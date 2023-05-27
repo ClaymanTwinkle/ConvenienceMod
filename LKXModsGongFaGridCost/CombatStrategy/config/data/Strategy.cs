@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ConvenienceFrontend.CombatStrategy.config.data;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
@@ -14,59 +15,81 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <returns></returns>
         public bool IsComplete()
         {
-            bool result;
-            if (this.skillId < 0 && this.changeTrickAction == null && this.switchWeaponAction == null && this.teammateCommandAction == null)
+            switch ((StrategyConst.StrategyType)type)
             {
-                result = false;
+                case StrategyConst.StrategyType.ReleaseSkill:
+                    if(this.skillId < 0) return false;
+                    break;
+                case StrategyConst.StrategyType.ChangeTrick:
+                    if (changeTrickAction ==null) return false;
+                    break;
+                case StrategyConst.StrategyType.SwitchWeapons:
+                    if (switchWeaponAction == null) return false;
+                    break;
+                case StrategyConst.StrategyType.ExecTeammateCommand:
+                    if (teammateCommandAction == null) return false;
+                    break;
+                case StrategyConst.StrategyType.AutoMove:
+                    if (autoMoveAction == null) return false;
+                    break;
+                default: return false;
             }
-            else
+
+            for (int i = 0; i < this.conditions.Count; i++)
             {
-                for (int i = 0; i < this.conditions.Count; i++)
+                if (!this.conditions[i].IsComplete())
                 {
-                    if (!this.conditions[i].IsComplete())
-                    {
-                        return false;
-                    }
+                    return false;
                 }
-                result = true;
             }
-            return result;
+
+            return true;
         }
 
-        public void setAction(short skillId)
+        public void SetAction(short skillId)
         { 
             this.skillId = skillId;
             changeTrickAction = null;
             switchWeaponAction = null;
             teammateCommandAction = null;
+            autoMoveAction= null;
         }
 
-        public void setAction(ChangeTrickAction changeTrickAction)
+        public void SetAction(ChangeTrickAction changeTrickAction)
         {
             this.changeTrickAction = changeTrickAction;
             this.skillId = -1;
             switchWeaponAction = null;
             teammateCommandAction = null;
+            autoMoveAction = null;
         }
 
-        public void setAction(SwitchWeaponAction switchWeaponAction)
+        public void SetAction(SwitchWeaponAction switchWeaponAction)
         {
             this.switchWeaponAction = switchWeaponAction;
             this.skillId = -1;
             changeTrickAction = null;
             teammateCommandAction = null;
+            autoMoveAction = null;
         }
 
-        public void setAction(TeammateCommandAction teammateCommandAction)
+        public void SetAction(TeammateCommandAction teammateCommandAction)
         { 
             this.teammateCommandAction = teammateCommandAction;
             this.skillId = -1;
             changeTrickAction = null;
             switchWeaponAction = null;
+            autoMoveAction = null;
         }
 
-        // 执行条件
-        public List<Condition> conditions = new List<Condition>();
+        public void SetAction(AutoMoveAction autoMoveAction)
+        { 
+            this.autoMoveAction = autoMoveAction;
+            teammateCommandAction = null;
+            skillId = -1;
+            changeTrickAction = null;
+            switchWeaponAction = null;
+        }
 
         // 技能templateId
         public short skillId = -1;
@@ -86,6 +109,11 @@ namespace ConvenienceFrontend.CombatStrategy
         /// </summary>
         public TeammateCommandAction teammateCommandAction = null;
 
+        /// <summary>
+        /// 自动移动
+        /// </summary>
+        public AutoMoveAction autoMoveAction = null;
+
         // 类型
         // 0: 释放技能
         // 1: 变招
@@ -94,5 +122,8 @@ namespace ConvenienceFrontend.CombatStrategy
 
         // 释放启用
         public bool enabled = false;
+
+        // 执行条件
+        public List<Condition> conditions = new List<Condition>();
     }
 }

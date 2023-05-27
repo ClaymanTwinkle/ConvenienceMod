@@ -97,8 +97,7 @@ namespace ConvenienceBackend.CombatStrategy
             bool flag = selfChar.MoveData.MaxJumpForwardDist > 0;
             if (flag)
             {
-                bool flag2 = _settings.TargetDistance > (int)currentDistance;
-                if (flag2)
+                if (_settings.TargetDistance > (int)currentDistance)
                 {
                     instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)2 : (byte)0, true);
                 }
@@ -173,15 +172,14 @@ namespace ConvenienceBackend.CombatStrategy
         private static void AutoMove(CombatDomain instance, CombatCharacter selfChar)
         {
             short currentDistance = instance.GetCurrentDistance();
-            bool flag = (int)currentDistance == _settings.TargetDistance;
-            if (flag)
+            if ((int)currentDistance == _settings.TargetDistance)
             {
                 instance.SetMoveState(0, true);
             }
             else
             {
-                bool flag2 = (int)currentDistance > _settings.TargetDistance;
-                byte b = flag2 ? (byte)1 : (byte)2;
+                bool isMoveForward = (int)currentDistance > _settings.TargetDistance;
+                byte moveState = isMoveForward ? (byte)1 : (byte)2;
                 if (selfChar.MoveData.JumpMoveSkillId > -1)
                 {
                     CheckJumping(instance, selfChar);
@@ -191,20 +189,17 @@ namespace ConvenienceBackend.CombatStrategy
                     short mobilityValue = selfChar.GetMobilityValue();
                     int maxMobility = selfChar.GetMaxMobility();
                     short mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
-                    bool flag4 = selfChar.GetAffectingMoveSkillId() < 0;
-                    if (flag4)
+                    if (selfChar.GetAffectingMoveSkillId() < 0)
                     {
-                        bool flag5 = (int)mobilityRecoverPrepareValue >= maxMobility && (int)mobilityValue < _settings.MobilityRecoverCap;
-                        if (flag5)
+                        if ((int)mobilityRecoverPrepareValue >= maxMobility && (int)mobilityValue < _settings.MobilityRecoverCap)
                         {
                             instance.SetMoveState(0, true);
                         }
                         else
                         {
-                            bool flag6 = (int)mobilityValue > (flag2 ? _settings.MobilityAllowForward : _settings.MobilityAllowBackward);
-                            if (flag6)
+                            if ((int)mobilityValue > (isMoveForward ? _settings.MobilityAllowForward : _settings.MobilityAllowBackward))
                             {
-                                instance.SetMoveState(b, true);
+                                instance.SetMoveState(moveState, true);
                             }
                             else
                             {
@@ -214,7 +209,8 @@ namespace ConvenienceBackend.CombatStrategy
                     }
                     else
                     {
-                        instance.SetMoveState(b, true);
+                        // 有身法就无需判断脚力
+                        instance.SetMoveState(moveState, true);
                     }
                 }
             }
@@ -226,17 +222,25 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="instance"></param>
         /// <param name="context"></param>
         /// <param name="selfChar"></param>
-        private static void AutoCastSkill(CombatDomain instance, DataContext context, CombatCharacter selfChar)
+        private static List<Strategy> AutoCastSkill(CombatDomain instance, DataContext context, CombatCharacter selfChar)
         {
+            var execedStrategyList = new List<Strategy>();
+
             foreach (Strategy strategy in _strategies)
             {
+                // 条件不满足
+                if (!CheckCondition(instance, selfChar, strategy.conditions)) continue;
+                if ((StrategyType)strategy.type != StrategyType.AutoMove && (selfChar.MoveData.JumpPreparedFrame != 0 || selfChar.GetJumpPreparedDistance() != 0)) continue;
+
                 switch (strategy.type)
                 {
                     case (short)StrategyType.ReleaseSkill:
-                        bool canUse = strategy.skillData != null && strategy.skillData.GetCanUse();
-                        if (canUse)
                         {
-                            bool canExecute = CheckCondition(instance, selfChar, strategy.conditions);
+                            // 无装备该功法
+                            if (strategy.skillData == null) break;
+                            // 功法目前不可使用
+                            if (!strategy.skillData.GetCanUse()) break;
+                            // 检查功法施展范围
                             bool beyondRange = strategy.conditions.Find((Condition condition) => condition.item == JudgeItem.Distance) == null;
                             if (beyondRange && strategy.skillData != null && Config.CombatSkill.Instance[strategy.skillId].EquipType == 1)
                             {
@@ -245,27 +249,21 @@ namespace ConvenienceBackend.CombatStrategy
                                 if ((int)instance.GetCurrentDistance() < skillAttackRange.Outer || (int)instance.GetCurrentDistance() > skillAttackRange.Inner)
                                 {
                                     // 不在施法范围中，跳过
-                                    continue;
-                                }
-                            }
-                            if (canExecute)
-                            {
-                                if (strategy.skillData != null)
-                                {
-                                    instance.StartPrepareSkill(context, strategy.skillId, true);
                                     break;
                                 }
                             }
+                            instance.StartPrepareSkill(context, strategy.skillId, true);
+                            execedStrategyList.Add(strategy);
+                            break;
                         }
-                        break;
                     case (short)StrategyType.ChangeTrick:
-                        if (!selfChar.GetCanChangeTrick()) break;
-
-                        if (strategy.changeTrickAction != null && CheckCondition(instance, selfChar, strategy.conditions))
                         {
+                            if (!selfChar.GetCanChangeTrick()) break;
+                            if (strategy.changeTrickAction == null) break;
                             if (strategy.changeTrickAction.trick == null) break;
                             var trickId = Config.TrickType.Instance[strategy.changeTrickAction.trick]?.TemplateId;
                             if (trickId == null) break;
+                            // 当前没有这个式
                             if (selfChar.GetWeaponTricks().IndexOf((sbyte)trickId) < 0) break;
 
                             if (strategy.changeTrickAction.body == null) break;
@@ -273,43 +271,58 @@ namespace ConvenienceBackend.CombatStrategy
                             if (bodyId == null) break;
 
                             instance.SelectChangeTrick(context, (sbyte)trickId, (sbyte)bodyId, true);
+                            execedStrategyList.Add(strategy);
+                            break;
                         }
-                        break;
                     case (short)StrategyType.SwitchWeapons:
-                        if (strategy.switchWeaponAction != null && CheckCondition(instance, selfChar, strategy.conditions))
                         {
-                            if (strategy.switchWeaponAction.weaponIndex > -1 && strategy.switchWeaponAction.weaponIndex != selfChar.GetUsingWeaponIndex())
-                            {
-                                instance.ChangeWeapon(context, strategy.switchWeaponAction.weaponIndex, true);
-                            }
+                            if (strategy.switchWeaponAction == null) break;
+                            if (strategy.switchWeaponAction.weaponIndex < 0) break;
+                            if (strategy.switchWeaponAction.weaponIndex == selfChar.GetUsingWeaponIndex()) break;
+
+                            instance.ChangeWeapon(context, strategy.switchWeaponAction.weaponIndex, true);
+                            execedStrategyList.Add(strategy);
+                            break;
                         }
-                        break;
                     case (short)StrategyType.ExecTeammateCommand:
-                        if (strategy.teammateCommandAction != null && CheckCondition(instance, selfChar, strategy.conditions))
                         {
+                            if (strategy.teammateCommandAction == null) break;
+
                             var comId = (sbyte)strategy.teammateCommandAction.id;
-                            if (comId > -1)
+                            if (comId < 0) break;
+                            
+                            int[] selfTeam = instance.GetSelfTeam();
+                            for (int i = 1; i < selfTeam.Length; i++)
                             {
-                                int[] selfTeam = instance.GetSelfTeam();
-                                for (int i = 1; i < selfTeam.Length; i++)
-                                {
-                                    var charId = selfTeam[i];
-                                    if (charId <= 0) continue;
-                                    CombatCharacter ally = null;
-                                    instance.TryGetElement_CombatCharacterDict(charId, out ally);
-                                    if (ally == null) continue;
-                                    var index = ally.GetCurrTeammateCommands().IndexOf(comId);
-                                    if (index < 0) continue;
-                                    if (!ally.GetTeammateCommandCanUse()[index]) continue;
-                                    instance.ExecuteTeammateCommand(context, selfChar.IsAlly, index, charId);
-                                    break;
-                                }
+                                var charId = selfTeam[i];
+                                if (charId <= 0) continue;
+                                instance.TryGetElement_CombatCharacterDict(charId, out CombatCharacter ally);
+                                if (ally == null) continue;
+                                var index = ally.GetCurrTeammateCommands().IndexOf(comId);
+                                if (index < 0) continue;
+                                if (!ally.GetTeammateCommandCanUse()[index]) continue;
+
+                                instance.ExecuteTeammateCommand(context, selfChar.IsAlly, index, charId);
+                                execedStrategyList.Add(strategy);
+                                break;
                             }
+
+                            break;
                         }
+                    case (short)StrategyType.AutoMove:
+                        {
+                            if (strategy.autoMoveAction == null) break;
+
+                            instance.SetMoveState((byte)strategy.autoMoveAction.type, true);
+                            execedStrategyList.Add(strategy);
+                            break;
+                        }
+                    default:
                         break;
                 }
-                
             }
+
+            return execedStrategyList;
         }
 
         /// <summary>
@@ -571,28 +584,26 @@ namespace ConvenienceBackend.CombatStrategy
 
             if (_settings == null) return;
 
-            if (!__instance.GetAutoCombat() && __instance.IsMainCharacter(combatCharacter))
-            {
-                // 自动指令
-                // AutoUseCommand(__instance, context, combatCharacter);
+            if (__instance.GetAutoCombat()) return;
 
-                // 自动施法
-                if (_settings.AutoCastSkill && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
-                {
-                    AutoCastSkill(__instance, context, combatCharacter);
-                }
-                // 自动变招
-                if (_needRemoveTrick) 
-                {
-                    // AutoChangeTrick(__instance, context, combatCharacter);
-                }
-                // 自动攻击
-                if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
-                {
-                    AutoAttack(__instance, context, combatCharacter);
-                }
-                // 自动移动
-                if (_settings.AutoMove)
+            if (!__instance.IsMainCharacter(combatCharacter)) return;
+
+            List<Strategy> execStrategy = new List<Strategy>();
+
+            // 自动施法
+            if (_settings.AutoCastSkill)
+            {
+                execStrategy = AutoCastSkill(__instance, context, combatCharacter);
+            }
+            // 自动攻击
+            if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
+            {
+                AutoAttack(__instance, context, combatCharacter);
+            }
+            // 自动移动
+            if (_settings.AutoMove)
+            {
+                if (execStrategy.Find(x => (StrategyType)x.type == StrategyType.AutoMove) == null)
                 {
                     AutoMove(__instance, combatCharacter);
                 }

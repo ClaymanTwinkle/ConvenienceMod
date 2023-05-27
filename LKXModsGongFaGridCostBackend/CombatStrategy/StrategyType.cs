@@ -26,5 +26,10 @@ namespace ConvenienceBackend.CombatStrategy
         /// 执行队友指令
         /// </summary>
         ExecTeammateCommand = 3,
+
+        /// <summary>
+        /// 自动移动
+        /// </summary>
+        AutoMove = 4,
     }
 }

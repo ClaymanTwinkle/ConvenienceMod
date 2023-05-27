@@ -30,6 +30,11 @@ namespace ConvenienceBackend.CombatStrategy
         public TeammateCommandAction teammateCommandAction { get; set; }
 
         /// <summary>
+        /// 自动移动
+        /// </summary>
+        public AutoMoveAction autoMoveAction { get; set; }
+
+        /// <summary>
         /// 类型
         /// </summary>
         public short type { get; set; }

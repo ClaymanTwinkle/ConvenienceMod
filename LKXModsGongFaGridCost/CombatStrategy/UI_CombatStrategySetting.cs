@@ -295,6 +295,7 @@ namespace ConvenienceFrontend.CombatStrategy
             this._changeTacticsPanel = UIUtils.CreateChangeTactics(this._focus.transform).GetComponent<RectTransform>();
             this._switchWeaponPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
             this._teammateCommandPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
+            this._moveActionSelectPanel = MoveActionSelectPanel.Create(this._focus.transform);
         }
 
         private void RefreshUI()
@@ -583,7 +584,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         if (type == 1)
                         {
                             Debug.Log("选中功法" + skillId);
-                            strategy.setAction(skillId);
+                            strategy.SetAction(skillId);
                             this.RenderStrategySkillText(strategy, skillRefers);
                         }
                         else
@@ -592,17 +593,22 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                     });
                     ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.BookId > 0).ConvertAll(x => x.TemplateId), _onSelected);
-                }), null, null, null, -1, null, null, null));
+                }), null, null, "自动施展功法", -1, null, null, null));
             }
             btnList.Add(new UI_PopupMenu.BtnData("变招", true, new Action(()=> {
                 this.ShowChangeTacticsPanel(skillRefers, strategy);
-            })));
+            }), tipContent: "自动变招"));
             btnList.Add(new UI_PopupMenu.BtnData("切换武器", true, new Action(() => {
                 this.ShowSwitchWeaponPanel(skillRefers, strategy);
-            })));
+            }), tipContent: "自动切换武器"));
             btnList.Add(new UI_PopupMenu.BtnData("队友协助", true, new Action(() => {
                 this.ShowTeammateCommandPanel(skillRefers, strategy);
-            })));
+            }), tipContent: "可自动执行队友指令"));
+            btnList.Add(new UI_PopupMenu.BtnData("自动移动", true, new Action(() => {
+                this._moveActionSelectPanel.Show(skillRefers, strategy, new Action(() => {
+                    this.RenderStrategySkillText(strategy, skillRefers);
+                }));
+            }), tipContent: "移动方式改为由策略触发，让移动变得更灵活；注意：该策略若执行了，默认的自动移动将不会执行"));
             btnList.Add(new UI_PopupMenu.BtnData("添加条件", true, delegate ()
             {
                 Condition condition = new Condition();
@@ -613,7 +619,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 content.GetComponent<GridLayoutGroup>().CalculateLayoutInputVertical();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                 LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
-            }, null, null, null, -1, null, null, null));
+            }, null, null, "策略触发的前提条件，可添加多个条件", -1, null, null, null));
             btnList.Add(new UI_PopupMenu.BtnData("删除策略", true, delegate ()
             {
                 CombatStrategyMod.Strategies.Remove(strategy);
@@ -715,6 +721,9 @@ namespace ConvenienceFrontend.CombatStrategy
                 case (short)StrategyConst.StrategyType.ExecTeammateCommand:
                     label.text = "队友指令[" + StrategyConst.GetTeammateCommandList()[strategy.teammateCommandAction.id] + "]";
                     break;
+                case (short)StrategyConst.StrategyType.AutoMove:
+                    label.text = StrategyConst.MoveActionOptions[strategy.autoMoveAction.type];
+                    break;
                 default:
                     break;
             }
@@ -778,7 +787,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 var body = bodyOptions.options[bodyOptions.value].text;
 
                 strategy.type = (short)StrategyConst.StrategyType.ChangeTrick;
-                strategy.setAction(new ChangeTrickAction(trick, body));
+                strategy.SetAction(new ChangeTrickAction(trick, body));
 
                 this.RenderStrategySkillText(strategy, parentRefers);
 
@@ -817,7 +826,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 var weaponIndex = valueOptions.value;
 
                 strategy.type = (short)StrategyConst.StrategyType.SwitchWeapons;
-                strategy.setAction(new SwitchWeaponAction((sbyte)weaponIndex));
+                strategy.SetAction(new SwitchWeaponAction((sbyte)weaponIndex));
 
                 this.RenderStrategySkillText(strategy, parentRefers);
 
@@ -857,7 +866,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 var value = valueOptions.value;
 
                 strategy.type = (short)StrategyConst.StrategyType.ExecTeammateCommand;
-                strategy.setAction(new TeammateCommandAction((sbyte)value));
+                strategy.SetAction(new TeammateCommandAction((sbyte)value));
 
                 this.RenderStrategySkillText(strategy, parentRefers);
 
@@ -1101,6 +1110,11 @@ namespace ConvenienceFrontend.CombatStrategy
         /// 队友指令面板
         /// </summary>
         private RectTransform _teammateCommandPanel;
+
+        /// <summary>
+        /// 移动动作选择面板
+        /// </summary>
+        private MoveActionSelectPanel _moveActionSelectPanel;
 
         private RectTransform _inputTextPanel;
 

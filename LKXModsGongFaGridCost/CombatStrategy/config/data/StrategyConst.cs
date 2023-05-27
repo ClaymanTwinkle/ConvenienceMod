@@ -31,6 +31,11 @@ namespace ConvenienceFrontend.CombatStrategy
             /// 执行队友指令
             /// </summary>
             ExecTeammateCommand = 3,
+
+            /// <summary>
+            /// 自动移动
+            /// </summary>
+            AutoMove = 4,
         }
 
         // Token: 0x04000030 RID: 48
@@ -196,6 +201,12 @@ namespace ConvenienceFrontend.CombatStrategy
             "树枝",
             "石子",
             "喉声"
+        };
+
+        public static readonly string[] MoveActionOptions = new string[] {
+            "不移动",
+            "向前移动",
+            "向后移动",
         };
 
         public static readonly string[] YesOrNo = new string[]
