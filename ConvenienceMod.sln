@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvenienceFrontend", "LKXModsGongFaGridCost\ConvenienceFrontend.csproj", "{CBB708F7-9C6A-42FB-9C0F-DDE2BACEFA9E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConvenienceBackend", "LKXModsGongFaGridCostBackend\ConvenienceBackend.csproj", "{CFD3673E-129C-46B5-8658-DEE6364BF6D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CBB708F7-9C6A-42FB-9C0F-DDE2BACEFA9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBB708F7-9C6A-42FB-9C0F-DDE2BACEFA9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBB708F7-9C6A-42FB-9C0F-DDE2BACEFA9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBB708F7-9C6A-42FB-9C0F-DDE2BACEFA9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFD3673E-129C-46B5-8658-DEE6364BF6D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFD3673E-129C-46B5-8658-DEE6364BF6D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFD3673E-129C-46B5-8658-DEE6364BF6D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFD3673E-129C-46B5-8658-DEE6364BF6D6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {31436120-B318-4A9F-80DF-CBC1CE83650C}
+	EndGlobalSection
+EndGlobal
