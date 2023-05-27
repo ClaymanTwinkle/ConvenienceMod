@@ -57,7 +57,7 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             else if (judgeItem == JudgeItem.Buff || judgeItem == JudgeItem.Debuff)
             {
-                stringBuilder.Append(SpecialEffectDataField.Instance[subType]?.Name ?? "").Append(' ');
+                stringBuilder.Append(StrategyConst.GetSpecialEffectNameById(subType)).Append(' ');
             }
 
             stringBuilder.Append(StrategyConst.ItemOptions[(int)judgeItem].Name).Append(' ');

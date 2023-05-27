@@ -184,7 +184,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                     }
                     else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
                     {
-                        var index = StrategyConst.GetSpecialEffectNameList().IndexOf(SpecialEffectDataField.Instance[condition.subType]?.Name ?? "");
+                        var index = StrategyConst.GetSpecialEffectNameList().IndexOf(StrategyConst.GetSpecialEffectNameById(condition.subType));
                         valueOptions.value = Math.Max(index, 0);
                     }
                     else
@@ -295,7 +295,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 }
                 else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
                 {
-                    condition.subType = SpecialEffectDataField.Instance[valueOptions.options[valueOptions.value].text].TemplateId;
+                    condition.subType = StrategyConst.GetSpecialEffectIdByName(valueOptions.options[valueOptions.value].text);
                 }
                 renderConditionText();
                 this._conditionSetter.gameObject.SetActive(false);

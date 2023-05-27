@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using TaiwuModdingLib.Core.Utils;
+using UnityEngine;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
@@ -171,6 +173,16 @@ namespace ConvenienceFrontend.CombatStrategy
         public static List<string> GetSpecialEffectNameList()
         {
             return SpecialEffectDataField.Instance.ToList().ConvertAll(x => x.Name);
+        }
+
+        public static String GetSpecialEffectNameById(int id)
+        { 
+            return SpecialEffectDataField.Instance[id].Name;
+        }
+
+        public static int GetSpecialEffectIdByName(string name)
+        {
+            return SpecialEffectDataField.Instance.ToList().Find(x => x.Name.Equals(name))?.TemplateId ?? 0;
         }
 
         /// <summary>

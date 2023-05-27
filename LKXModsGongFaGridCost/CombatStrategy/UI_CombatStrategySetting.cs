@@ -552,8 +552,8 @@ namespace ConvenienceFrontend.CombatStrategy
                 }));
             });
             CToggle ctoggle = oRefers.CGet<CToggle>("Toggle");
-            ctoggle.isOn = strategy.enabled;
             ctoggle.onValueChanged.RemoveAllListeners();
+            ctoggle.isOn = strategy.enabled;
             ctoggle.onValueChanged.AddListener(delegate (bool isOn)
             {
                 strategy.enabled = isOn;
@@ -943,6 +943,7 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000070 RID: 112 RVA: 0x0000764C File Offset: 0x0000584C
         private void ListenHotKey()
         {
+            Debug.Log("ListenHotKey");
             KeyCode keyCode = 0;
             if (Input.anyKey)
             {
