@@ -13,44 +13,29 @@ namespace ConvenienceFrontend.CombatStrategy
         public KeyCode GetKey(string key)
         {
             KeyCode result;
-            if (!(key == "SwitchAutoMoveKey"))
+            switch (key)
             {
-                if (!(key == "SwitchAutoAttackKey"))
-                {
-                    if (!(key == "SwitchTargetDistanceKey"))
-                    {
-                        if (!(key == "IncreaseDistanceKey"))
-                        {
-                            if (!(key == "DecreaseDistanceKey"))
-                            {
-                                result = 0;
-                            }
-                            else
-                            {
-                                result = this.DecreaseDistanceKey;
-                            }
-                        }
-                        else
-                        {
-                            result = this.IncreaseDistanceKey;
-                        }
-                    }
-                    else
-                    {
-                        result = this.SwitchTargetDistanceKey;
-                    }
-                }
-                else
-                {
+                case "SwitchAutoMoveKey":
+                    result = this.SwitchAutoMoveKey;
+                    break;
+                case "SwitchAutoAttackKey":
                     result = this.SwitchAutoAttackKey;
-                }
-            }
-            else
-            {
-                result = this.SwitchAutoMoveKey;
-            }
-            if (!true)
-            {
+                    break;
+                case "SwitchTargetDistanceKey":
+                    result = this.SwitchTargetDistanceKey;
+                    break;
+                case "IncreaseDistanceKey":
+                    result = this.IncreaseDistanceKey;
+                    break;
+                case "DecreaseDistanceKey":
+                    result = this.DecreaseDistanceKey;
+                    break;
+                case "SwitchAutoCastSkillKey":
+                    result = this.SwitchAutoCastSkillKey;
+                    break;
+                default:
+                    result = 0;
+                    break;
             }
             return result;
         }
@@ -58,37 +43,28 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000013 RID: 19 RVA: 0x00002724 File Offset: 0x00000924
         public void SetKey(string key, KeyCode keyCode)
         {
-            if (!(key == "SwitchAutoMoveKey"))
+            switch (key)
             {
-                if (!(key == "SwitchAutoAttackKey"))
-                {
-                    if (!(key == "SwitchTargetDistanceKey"))
-                    {
-                        if (!(key == "IncreaseDistanceKey"))
-                        {
-                            if (key == "DecreaseDistanceKey")
-                            {
-                                this.DecreaseDistanceKey = keyCode;
-                            }
-                        }
-                        else
-                        {
-                            this.IncreaseDistanceKey = keyCode;
-                        }
-                    }
-                    else
-                    {
-                        this.SwitchTargetDistanceKey = keyCode;
-                    }
-                }
-                else
-                {
+                case "SwitchAutoMoveKey":
+                    this.SwitchAutoMoveKey = keyCode;
+                    break;
+                case "SwitchAutoAttackKey":
                     this.SwitchAutoAttackKey = keyCode;
-                }
-            }
-            else
-            {
-                this.SwitchAutoMoveKey = keyCode;
+                    break;
+                case "SwitchTargetDistanceKey":
+                    this.SwitchTargetDistanceKey = keyCode;
+                    break;
+                case "IncreaseDistanceKey":
+                    this.IncreaseDistanceKey = keyCode;
+                    break;
+                case "DecreaseDistanceKey":
+                    this.DecreaseDistanceKey = keyCode;
+                    break;
+                case "SwitchAutoCastSkillKey":
+                    this.SwitchAutoCastSkillKey = keyCode;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -263,6 +239,8 @@ namespace ConvenienceFrontend.CombatStrategy
 
         // Token: 0x0400002D RID: 45
         public KeyCode SwitchAutoAttackKey = KeyCode.LeftControl; // 306;
+
+        public KeyCode SwitchAutoCastSkillKey = KeyCode.RightControl;
 
         // Token: 0x0400002E RID: 46
         public int CounterAccordance = 0;

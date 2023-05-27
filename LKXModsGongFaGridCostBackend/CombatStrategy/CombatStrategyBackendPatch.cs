@@ -677,7 +677,6 @@ namespace ConvenienceBackend.CombatStrategy
                                 break;
                             }
                         case 4:
-                            Serializer.Deserialize(argDataPool, num, ref _counteredCharacters);
                             break;
                         case 5:
                             {
@@ -690,6 +689,16 @@ namespace ConvenienceBackend.CombatStrategy
                                 catch (Exception ex2)
                                 {
                                     AdaptableLog.Warning("CombatStrategy Backend: Deserialize strategy Json Failed:" + ex2.Message, false);
+                                }
+                                break;
+                            }
+                        case 6:
+                            {
+                                if (_settings != null)
+                                {
+                                    bool autoCastSkill = _settings.AutoCastSkill;
+                                    Serializer.Deserialize(argDataPool, num, ref autoCastSkill);
+                                    _settings.AutoCastSkill = autoCastSkill;
                                 }
                                 break;
                             }
@@ -752,9 +761,6 @@ namespace ConvenienceBackend.CombatStrategy
 
         // Token: 0x04000016 RID: 22
         private static List<Strategy> _strategies = new List<Strategy>();
-
-        // Token: 0x04000018 RID: 24
-        private static List<int> _counteredCharacters = new List<int>();
 
         private static bool _needRemoveTrick;
 

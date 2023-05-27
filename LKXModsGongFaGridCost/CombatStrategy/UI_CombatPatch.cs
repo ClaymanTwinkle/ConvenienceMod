@@ -15,46 +15,43 @@ namespace ConvenienceFrontend.CombatStrategy
 {
     internal class UI_CombatPatch
     {
-        // Token: 0x06000044 RID: 68 RVA: 0x00005084 File Offset: 0x00003284
+        /// <summary>
+        /// 快捷键监听
+        /// </summary>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_Combat), "Update")]
         public static void UI_Combat_Update_Postfix()
         {
             if (!CombatStrategyMod.ReplaceAI) return;
 
-            bool keyDown = Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoMoveKey);
-            if (keyDown)
+            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoMoveKey))
             {
                 UI_CombatPatch.SwitchAutoMove();
             }
-            else
+
+            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoAttackKey))
             {
-                bool keyDown2 = Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoAttackKey);
-                if (keyDown2)
-                {
-                    UI_CombatPatch.SwitchAutoAttack();
-                }
-                else
-                {
-                    bool keyDown3 = Input.GetKeyDown(CombatStrategyMod.Settings.SwitchTargetDistanceKey);
-                    if (keyDown3)
-                    {
-                        UI_CombatPatch.SwitchTargetDistance();
-                    }
-                    else
-                    {
-                        bool flag = CombatStrategyMod.Settings.TargetDistance < 120;
-                        if (flag)
-                        {
-                            UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.IncreaseDistanceKey, 1, ref UI_CombatPatch.pressKeyCounterInc);
-                        }
-                        bool flag2 = CombatStrategyMod.Settings.TargetDistance > 20;
-                        if (flag2)
-                        {
-                            UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.DecreaseDistanceKey, -1, ref UI_CombatPatch.pressKeyCounterDec);
-                        }
-                    }
-                }
+                UI_CombatPatch.SwitchAutoAttack();
+            }
+
+            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchTargetDistanceKey))
+            {
+                UI_CombatPatch.SwitchTargetDistance();
+            }
+
+            if (CombatStrategyMod.Settings.TargetDistance < 120)
+            {
+                UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.IncreaseDistanceKey, 1, ref UI_CombatPatch.pressKeyCounterInc);
+            }
+
+            if (CombatStrategyMod.Settings.TargetDistance > 20)
+            {
+                UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.DecreaseDistanceKey, -1, ref UI_CombatPatch.pressKeyCounterDec);
+            }
+
+            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoCastSkillKey))
+            {
+                SwitchAutoCastSkill();
             }
         }
 
@@ -79,14 +76,20 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 flag = true;
             }
-            bool flag2 = flag;
-            if (flag2)
+            if (flag)
             {
                 UI_CombatPatch.ModifyTargetDistance(addFactor);
                 keyCounter = -2;
             }
         }
 
+        /// <summary>
+        /// 战斗界面点击事件拦截
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="btn"></param>
+        /// <param name="____showMercyOption"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(UI_Combat), "OnClick")]
         public static bool UI_Combat_OnClick_Prefix(UI_Combat __instance, CButton btn, sbyte ____showMercyOption)
@@ -116,22 +119,27 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (!CombatStrategyMod.ReplaceAI) return;
 
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, CombatStrategyMod.MethodId, 3, ConfigManager.GetBackendSettingsJson());
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, CombatStrategyMod.MethodId, 5, ConfigManager.GetStrategiesJson());
-            if (CombatStrategyMod.Settings.ShowAutoAttackTips && UI_CombatPatch.autoAttackTips == null)
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
+            if (CombatStrategyMod.Settings.ShowAutoAttackTips)
             {
                 Debug.Log("CombatStrategyMod.Settings.ShowAutoAttackTips && UI_CombatPatch.autoAttackTips == null");
-                Transform transform = __instance.CGet<Refers>("SelfInfoChar").gameObject.transform;
-                UI_CombatPatch.autoAttackTips = Object.Instantiate<GameObject>(__instance.CGet<GameObject>("PauseTips"), transform, false);
-                UI_CombatPatch.autoAttackTips.name = "AutoAttckTip";
-                UI_CombatPatch.autoAttackTips.GetComponent<RectTransform>().anchoredPosition = new Vector2(-145f, -76f);
-                Object.DestroyImmediate(UI_CombatPatch.autoAttackTips.transform.GetComponentInChildren<TextLanguage>());
-                UI_CombatPatch.autoAttackTips.transform.GetComponentInChildren<TextMeshProUGUI>().text = "自动攻击";
-                UI_CombatPatch.autoAttackTips.GetComponent<DOTweenAnimation>().DOPause();
-                UI_CombatPatch.autoAttackTips.GetComponent<CanvasGroup>().alpha = 1f;
-                UI_CombatPatch.autoAttackTips.GetComponent<DOTweenAnimation>().DOPlay();
+                if (UI_CombatPatch.autoAttackTips == null)
+                {
+                    Transform transform = __instance.CGet<Refers>("SelfInfoChar").gameObject.transform;
+                    var autoTips = Object.Instantiate<GameObject>(__instance.CGet<GameObject>("PauseTips"), transform, false);
+                    autoTips.name = "AutoAttckTip";
+                    autoTips.GetComponent<RectTransform>().anchoredPosition = new Vector2(-145f, -76f);
+                    Object.DestroyImmediate(autoTips.transform.GetComponentInChildren<TextLanguage>());
+                    autoTips.transform.GetComponentInChildren<TextMeshProUGUI>().text = "自动攻击";
+                    autoTips.GetComponent<DOTweenAnimation>().DOPause();
+                    autoTips.GetComponent<CanvasGroup>().alpha = 1f;
+                    autoTips.GetComponent<DOTweenAnimation>().DOPlay();
+                    UI_CombatPatch.autoAttackTips = autoTips;
+                }
             }
             UI_CombatPatch.UpdateAutoAttackTips(CombatStrategyMod.Settings.AutoAttack);
+
             if (!CombatStrategyMod.ShowUIInCombat)
             {
                 Debug.Log("!CombatStrategyMod.ShowUIInCombat = true");
@@ -358,7 +366,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 CombatStrategyMod.Settings.TargetDistance = val;
             }
-            GameDataBridge.AddMethodCall<ushort, int>(-1, 8, CombatStrategyMod.MethodId, 2, val);
+            GameDataBridge.AddMethodCall<ushort, int>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateTargetDistance, val);
             UI_CombatPatch.distanceSlider.value = (float)val;
             UI_CombatPatch.UpdateTargetDistanceText(val);
         }
@@ -374,7 +382,7 @@ namespace ConvenienceFrontend.CombatStrategy
         public static void SwitchAutoMove()
         {
             CombatStrategyMod.Settings.AutoMove = !CombatStrategyMod.Settings.AutoMove;
-            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, CombatStrategyMod.MethodId, 0, CombatStrategyMod.Settings.AutoMove);
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoMove, CombatStrategyMod.Settings.AutoMove);
             UI_CombatPatch.UpdateAutoMoveText(CombatStrategyMod.Settings.AutoMove);
         }
 
@@ -382,8 +390,15 @@ namespace ConvenienceFrontend.CombatStrategy
         public static void SwitchAutoAttack()
         {
             CombatStrategyMod.Settings.AutoAttack = !CombatStrategyMod.Settings.AutoAttack;
-            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, CombatStrategyMod.MethodId, 1, CombatStrategyMod.Settings.AutoAttack);
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoAttack, CombatStrategyMod.Settings.AutoAttack);
             UI_CombatPatch.UpdateAutoAttackTips(CombatStrategyMod.Settings.AutoAttack);
+        }
+
+        public static void SwitchAutoCastSkill()
+        {
+            CombatStrategyMod.Settings.AutoCastSkill = !CombatStrategyMod.Settings.AutoCastSkill;
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoCastSkill, CombatStrategyMod.Settings.AutoCastSkill);
+            // UI_CombatPatch.UpdateAutoAttackTips(CombatStrategyMod.Settings.AutoAttack);
         }
 
         // Token: 0x06000051 RID: 81 RVA: 0x00005BD1 File Offset: 0x00003DD1

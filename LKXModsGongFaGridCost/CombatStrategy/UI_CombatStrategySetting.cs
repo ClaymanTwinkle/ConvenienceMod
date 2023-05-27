@@ -161,6 +161,7 @@ namespace ConvenienceFrontend.CombatStrategy
             base.AddMono(UIUtils.CreateHotKey(transform, "IncreaseDistanceKey", "减少目标距离"), "IncreaseDistanceKey");
             base.AddMono(UIUtils.CreateHotKey(transform, "DecreaseDistanceKey", "增加目标距离"), "DecreaseDistanceKey");
             base.AddMono(UIUtils.CreateHotKey(transform, "SwitchAutoAttackKey", "自动攻击"), "SwitchAutoAttackKey");
+            base.AddMono(UIUtils.CreateHotKey(transform, "SwitchAutoCastSkillKey", "执行策略"), "SwitchAutoCastSkillKey");
         }
 
         private void BuildStrategyProgramme(Transform parent)
@@ -417,11 +418,11 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 if (settingsChanged)
                 {
-                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, CombatStrategyMod.MethodId, 3, ConfigManager.GetBackendSettingsJson());
+                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
                 }
                 if (strategiesChanged)
                 {
-                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, CombatStrategyMod.MethodId, 5, ConfigManager.GetStrategiesJson());
+                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
                 }
             }
             yield return new WaitForEndOfFrame();
@@ -484,6 +485,7 @@ namespace ConvenienceFrontend.CombatStrategy
             this.RenderHotKeyPrefab("IncreaseDistanceKey", true);
             this.RenderHotKeyPrefab("DecreaseDistanceKey", true);
             this.RenderHotKeyPrefab("SwitchAutoAttackKey", true);
+            this.RenderHotKeyPrefab("SwitchAutoCastSkillKey", true);
         }
 
         // Token: 0x06000066 RID: 102 RVA: 0x00006B48 File Offset: 0x00004D48

@@ -42,6 +42,7 @@
     <Compile Include="CombatStrategy\config\data\Judgement.cs" />
     <Compile Include="CombatStrategy\CombatStrategyMod.cs" />
     <Compile Include="CombatStrategy\config\data\StrategyProgramme.cs" />
+    <Compile Include="CombatStrategy\GameDataBridgeConst.cs" />
     <Compile Include="CombatStrategy\Settings.cs" />
     <Compile Include="CombatStrategy\config\data\SettingsConst.cs" />
     <Compile Include="CombatStrategy\config\data\Strategy.cs" />
@@ -51,7 +52,6 @@
     <Compile Include="CombatStrategy\TSlider.cs" />
     <Compile Include="CombatStrategy\ui\ConditionSetterPanel.cs" />
     <Compile Include="CombatStrategy\ui\UIUtils.cs" />
-    <Compile Include="CombatStrategy\UI_CombatBeginPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatStrategySetting.cs" />
     <Compile Include="CustomSteal\CustomStealFrontPatch.cs" />

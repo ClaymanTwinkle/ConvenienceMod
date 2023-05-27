@@ -46,7 +46,11 @@ namespace ConvenienceFrontend.CombatStrategy
             return JsonConvert.SerializeObject(list);
         }
 
-        // Token: 0x0600000B RID: 11 RVA: 0x000023B0 File Offset: 0x000005B0
+        /// <summary>
+        /// 设置中打开战斗策略设置面板
+        /// </summary>
+        /// <param name="modInfo"></param>
+        /// <param name="____settingEntriesList"></param>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_ModPanel), "UpdateSettings")]
         public static void UI_ModPanel_UpdateSettings_Postfix(ModInfo modInfo, List<Refers> ____settingEntriesList)
