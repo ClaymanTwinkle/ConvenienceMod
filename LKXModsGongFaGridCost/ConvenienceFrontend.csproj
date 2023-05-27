@@ -42,6 +42,7 @@
     <Compile Include="CombatStrategy\config\data\JudgeItem.cs" />
     <Compile Include="CombatStrategy\config\data\Judgement.cs" />
     <Compile Include="CombatStrategy\CombatStrategyMod.cs" />
+    <Compile Include="CombatStrategy\config\data\NormalAttackAction.cs" />
     <Compile Include="CombatStrategy\config\data\StrategyProgramme.cs" />
     <Compile Include="CombatStrategy\GameDataBridgeConst.cs" />
     <Compile Include="CombatStrategy\Settings.cs" />

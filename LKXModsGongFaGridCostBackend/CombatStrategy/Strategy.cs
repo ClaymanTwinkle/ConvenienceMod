@@ -35,6 +35,11 @@ namespace ConvenienceBackend.CombatStrategy
         public AutoMoveAction autoMoveAction { get; set; }
 
         /// <summary>
+        /// 普通攻击
+        /// </summary>
+        public NormalAttackAction normalAttackAction { get; set; }
+
+        /// <summary>
         /// 类型
         /// </summary>
         public short type { get; set; }

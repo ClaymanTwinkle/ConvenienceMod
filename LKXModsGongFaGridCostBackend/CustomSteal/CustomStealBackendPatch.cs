@@ -39,6 +39,12 @@ namespace ConvenienceBackend.CustomSteal
         private static int _scamValue;
         private static TryMode _scamMode = TryMode.SimulationMode;
 
+        /// <summary>
+        /// 暗害
+        /// </summary>
+        private static int _plotHarmValue;
+        private static TryMode _plotHarmMode = TryMode.SimulationMode;
+
         private static TryMode[] _modeList = new TryMode[]
         {
             // 模拟
@@ -73,6 +79,10 @@ namespace ConvenienceBackend.CustomSteal
             DomainManager.Mod.GetSetting(modIdStr, "scam_mode", ref num);
             DomainManager.Mod.GetSetting(modIdStr, "scam_value", ref _scamValue);
             _scamMode = _modeList[num];
+
+            DomainManager.Mod.GetSetting(modIdStr, "plot_harm_mode", ref num);
+            DomainManager.Mod.GetSetting(modIdStr, "plot_harm_value", ref _plotHarmValue);
+            _plotHarmMode = _modeList[num];
 
             DomainManager.Mod.GetSetting(modIdStr, "guaranteed_excavation", ref _guaranteedExcavation);
             DomainManager.Mod.GetSetting(modIdStr, "excavation_lucky", ref _enableExcavationLucky);
@@ -154,6 +164,16 @@ namespace ConvenienceBackend.CustomSteal
 
         private static int _maxFindTreasureCount = 100;
 
+        /// <summary>
+        /// 挖掘
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="context"></param>
+        /// <param name="charId"></param>
+        /// <param name="____brokenAreaMaterials"></param>
+        /// <param name="____treasureMaterialFailedTimes"></param>
+        /// <param name="__result"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ExtraDomain), "FindTreasure")]
         public static unsafe bool FindTreasurePostfix(ExtraDomain __instance, DataContext context, int charId, TreasureMaterialData[] ____brokenAreaMaterials, int ____treasureMaterialFailedTimes, ref TreasureFindResult __result)
@@ -250,16 +270,23 @@ namespace ConvenienceBackend.CustomSteal
             return false;
         }
 
+        /// <summary>
+        /// 暗害
+        /// </summary>
+        /// <param name="selfCharId"></param>
+        /// <param name="targetCharId"></param>
+        /// <param name="__result"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(EventHelper), "GetPlotHarmActionPhase")]
         public static bool GetPlotHarmActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
         {
             if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId())
             {
-                switch (_stealMode)
+                switch (_plotHarmMode)
                 {
                     case TryMode.SuccessRateMode:
-                        processSuccessRateMode(_stealValue, ref __result);
+                        processSuccessRateMode(_plotHarmValue, ref __result);
                         return false;
                     case TryMode.SimulationMode:
                         processPlotHarmSimulationMode(selfCharId, targetCharId, ref __result);
@@ -421,7 +448,7 @@ namespace ConvenienceBackend.CustomSteal
 
         private static void processPlotHarmSimulationMode(int selfCharId, int targetCharId, ref sbyte __result) 
         {
-            int value = _stealValue;
+            int value = _plotHarmValue;
 
             GameData.Domains.Character.Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
             GameData.Domains.Character.Character character = DomainManager.Character.GetElement_Objects(targetCharId);

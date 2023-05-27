@@ -317,6 +317,14 @@ namespace ConvenienceBackend.CombatStrategy
                             execedStrategyList.Add(strategy);
                             break;
                         }
+                    case (short)StrategyType.NormalAttack:
+                        {
+                            if (strategy.normalAttackAction == null) break;
+
+                            instance.NormalAttack(context, true);
+                            execedStrategyList.Add(strategy);
+                            break;
+                        }
                     default:
                         break;
                 }

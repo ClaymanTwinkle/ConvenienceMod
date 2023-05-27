@@ -31,5 +31,10 @@ namespace ConvenienceBackend.CombatStrategy
         /// 自动移动
         /// </summary>
         AutoMove = 4,
+
+        /// <summary>
+        /// 普通攻击
+        /// </summary>
+        NormalAttack = 5,
     }
 }

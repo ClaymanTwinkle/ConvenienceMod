@@ -609,6 +609,11 @@ namespace ConvenienceFrontend.CombatStrategy
                     this.RenderStrategySkillText(strategy, skillRefers);
                 }));
             }), tipContent: "移动方式改为由策略触发，让移动变得更灵活；注意：该策略若执行了，默认的自动移动将不会执行"));
+            btnList.Add(new UI_PopupMenu.BtnData("普通攻击", true, new Action(() => {
+                strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
+                strategy.SetAction(new NormalAttackAction());
+                this.RenderStrategySkillText(strategy, skillRefers);
+            }), tipContent: "触发普通攻击"));
             btnList.Add(new UI_PopupMenu.BtnData("添加条件", true, delegate ()
             {
                 Condition condition = new Condition();
@@ -723,6 +728,9 @@ namespace ConvenienceFrontend.CombatStrategy
                     break;
                 case (short)StrategyConst.StrategyType.AutoMove:
                     label.text = StrategyConst.MoveActionOptions[strategy.autoMoveAction.type];
+                    break;
+                case (short)StrategyConst.StrategyType.NormalAttack:
+                    label.text = "普通攻击";
                     break;
                 default:
                     break;

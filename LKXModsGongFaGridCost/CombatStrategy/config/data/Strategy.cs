@@ -32,6 +32,9 @@ namespace ConvenienceFrontend.CombatStrategy
                 case StrategyConst.StrategyType.AutoMove:
                     if (autoMoveAction == null) return false;
                     break;
+                case StrategyConst.StrategyType.NormalAttack:
+                    if (normalAttackAction == null) return false;
+                    break;
                 default: return false;
             }
 
@@ -53,6 +56,7 @@ namespace ConvenienceFrontend.CombatStrategy
             switchWeaponAction = null;
             teammateCommandAction = null;
             autoMoveAction= null;
+            normalAttackAction = null;
         }
 
         public void SetAction(ChangeTrickAction changeTrickAction)
@@ -62,6 +66,7 @@ namespace ConvenienceFrontend.CombatStrategy
             switchWeaponAction = null;
             teammateCommandAction = null;
             autoMoveAction = null;
+            normalAttackAction = null;
         }
 
         public void SetAction(SwitchWeaponAction switchWeaponAction)
@@ -71,6 +76,7 @@ namespace ConvenienceFrontend.CombatStrategy
             changeTrickAction = null;
             teammateCommandAction = null;
             autoMoveAction = null;
+            normalAttackAction = null;
         }
 
         public void SetAction(TeammateCommandAction teammateCommandAction)
@@ -80,6 +86,7 @@ namespace ConvenienceFrontend.CombatStrategy
             changeTrickAction = null;
             switchWeaponAction = null;
             autoMoveAction = null;
+            normalAttackAction = null;
         }
 
         public void SetAction(AutoMoveAction autoMoveAction)
@@ -89,6 +96,17 @@ namespace ConvenienceFrontend.CombatStrategy
             skillId = -1;
             changeTrickAction = null;
             switchWeaponAction = null;
+            normalAttackAction = null;
+        }
+
+        public void SetAction(NormalAttackAction normalAttackAction)
+        {
+            autoMoveAction = null;
+            teammateCommandAction = null;
+            skillId = -1;
+            changeTrickAction = null;
+            switchWeaponAction = null;
+            this.normalAttackAction = normalAttackAction;
         }
 
         // 技能templateId
@@ -113,6 +131,11 @@ namespace ConvenienceFrontend.CombatStrategy
         /// 自动移动
         /// </summary>
         public AutoMoveAction autoMoveAction = null;
+
+        /// <summary>
+        /// 普通攻击
+        /// </summary>
+        public NormalAttackAction normalAttackAction = null;
 
         // 类型
         // 0: 释放技能
