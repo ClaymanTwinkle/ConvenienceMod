@@ -49,7 +49,8 @@
     <Compile Include="CombatStrategy\config\data\SwitchWeaponAction.cs" />
     <Compile Include="CombatStrategy\config\data\TeammateCommandAction.cs" />
     <Compile Include="CombatStrategy\TSlider.cs" />
-    <Compile Include="CombatStrategy\UIUtils.cs" />
+    <Compile Include="CombatStrategy\ui\ConditionSetterPanel.cs" />
+    <Compile Include="CombatStrategy\ui\UIUtils.cs" />
     <Compile Include="CombatStrategy\UI_CombatBeginPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatStrategySetting.cs" />

@@ -6,12 +6,14 @@ using System.Text;
 using Config;
 using ConvenienceFrontend.CombatStrategy.config;
 using ConvenienceFrontend.CombatStrategy.config.data;
+using ConvenienceFrontend.CombatStrategy.ui;
 using DG.Tweening;
 using FrameWork;
 using FrameWork.ModSystem;
 using GameData.Domains.CombatSkill;
 using GameData.GameDataBridge;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using TaiwuModdingLib.Core.Utils;
 using TMPro;
 using UnityEngine;
@@ -186,7 +188,7 @@ namespace ConvenienceFrontend.CombatStrategy
 
                 this._scroll.ScrollTo(anchoredPosition);
                 
-                Invoke("refreshUI", 0.2f);
+                Invoke("RefreshUI", 0.2f);
                 // LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             });
             base.AddMono(dropdown, "StrategyProgrammeOptions");
@@ -288,20 +290,20 @@ namespace ConvenienceFrontend.CombatStrategy
                 this.RenderStrategy(transform.transform, strategy);
                 LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
             });
-            this._conditionSetter = UIUtils.CreateConditionSetter(this._focus.transform).GetComponent<RectTransform>();
+            this._conditionSetter = ConditionSetterPanel.Create(this._focus.transform);
             this._changeTacticsPanel = UIUtils.CreateChangeTactics(this._focus.transform).GetComponent<RectTransform>();
             this._switchWeaponPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
             this._teammateCommandPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
         }
 
-        private void refreshUI()
+        private void RefreshUI()
         {
             // this._scroll.ScrollTo(this._otherSettings);
             LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
         }
 
-        private void showSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
+        private void ShowSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
         {
             if (Game.Instance.GetCurrentGameStateName() == EGameState.InGame)
             {
@@ -587,7 +589,7 @@ namespace ConvenienceFrontend.CombatStrategy
                             // cancel
                         }
                     });
-                    showSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.BookId > 0).ConvertAll(x => x.TemplateId), _onSelected);
+                    ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.BookId > 0).ConvertAll(x => x.TemplateId), _onSelected);
                 }), null, null, null, -1, null, null, null));
             }
             btnList.Add(new UI_PopupMenu.BtnData("变招", true, new Action(()=> {
@@ -721,67 +723,7 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (condition.IsComplete())
             {
-                JudgeItem judgeItem = condition.item;
-
-                StringBuilder stringBuilder = new StringBuilder();
-                if (judgeItem > JudgeItem.Distance)
-                {
-                    stringBuilder.Append(StrategyConst.PlayerOptions[condition.isAlly ? 0 : 1]).Append(' ');
-                }
-                if (judgeItem == JudgeItem.HasSkillEffect || judgeItem == JudgeItem.CanUseSkill || judgeItem == JudgeItem.AffectingSkill)
-                {
-                    CombatSkillItem combatSkillItem = CombatSkill.Instance[condition.subType];
-                    if (combatSkillItem != null)
-                    {
-                        stringBuilder.Append(combatSkillItem.Name).Append(' ');
-                    }
-                }
-                else if (judgeItem == JudgeItem.HasTrick && condition.subType >= 0)
-                {
-                    stringBuilder.Append(StrategyConst.TrickTypeOptions[condition.subType + 1]).Append(' ');
-                }
-                else if (judgeItem == JudgeItem.DefeatMarkCount)
-                {
-                    stringBuilder.Append(StrategyConst.DefeatMarkOptions[condition.subType]).Append(' ');
-                }
-                else if (judgeItem == JudgeItem.Buff || judgeItem == JudgeItem.Debuff)
-                {
-                    stringBuilder.Append(SpecialEffectDataField.Instance[condition.subType]?.Name ?? "").Append(' ');
-                }
-
-                stringBuilder.Append(StrategyConst.ItemOptions[(int)judgeItem].Name).Append(' ');
-
-                if (judgeItem == JudgeItem.WeaponType)
-                {
-                    stringBuilder.Append(StrategyConst.WeaponTypeOptions[condition.value]);
-                }
-                else if (judgeItem == JudgeItem.PreparingSkillType)
-                {
-                    stringBuilder.Append(StrategyConst.SkillTypeOptions[condition.value]);
-                }
-                else if (judgeItem == JudgeItem.CanUseSkill)
-                {
-                    stringBuilder.Append(StrategyConst.SatisfiedorDissatisfied[condition.value]);
-                }
-                else if (judgeItem == JudgeItem.AffectingSkill)
-                {
-                    stringBuilder.Append(StrategyConst.YesOrNo[condition.value]);
-                }
-                else
-                {
-                    stringBuilder.Append(StrategyConst.JudgementOptions[(int)condition.judge]).Append(' ');
-                    if (judgeItem == JudgeItem.CurrentTrick)
-                    {
-                        stringBuilder.Append(condition.valueStr);
-                    }
-                    else
-                    {
-                        string format = (judgeItem == JudgeItem.Distance) ? "f1" : "f0";
-                        float multiplyer = StrategyConst.ItemOptions[(int)judgeItem].Multiplyer;
-                        stringBuilder.Append(((float)condition.value / multiplyer).ToString(format));
-                    }
-                }
-                refers.CGet<TextMeshProUGUI>("DropDownLabel").text = Extentions.SetColor(stringBuilder.ToString(), new Color(0.9725f, 0.902f, 0.7569f));
+                refers.CGet<TextMeshProUGUI>("DropDownLabel").text = Extentions.SetColor(condition.GetShowDesc(), new Color(0.9725f, 0.902f, 0.7569f));
             }
             else
             {
@@ -796,179 +738,18 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <param name="condition"></param>
         private void ShowConditionSetter(Transform parent, Condition condition)
         {
-            Vector3 vector = UIManager.Instance.UiCamera.WorldToScreenPoint(parent.position);
-            this._conditionSetter.position = UIManager.Instance.UiCamera.ScreenToWorldPoint(vector);
-            this._conditionSetter.anchoredPosition += new Vector2(40f, -50f);
-            this._conditionSetter.gameObject.SetActive(true);
-            this._focus.SetActive(true);
-            Refers refers = this._conditionSetter.gameObject.GetComponent<Refers>();
-            var confirmButton = refers.CGet<CButton>("Confirm");
-            var cancelButton = refers.CGet<CButton>("Cancel");
-            var playerOptions = refers.CGet<CDropdown>("PlayerOptions");
-            var itemOptions = refers.CGet<CDropdown>("ItemOptions");
-            var judgementOptions = refers.CGet<CDropdown>("JudgementOptions");
-            var inputField = refers.CGet<TMP_InputField>("InputField");
-            var valueOptions = refers.CGet<CDropdown>("ValueOptions");
-            var selectButton = refers.CGet<CButton>("SelectButton");
-
-            if (condition.IsComplete())
-            {
-                playerOptions.value = (condition.isAlly ? 0 : 1);
-                itemOptions.value = (int)condition.item;
-                judgementOptions.value = (int)condition.judge;
-                StrategyConst.Item item = StrategyConst.ItemOptions[(int)condition.item];
-                bool showNumSetter = item.ShowNumSetter;
-                if (showNumSetter)
-                {
-                    if (condition.item == JudgeItem.CurrentTrick)
-                    {
-                        inputField.text = condition.valueStr;
-                    }
-                    else
-                    {
-                        string format = (condition.item == JudgeItem.Distance) ? "f1" : "f0";
-                        inputField.text = ((float)condition.value / item.Multiplyer).ToString(format);
-                    }
-                }
-                if (item.OptionIndex >= 0)
-                {
-                    if (condition.item == JudgeItem.HasTrick)
-                    {
-                        valueOptions.value = condition.subType + 1;
-                    }
-                    else if (condition.item == JudgeItem.DefeatMarkCount)
-                    {
-                        valueOptions.value = condition.subType;
-                    }
-                    else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
-                    {
-                        var index = StrategyConst.GetSpecialEffectNameList().IndexOf(SpecialEffectDataField.Instance[condition.subType]?.Name ?? "");
-                        valueOptions.value = Math.Max(index, 0);
-                    }
-                    else
-                    {
-                        valueOptions.value = condition.value;
-                    }
-                }
-                if (item.ShowSelectBtn)
-                {
-                    if (condition.item == JudgeItem.HasSkillEffect || condition.item == JudgeItem.CanUseSkill || condition.item == JudgeItem.AffectingSkill)
-                    {
-                        CombatSkillItem combatSkillItem = CombatSkill.Instance[condition.subType];
-                        if (combatSkillItem != null)
-                        {
-                            selectButton.GetComponentInChildren<TextMeshProUGUI>().text = combatSkillItem.Name;
-                        }
-                        else
-                        {
-                            selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
-                        }
-                    }
-                }
-            }
-            else
-            {
-                playerOptions.value = 0;
-                itemOptions.value = 0;
-                itemOptions.onValueChanged.Invoke(0);
-                judgementOptions.value = 0;
-                valueOptions.value = 0;
-                inputField.text = "0";
-                selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "未选择";
-            }
-            inputField.onValueChanged.RemoveAllListeners();
-            inputField.onValueChanged.AddListener(delegate (string val)
-            {
-                int value = itemOptions.value;
-
-                if ((JudgeItem)value == JudgeItem.CurrentTrick)
-                {
-                    confirmButton.interactable = true;
-                }
-                else
-                {
-                    float num;
-                    confirmButton.interactable = float.TryParse(val, out num);
-                }
-            });
-
-            selectButton.ClearAndAddListener(delegate ()
-            {
-                int value = itemOptions.value;
-
-                if ((JudgeItem)value == JudgeItem.HasSkillEffect || (JudgeItem)value == JudgeItem.CanUseSkill || (JudgeItem)value == JudgeItem.AffectingSkill)
-                {
-                    var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) =>
-                    {
-                        if (type == 1)
-                        {
-                            Debug.Log("选中功法" + skillId);
-                            CombatSkillItem selectSkillItem = CombatSkill.Instance[skillId];
-                            if (selectSkillItem != null) selectButton.GetComponentInChildren<TextMeshProUGUI>().text = selectSkillItem.Name;
-                        }
-                        else
-                        {
-                            // cancel
-                        }
-                    });
-                    showSkillSelectUI(
-                        (short)condition.value,
-                        ((JudgeItem)value == JudgeItem.AffectingSkill ? _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Attack) : _allActiveSkillItemList).ConvertAll(x => x.TemplateId),
-                        _onSelected
-                    );
-                }
-            });
-
-            confirmButton.ClearAndAddListener(delegate ()
-            {
-                condition.isAlly = (playerOptions.value == 0);
-                int value = itemOptions.value;
-                condition.item = (JudgeItem)value;
-                condition.judge = (Judgement)judgementOptions.value;
-                if (StrategyConst.ItemOptions[value].ShowNumSetter) 
-                {
-                    float.TryParse(inputField.text, out float floatValue);
-                    condition.value = ((int)(floatValue * StrategyConst.ItemOptions[value].Multiplyer));
-                }
-                else
-                {
-                    condition.valueStr = valueOptions.options[valueOptions.value].text;
-                    condition.value = valueOptions.value;
-                }
-
-                if (condition.item == JudgeItem.HasTrick)
-                {
-                    condition.subType = valueOptions.value - 1;
-                }
-                else if (condition.item == JudgeItem.HasSkillEffect || condition.item == JudgeItem.CanUseSkill || condition.item == JudgeItem.AffectingSkill)
-                {
-                    CombatSkillItem combatSkillItem = CombatSkill.Instance[selectButton.GetComponentInChildren<TextMeshProUGUI>().text];
-                    if (combatSkillItem != null)
-                    {
-                        condition.subType = combatSkillItem.TemplateId;
-                    }
-                    else
-                    {
-                        condition.subType = -1;
-                    }
-                }
-                else if (condition.item == JudgeItem.DefeatMarkCount)
-                {
-                    condition.subType = valueOptions.value;
-                }
-                else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
-                {
-                    condition.subType = SpecialEffectDataField.Instance[valueOptions.options[valueOptions.value].text].TemplateId;
-                }
+            Action renderConditionText = delegate() {
                 this.RenderConditionText(parent.GetComponentInParent<Refers>(), condition);
-                this._conditionSetter.gameObject.SetActive(false);
-                this._focus.SetActive(false);
-            });
-            cancelButton.ClearAndAddListener(delegate ()
-            {
-                this._conditionSetter.gameObject.SetActive(false);
-                this._focus.SetActive(false);
-            });
+            };
+            Action<int, Action<sbyte, short>> showSkillSelectUI = delegate (int value, Action< sbyte, short>  onSelect) {
+                ShowSkillSelectUI(
+                (short)condition.value,
+                        ((JudgeItem)value == JudgeItem.AffectingSkill ? _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Attack) : _allActiveSkillItemList).ConvertAll(x => x.TemplateId),
+                        onSelect
+                    );
+            };
+
+            _conditionSetter.ShowConditionSetter(parent, condition, renderConditionText, showSkillSelectUI);
         }
 
         /// <summary>
@@ -1301,7 +1082,7 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <summary>
         /// 条件设置面板
         /// </summary>
-        private RectTransform _conditionSetter;
+        private ConditionSetterPanel _conditionSetter;
 
         /// <summary>
         /// 变招设置面板

@@ -504,7 +504,7 @@ namespace ConvenienceFrontend.CombatStrategy
             return Object.Instantiate<GameObject>(UIUtils.strategyObj, parent).transform;
         }
 
-        private static GameObject CreateSliceDownSheet(Transform parent)
+        public static GameObject CreateSliceDownSheetPanel(Transform parent)
         {
             GameObject sliceDownSheet = GameObjectCreationUtils.InstantiateUIElement(parent, "SliceDownSheet");
             GameObject gameObject2 = sliceDownSheet.transform.Find("AutoWidthLablePreset/Label/").gameObject;
@@ -538,124 +538,13 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         /// <summary>
-        /// 条件选择面板
-        /// </summary>
-        /// <param name="parent"></param>
-        /// <returns></returns>
-        public static GameObject CreateConditionSetter(Transform parent)
-        {
-            GameObject sliceDownSheet = CreateSliceDownSheet(parent) ;
-            GameObject panelGameObject = sliceDownSheet.transform.Find("Panel").gameObject;
-            Refers refers = sliceDownSheet.GetComponent<Refers>();
-            CButton confirm = sliceDownSheet.transform.Find("Confirm").GetComponent<CButton>();
-
-            // 选择我方/敌方
-            GameObject playerOptionsGameObject = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonDropdown");
-            Extentions.SetWidth(playerOptionsGameObject.GetComponent<RectTransform>(), 180f);
-            CDropdown playerOptions = playerOptionsGameObject.GetComponent<CDropdown>();
-            playerOptions.AddOptions(StrategyConst.PlayerOptions.ToList<string>());
-            refers.AddMono(playerOptions, "PlayerOptions");
-
-            // 按钮
-            CButton selectButton = GameObjectCreationUtils.UGUICreateCButton(panelGameObject.transform, 36f, "未选择");
-            var selectButtonGameObject = selectButton.gameObject;
-            Extentions.SetWidth(selectButtonGameObject.GetComponent<RectTransform>(), 180f);
-            Extentions.SetHeight(selectButtonGameObject.GetComponent<RectTransform>(), 40f);
-            refers.AddMono(selectButton, "SelectButton");
-            selectButtonGameObject.SetActive(false);
-
-            // 条件选项
-            GameObject itemOptionsGameObject = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonDropdown");
-            Extentions.SetWidth(itemOptionsGameObject.GetComponent<RectTransform>(), 180f);
-            CDropdown itemOptions = itemOptionsGameObject.GetComponent<CDropdown>();
-            itemOptions.AddOptions(StrategyConst.ItemOptions.ToList().ConvertAll<String>(x=>x.Name));
-            refers.AddMono(itemOptions, "ItemOptions");
-
-            // 二次条件选项
-            GameObject valueOption = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonDropdown");
-            Extentions.SetWidth(valueOption.GetComponent<RectTransform>(), 180f);
-            CDropdown valueDropDown = valueOption.GetComponent<CDropdown>();
-            refers.AddMono(valueDropDown, "ValueOptions");
-            valueOption.SetActive(false);
-
-            // 比较大小
-            GameObject judgementOption = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonDropdown");
-            Extentions.SetWidth(judgementOption.GetComponent<RectTransform>(), 180f);
-            CDropdown judgementDropDown = judgementOption.GetComponent<CDropdown>();
-            judgementDropDown.AddOptions(StrategyConst.JudgementOptions.ToList<string>());
-            refers.AddMono(judgementDropDown, "JudgementOptions");
-            judgementOption.SetActive(false);
-
-            // 输入框
-            GameObject inputField = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonInputField");
-            Extentions.SetWidth(inputField.GetComponent<RectTransform>(), 180f);
-            TMP_InputField input = inputField.GetComponent<TMP_InputField>();
-            refers.AddMono(input, "InputField");
-            inputField.SetActive(false);
-
-            itemOptions.onValueChanged.RemoveAllListeners();
-            itemOptions.onValueChanged.AddListener(delegate (int val)
-            {
-                StrategyConst.Item item2 = StrategyConst.ItemOptions[val];
-                if (item2.ShowNumSetter)
-                {
-                    judgementOption.SetActive(true);
-                    inputField.SetActive(true);
-                    if (((JudgeItem)val) == JudgeItem.CurrentTrick)
-                    {
-                        confirm.interactable = true;
-                        input.text = "";
-                    }
-                    else 
-                    {
-                        confirm.interactable = float.TryParse(input.text, out float num);
-                        input.text = "";
-                    }
-                }
-                else
-                {
-                    judgementOption.SetActive(false);
-                    inputField.SetActive(false);
-                }
-                if (item2.OptionIndex >= 0)
-                {
-                    valueDropDown.ClearOptions();
-                    valueDropDown.AddOptions(StrategyConst.OptionsList[item2.OptionIndex].ToList<string>());
-                    valueOption.SetActive(true);
-                    confirm.interactable = true;
-                    judgementDropDown.value = 0;
-                }
-                else
-                {
-                    valueOption.SetActive(false);
-                }
-
-                if (item2.ShowSelectBtn)
-                {
-                    selectButtonGameObject.SetActive(true);
-                    if (((JudgeItem)val) == JudgeItem.HasSkillEffect || ((JudgeItem)val) == JudgeItem.CanUseSkill || ((JudgeItem)val) == JudgeItem.AffectingSkill)
-                    {
-                        selectButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
-                        selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
-                    }
-                }
-                else
-                { 
-                    selectButtonGameObject.SetActive(false);
-                }
-            });
-            sliceDownSheet.SetActive(false);
-            return sliceDownSheet;
-        }
-
-        /// <summary>
         /// 创建变招选择面板
         /// </summary>
         /// <param name="parent"></param>
         /// <returns></returns>
         public static GameObject CreateChangeTactics(Transform parent)
         {
-            GameObject sliceDownSheet = CreateSliceDownSheet(parent);
+            GameObject sliceDownSheet = CreateSliceDownSheetPanel(parent);
             GameObject gameObject2 = sliceDownSheet.transform.Find("Panel").gameObject;
 
             Refers refers = sliceDownSheet.GetComponent<Refers>();
@@ -682,7 +571,7 @@ namespace ConvenienceFrontend.CombatStrategy
 
         public static GameObject CreateOneValueOptionsPanel(Transform parent)
         {
-            GameObject sliceDownSheet = CreateSliceDownSheet(parent);
+            GameObject sliceDownSheet = CreateSliceDownSheetPanel(parent);
             GameObject gameObject2 = sliceDownSheet.transform.Find("Panel").gameObject;
 
             Refers refers = sliceDownSheet.GetComponent<Refers>();
@@ -701,7 +590,7 @@ namespace ConvenienceFrontend.CombatStrategy
 
         public static GameObject CreateInputTextPanel(Transform parent)
         {
-            GameObject sliceDownSheet = CreateSliceDownSheet(parent);
+            GameObject sliceDownSheet = CreateSliceDownSheetPanel(parent);
             GameObject gameObject2 = sliceDownSheet.transform.Find("Panel").gameObject;
 
             Refers refers = sliceDownSheet.GetComponent<Refers>();
