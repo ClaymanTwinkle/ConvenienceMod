@@ -8,6 +8,8 @@ namespace ConvenienceBackend.CombatStrategy
 {
     internal class Settings
     {
+        public bool isEnable { get; set; }
+
         public bool AutoMove { get; set; }
 
         public int TargetDistance { get; set; }

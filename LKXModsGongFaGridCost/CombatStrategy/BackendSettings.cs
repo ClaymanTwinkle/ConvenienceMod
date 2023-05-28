@@ -4,7 +4,8 @@ namespace ConvenienceFrontend.CombatStrategy
 {
     public class BackendSettings
     {
-        // Token: 0x04000013 RID: 19
+        public bool isEnable = true;
+
         public bool AutoMove = true;
 
         // Token: 0x04000014 RID: 20

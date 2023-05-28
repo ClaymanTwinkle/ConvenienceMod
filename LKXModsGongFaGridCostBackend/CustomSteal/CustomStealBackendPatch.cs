@@ -162,8 +162,6 @@ namespace ConvenienceBackend.CustomSteal
             return true;
         }
 
-        private static int _maxFindTreasureCount = 100;
-
         /// <summary>
         /// 挖掘
         /// </summary>

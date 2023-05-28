@@ -25,6 +25,184 @@ namespace ConvenienceBackend.CombatStrategy
             DomainManager.Mod.GetSetting(modIdStr, "ReplaceAI", ref _replaceAi);
         }
 
+        // Token: 0x0600001D RID: 29 RVA: 0x00002E98 File Offset: 0x00001098
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatCharacter), "InitTeammateCommand")]
+        public static void CombatCharacter_InitTeammateCommand_Postfix(DataContext context, CombatCharacter __instance)
+        {
+            if (isEnable()) return;
+            if (!__instance.IsAlly) return;
+            AdaptableLog.Info("CombatCharacter::InitTeammateCommand");
+            var currTeammateCommands = __instance.GetCurrTeammateCommands();
+            AdaptableLog.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
+        public static void CombatDomain_SetPlayerAutoCombat_Prefix(DataContext context, ref bool autoCombat)
+        {
+            if (isEnable() && autoCombat)
+            {
+                autoCombat = false;
+                AdaptableLog.Info("系统设置打开原版自动战斗，但是因为战斗策略打开，所有禁用原版的自动战斗");
+            }
+        }
+
+        // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        public static void CombatDomain_OnUpdate_Postfix(CombatDomain __instance, DataContext context)
+        {
+            // 没有开启战斗策略
+            if (!isEnable()) return;
+
+            // 没有配置
+            if (_settings == null) return;
+
+            // 系统自动战斗打开了
+            if (__instance.GetAutoCombat()) return;
+
+            // 关闭了战斗策略
+            if (!_settings.isEnable) return;
+
+            // 不是玩家
+            CombatCharacter combatCharacter = __instance.GetCombatCharacter(true, false);
+            if (!__instance.IsMainCharacter(combatCharacter)) return;
+
+            List<Strategy> execStrategy = new List<Strategy>();
+
+            // 自动施法
+            if (_settings.AutoCastSkill)
+            {
+                execStrategy = AutoCastSkill(__instance, context, combatCharacter);
+            }
+            // 自动攻击
+            if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
+            {
+                AutoAttack(__instance, context, combatCharacter);
+            }
+            // 自动移动
+            if (_settings.AutoMove)
+            {
+                if (execStrategy.Find(x => (StrategyType)x.type == StrategyType.AutoMove) == null)
+                {
+                    AutoMove(__instance, combatCharacter);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 与前台程序通讯
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="operation"></param>
+        /// <param name="argDataPool"></param>
+        /// <param name="__result"></param>
+        /// <returns></returns>
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "CallMethod")]
+        public static bool CombatDomain_CallMethod_Prefix(CombatDomain __instance, Operation operation, RawDataPool argDataPool, ref int __result)
+        {
+            bool result;
+            if (operation.MethodId == GameDataBridgeConst.MethodId)
+            {
+                int num = operation.ArgsOffset;
+                ushort num2 = 0;
+                num += Serializer.Deserialize(argDataPool, num, ref num2);
+                if (operation.ArgsCount == 2)
+                {
+                    switch (num2)
+                    {
+                        case GameDataBridgeConst.Flag.Flag_SwitchAutoMove:
+                            {
+                                if (_settings != null)
+                                {
+                                    bool autoMove = true;
+                                    Serializer.Deserialize(argDataPool, num, ref autoMove);
+                                    _settings.AutoMove = autoMove;
+                                    bool flag4 = !_settings.AutoMove;
+                                    if (flag4)
+                                    {
+                                        __instance.SetMoveState(0, true);
+                                    }
+                                }
+                                break;
+                            }
+                        case GameDataBridgeConst.Flag.Flag_SwitchAutoAttack:
+                            {
+                                if (_settings != null)
+                                {
+                                    bool autoAttack = true;
+                                    Serializer.Deserialize(argDataPool, num, ref autoAttack);
+                                    _settings.AutoAttack = autoAttack;
+                                }
+                                break;
+                            }
+                        case GameDataBridgeConst.Flag.Flag_UpdateTargetDistance:
+                            {
+                                if (_settings != null)
+                                {
+                                    int targetDistance = 0;
+                                    Serializer.Deserialize(argDataPool, num, ref targetDistance);
+                                    _settings.TargetDistance = targetDistance;
+                                }
+                                break;
+                            }
+                        case GameDataBridgeConst.Flag.Flag_UpdateSettingsJson:
+                            {
+                                string json = null;
+                                Serializer.Deserialize(argDataPool, num, ref json);
+                                try
+                                {
+                                    _settings = JsonConvert.DeserializeObject<Settings>(json);
+                                    _needRemoveTrick = _settings.RemoveTrick.Contains(true);
+                                    if (!_settings.AutoMove || !_settings.isEnable)
+                                    {
+                                        __instance.SetMoveState(0, true);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize settings Json Failed:" + ex.Message, false);
+                                }
+                                break;
+                            }
+                        case GameDataBridgeConst.Flag.Flag_SwitchAutoCastSkill:
+                            {
+                                if (_settings != null)
+                                {
+                                    bool autoCastSkill = _settings.AutoCastSkill;
+                                    Serializer.Deserialize(argDataPool, num, ref autoCastSkill);
+                                    _settings.AutoCastSkill = autoCastSkill;
+                                }
+                                break;
+                            }
+                        case GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson:
+                            {
+                                string json2 = null;
+                                Serializer.Deserialize(argDataPool, num, ref json2);
+                                try
+                                {
+                                    UpdateStrategies(JsonConvert.DeserializeObject<List<Strategy>>(json2), __instance);
+                                }
+                                catch (Exception ex2)
+                                {
+                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize strategy Json Failed:" + ex2.Message, false);
+                                }
+                                break;
+                            }
+                    }
+                }
+                __result = -1;
+                result = false;
+            }
+            else
+            {
+                result = true;
+            }
+            return result;
+        }
+
         /// <summary>
         /// 指定式，空A
         /// </summary>
@@ -39,7 +217,7 @@ namespace ConvenienceBackend.CombatStrategy
             if (!isEnable()) return;
             if (!___CombatChar.IsAlly) return;
 
-            if (_settings!= null && _settings.RemoveTrick[____trickType]) 
+            if (_settings!= null && _settings.isEnable && _settings.RemoveTrick[____trickType]) 
             {
                 ____inAttackRange = false;
 
@@ -570,169 +748,6 @@ namespace ConvenienceBackend.CombatStrategy
             return result;
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
-        public static void CombatDomain_SetPlayerAutoCombat_Prefix(DataContext context, ref bool autoCombat)
-        {
-            if (isEnable() && autoCombat)
-            { 
-                autoCombat = false;
-                AdaptableLog.Info("系统设置打开原版自动战斗，但是因为战斗策略打开，所有禁用原版的自动战斗");
-            }
-        }
-
-        // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
-        public static void CombatDomain_OnUpdate_Postfix(CombatDomain __instance, DataContext context)
-        {
-            if (!isEnable()) return;
-
-            CombatCharacter combatCharacter = __instance.GetCombatCharacter(true, false);
-
-            if (_settings == null) return;
-
-            if (__instance.GetAutoCombat()) return;
-
-            if (!__instance.IsMainCharacter(combatCharacter)) return;
-
-            List<Strategy> execStrategy = new List<Strategy>();
-
-            // 自动施法
-            if (_settings.AutoCastSkill)
-            {
-                execStrategy = AutoCastSkill(__instance, context, combatCharacter);
-            }
-            // 自动攻击
-            if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
-            {
-                AutoAttack(__instance, context, combatCharacter);
-            }
-            // 自动移动
-            if (_settings.AutoMove)
-            {
-                if (execStrategy.Find(x => (StrategyType)x.type == StrategyType.AutoMove) == null)
-                {
-                    AutoMove(__instance, combatCharacter);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 与前台程序通讯
-        /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="operation"></param>
-        /// <param name="argDataPool"></param>
-        /// <param name="__result"></param>
-        /// <returns></returns>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "CallMethod")]
-        public static bool CombatDomain_CallMethod_Prefix(CombatDomain __instance, Operation operation, RawDataPool argDataPool, ref int __result)
-        {
-            bool result;
-            if (operation.MethodId == 1957)
-            {
-                int num = operation.ArgsOffset;
-                ushort num2 = 0;
-                num += Serializer.Deserialize(argDataPool, num, ref num2);
-                if (operation.ArgsCount == 2)
-                {
-                    switch (num2)
-                    {
-                        case 0:
-                            {
-                                if (_settings != null)
-                                {
-                                    bool autoMove = true;
-                                    Serializer.Deserialize(argDataPool, num, ref autoMove);
-                                    _settings.AutoMove = autoMove;
-                                    bool flag4 = !_settings.AutoMove;
-                                    if (flag4)
-                                    {
-                                        __instance.SetMoveState(0, true);
-                                    }
-                                }
-                                break;
-                            }
-                        case 1:
-                            {
-                                if (_settings != null)
-                                {
-                                    bool autoAttack = true;
-                                    Serializer.Deserialize(argDataPool, num, ref autoAttack);
-                                    _settings.AutoAttack = autoAttack;
-                                }
-                                break;
-                            }
-                        case 2:
-                            {
-                                if (_settings != null)
-                                {
-                                    int targetDistance = 0;
-                                    Serializer.Deserialize(argDataPool, num, ref targetDistance);
-                                    _settings.TargetDistance = targetDistance;
-                                }
-                                break;
-                            }
-                        case 3:
-                            {
-                                string json = null;
-                                Serializer.Deserialize(argDataPool, num, ref json);
-                                try
-                                {
-                                    _settings = JsonConvert.DeserializeObject<Settings>(json);
-                                    _needRemoveTrick = _settings.RemoveTrick.Contains(true);
-                                    bool flag7 = !_settings.AutoMove;
-                                    if (flag7)
-                                    {
-                                        __instance.SetMoveState(0, true);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize settings Json Failed:" + ex.Message, false);
-                                }
-                                break;
-                            }
-                        case 4:
-                            break;
-                        case 5:
-                            {
-                                string json2 = null;
-                                Serializer.Deserialize(argDataPool, num, ref json2);
-                                try
-                                {
-                                    UpdateStrategies(JsonConvert.DeserializeObject<List<Strategy>>(json2), __instance);
-                                }
-                                catch (Exception ex2)
-                                {
-                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize strategy Json Failed:" + ex2.Message, false);
-                                }
-                                break;
-                            }
-                        case 6:
-                            {
-                                if (_settings != null)
-                                {
-                                    bool autoCastSkill = _settings.AutoCastSkill;
-                                    Serializer.Deserialize(argDataPool, num, ref autoCastSkill);
-                                    _settings.AutoCastSkill = autoCastSkill;
-                                }
-                                break;
-                            }
-                    }
-                }
-                __result = -1;
-                result = false;
-            }
-            else
-            {
-                result = true;
-            }
-            return result;
-        }
-
         // 更新策略
         private static void UpdateStrategies(List<Strategy> strategies, CombatDomain instance)
         {
@@ -756,18 +771,6 @@ namespace ConvenienceBackend.CombatStrategy
                     });
                 _strategies = strategies;
             }
-        }
-
-        // Token: 0x0600001D RID: 29 RVA: 0x00002E98 File Offset: 0x00001098
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatCharacter), "InitTeammateCommand")]
-        public static void CombatCharacter_InitTeammateCommand_Postfix(DataContext context, CombatCharacter __instance)
-        {
-            if (isEnable()) return;
-            if (!__instance.IsAlly) return;
-            AdaptableLog.Info("CombatCharacter::InitTeammateCommand");
-            var currTeammateCommands =  __instance.GetCurrTeammateCommands();
-            AdaptableLog.Info("角色["+ __instance.GetId() +"]有" + String.Join(",", currTeammateCommands));
         }
 
         private static bool isEnable()

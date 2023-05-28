@@ -5,6 +5,7 @@ using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.ModifyCombatSkill;
+using ConvenienceFrontend.RollCreateRole;
 using HarmonyLib;
 using TaiwuModdingLib.Core.Plugin;
 
@@ -27,6 +28,8 @@ namespace ConvenienceFrontend
             // new ManualArchiveFrontendPatch(),
             // 修改功法
             new ModifyCombatSkillFrontPatch(),
+            // roll角色属性
+            // new RollCreateRoleFrontPatch()
         };
 
         public override void OnModSettingUpdate()
