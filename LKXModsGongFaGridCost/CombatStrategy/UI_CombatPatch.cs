@@ -108,12 +108,7 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             else if (btnName == "AutoFight")
             {
-                CombatStrategyMod.Settings.isEnable = !CombatStrategyMod.Settings.isEnable;
-                GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
-                __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.Settings.isEnable, false);
-
-                UpdateAutoAttackTips();
-                UpdateAutoMoveText();
+                OnClickAutoFight(__instance);
                 return false;
             }
 
@@ -125,6 +120,9 @@ namespace ConvenienceFrontend.CombatStrategy
         public static void UI_Combat_OnInit_Postfix(UI_Combat __instance)
         {
             if (!CombatStrategyMod.ReplaceAI) return;
+
+            _autoCombat = false;
+            ConfigManager.Settings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
 
             GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
             GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
@@ -255,8 +253,6 @@ namespace ConvenienceFrontend.CombatStrategy
                 UI_CombatPatch.UpdateTargetDistance2Text(CombatStrategyMod.Settings.TargetDistance2);
                 UI_CombatPatch.UpdateAutoMoveText();
             }
-
-            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.Settings.isEnable, false);
         }
 
         // Token: 0x06000048 RID: 72 RVA: 0x000059AF File Offset: 0x00003BAF
@@ -265,6 +261,18 @@ namespace ConvenienceFrontend.CombatStrategy
         public static void UI_Combat_OnDisable_Postfix()
         {
             ConfigManager.SaveJsons();
+        }
+
+        private static void OnClickAutoFight(UI_Combat __instance)
+        {
+            _autoCombat = !_autoCombat;
+            SingletonObject.getInstance<GlobalSettings>().SetAutoCombat(_autoCombat);
+            ConfigManager.Settings.isEnable = _autoCombat;
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.Settings.isEnable, false);
+
+            UpdateAutoAttackTips();
+            UpdateAutoMoveText();
         }
 
         // Token: 0x06000047 RID: 71 RVA: 0x00005868 File Offset: 0x00003A68
@@ -471,5 +479,7 @@ namespace ConvenienceFrontend.CombatStrategy
         };
 
         public static Action __SwitchAutoAttack;
+
+        private static bool _autoCombat = false;
     }
 }

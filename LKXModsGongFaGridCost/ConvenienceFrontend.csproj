@@ -67,6 +67,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConvenienceFrontend.cs" />
     <Compile Include="RollCreateRole\RollCreateRoleFrontPatch.cs" />
+    <Compile Include="TaiwuBuildingManager\TaiwuBuildingManagerFrontPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">

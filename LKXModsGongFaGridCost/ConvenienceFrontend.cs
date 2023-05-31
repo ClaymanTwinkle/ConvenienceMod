@@ -6,8 +6,10 @@ using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.ModifyCombatSkill;
 using ConvenienceFrontend.RollCreateRole;
+using ConvenienceFrontend.TaiwuBuildingManager;
 using HarmonyLib;
 using TaiwuModdingLib.Core.Plugin;
+using UnityEngine;
 
 namespace ConvenienceFrontend
 {
@@ -29,7 +31,9 @@ namespace ConvenienceFrontend
             // 修改功法
             new ModifyCombatSkillFrontPatch(),
             // roll角色属性
-            // new RollCreateRoleFrontPatch()
+            // new RollCreateRoleFrontPatch(),
+            // 太吾村管家
+            new TaiwuBuildingManagerFrontPatch(),
         };
 
         public override void OnModSettingUpdate()
@@ -64,6 +68,13 @@ namespace ConvenienceFrontend
         // Token: 0x06000004 RID: 4 RVA: 0x000020F0 File Offset: 0x000002F0
         public override void OnLoadedArchiveData()
         {
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIManager), "ShowUI")]
+        public static void UIManager_ShowUI_Postfix(UIElement elem)
+        {
+            Debug.Log("ShowUI: " + elem.Name);
         }
 
         // Token: 0x04000001 RID: 1

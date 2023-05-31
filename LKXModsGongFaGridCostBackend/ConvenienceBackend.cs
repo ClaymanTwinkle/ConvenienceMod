@@ -10,6 +10,7 @@ using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.ModifyCombatSkill;
 using ConvenienceBackend.NotNTR;
+using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
@@ -44,7 +45,9 @@ namespace ConvenienceBackend
             // 手动存档
             // new ManualArchiveBackendPatch(),
             // 修改功法
-            new ModifyCombatSkillBackendPatch()
+            new ModifyCombatSkillBackendPatch(),
+            // 太吾村管家
+            new TaiwuBuildingManagerBackendPatch(),
         };
 
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
@@ -55,6 +58,7 @@ namespace ConvenienceBackend
             allPatch.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
 
         }
+
         public override void Initialize()
         {
             harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceBackend), null);
@@ -76,12 +80,13 @@ namespace ConvenienceBackend
         // Token: 0x06000002 RID: 2 RVA: 0x000021B9 File Offset: 0x000003B9
         public override void OnEnterNewWorld()
         {
+            allPatch.ForEach((BaseBackendPatch patch) => patch.OnEnterNewWorld());
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x000021C8 File Offset: 0x000003C8
         public override void OnLoadedArchiveData()
         {
-
+            allPatch.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
         }
 
         // Token: 0x04000001 RID: 1

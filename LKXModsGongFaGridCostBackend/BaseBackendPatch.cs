@@ -14,5 +14,9 @@ namespace ConvenienceBackend
         public virtual void Initialize(Harmony harmony, string modIdStr) { }
 
         public virtual void Dispose() { }
+
+        public virtual void OnEnterNewWorld() { }
+
+        public virtual void OnLoadedArchiveData() { }
     }
 }

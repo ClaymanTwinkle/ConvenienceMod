@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FrameWork;
 using FrameWork.ModSystem;
+using GameData.GameDataBridge;
 using GameData.Utilities;
 using HarmonyLib;
 using UnityEngine;
@@ -17,7 +18,6 @@ namespace ConvenienceFrontend.RollCreateRole
 
         public override void OnModSettingUpdate(string modIdStr)
         {
-
         }
 
         [HarmonyPostfix]
