@@ -3,6 +3,7 @@ using System.Reflection;
 using ConvenienceFrontend.CombatStrategy.config;
 using DG.Tweening;
 using FrameWork;
+using FrameWork.ModSystem;
 using GameData.GameDataBridge;
 using HarmonyLib;
 using Spine.Unity;
@@ -16,6 +17,20 @@ namespace ConvenienceFrontend.CombatStrategy
 {
     internal class UI_CombatPatch
     {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_CharacterMenuEquipCombatSkill), "InitEquipSkill")]
+        public static void UI_CharacterMenuEquipCombatSkill_InitEquipSkill_Postfix(UI_Combat __instance, Refers ____equipSkillRefers)
+        {
+            if (!CombatStrategyMod.ReplaceAI) return;
+
+            CToggleGroup cToggleGroup = ____equipSkillRefers.CGet<CToggleGroup>("PlanHolder");
+            var parent = cToggleGroup.gameObject.transform.parent;
+            GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(400, 0), new Vector2(200, 40), 18, "战斗策略").ClearAndAddListener(delegate () {
+                UIManager.Instance.ShowUI(UI_CombatStrategySetting.GetUI());
+                UIElement ui = UI_CombatStrategySetting.GetUI();
+            });
+        }
+
         /// <summary>
         /// 快捷键监听
         /// </summary>

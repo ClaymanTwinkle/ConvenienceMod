@@ -61,6 +61,7 @@
     <Compile Include="CustomWeapon\CustomWeaponFrontPatch.cs" />
     <Compile Include="CustomWeapon\UI_ChangeTrick.cs" />
     <Compile Include="ComparativeArt\ComparativeArtFrontPatch.cs" />
+    <Compile Include="IgnoreReadFinishBook\IgnoreReadFinishBookFrontPatch.cs" />
     <Compile Include="ManualArchive\ManualArchiveFrontendPatch.cs" />
     <Compile Include="ManualArchive\ModMono.cs" />
     <Compile Include="ModifyCombatSkill\ModifyCombatSkillFrontPatch.cs" />

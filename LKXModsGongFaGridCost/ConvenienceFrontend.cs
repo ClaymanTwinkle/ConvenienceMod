@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
+using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.ModifyCombatSkill;
 using ConvenienceFrontend.RollCreateRole;
@@ -34,6 +35,8 @@ namespace ConvenienceFrontend
             // new RollCreateRoleFrontPatch(),
             // 太吾村管家
             new TaiwuBuildingManagerFrontPatch(),
+            // 隐藏已读书籍
+            new IgnoreReadFinishBookFrontPatch()
         };
 
         public override void OnModSettingUpdate()
