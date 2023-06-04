@@ -68,7 +68,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConvenienceFrontend.cs" />
     <Compile Include="RollCreateRole\RollCreateRoleFrontPatch.cs" />
+    <Compile Include="TaiwuBuildingManager\GameDataBridgeConst.cs" />
     <Compile Include="TaiwuBuildingManager\TaiwuBuildingManagerFrontPatch.cs" />
+    <Compile Include="TaiwuBuildingManager\UI_TaiwuBuildingManager.cs" />
+    <Compile Include="Utils\JsonFileUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -89,6 +92,10 @@
     </Reference>
     <Reference Include="DOTweenPro">
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\DOTweenPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MoonSharp.Interpreter">
+      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\The Scroll of Taiwu_Data\Managed\MoonSharp.Interpreter.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">

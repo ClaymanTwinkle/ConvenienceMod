@@ -17,6 +17,8 @@ namespace ConvenienceFrontend.CombatStrategy
 {
     internal class UI_CombatPatch
     {
+        private static CButton _openAutoCombatPanelButton = null;
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_CharacterMenuEquipCombatSkill), "InitEquipSkill")]
         public static void UI_CharacterMenuEquipCombatSkill_InitEquipSkill_Postfix(UI_Combat __instance, Refers ____equipSkillRefers)
@@ -25,7 +27,9 @@ namespace ConvenienceFrontend.CombatStrategy
 
             CToggleGroup cToggleGroup = ____equipSkillRefers.CGet<CToggleGroup>("PlanHolder");
             var parent = cToggleGroup.gameObject.transform.parent;
-            GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(400, 0), new Vector2(200, 40), 18, "战斗策略").ClearAndAddListener(delegate () {
+            if (_openAutoCombatPanelButton != null) return;
+            _openAutoCombatPanelButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(400, 0), new Vector2(200, 40), 18, "战斗策略");
+            _openAutoCombatPanelButton.ClearAndAddListener(delegate () {
                 UIManager.Instance.ShowUI(UI_CombatStrategySetting.GetUI());
                 UIElement ui = UI_CombatStrategySetting.GetUI();
             });

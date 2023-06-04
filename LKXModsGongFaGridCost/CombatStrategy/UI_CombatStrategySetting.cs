@@ -592,7 +592,7 @@ namespace ConvenienceFrontend.CombatStrategy
                             // cancel
                         }
                     });
-                    ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.BookId > 0).ConvertAll(x => x.TemplateId), _onSelected);
+                    ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.ConvertAll(x => x.TemplateId), _onSelected);
                 }), null, null, "自动施展功法", -1, null, null, null));
             }
             btnList.Add(new UI_PopupMenu.BtnData("变招", true, new Action(()=> {

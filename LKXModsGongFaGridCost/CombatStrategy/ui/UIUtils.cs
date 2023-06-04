@@ -317,7 +317,23 @@ namespace ConvenienceFrontend.CombatStrategy
             GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.toggle, parent);
             gameObject.SetActive(true);
             gameObject.name = name;
-            gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Label").text = label;
+            TextMeshProUGUI textMeshProUGUI = gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Label");
+            textMeshProUGUI.text = label;
+            return gameObject.transform.GetChild(1).GetComponent<CToggle>();
+        }
+
+        public static CToggle CreateToggle(Transform parent, string name, string label, string description)
+        {
+            GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.toggle, parent);
+            gameObject.SetActive(true);
+            gameObject.name = name;
+            TextMeshProUGUI textMeshProUGUI = gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Label");
+            textMeshProUGUI.text = label;
+
+            MouseTipDisplayer component = textMeshProUGUI.GetComponent<MouseTipDisplayer>();
+            component.PresetParam[0] = description;
+            component.Refresh();
+
             return gameObject.transform.GetChild(1).GetComponent<CToggle>();
         }
 

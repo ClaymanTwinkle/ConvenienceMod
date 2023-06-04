@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CustomSteal;
@@ -8,6 +10,8 @@ using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.ModifyCombatSkill;
 using ConvenienceFrontend.RollCreateRole;
 using ConvenienceFrontend.TaiwuBuildingManager;
+using ConvenienceFrontend.Utils;
+using GameData.Domains.Mod;
 using HarmonyLib;
 using TaiwuModdingLib.Core.Plugin;
 using UnityEngine;
@@ -17,6 +21,17 @@ namespace ConvenienceFrontend
     [PluginConfig("ConvenienceFrontend", "kesar", "1.0.0")]
     public class ConvenienceFrontend : TaiwuRemakePlugin
     {
+        private const string CONFIG_FILE_NAME = "ModConfig.json";
+        private static string _config_file_path = CONFIG_FILE_NAME;
+
+        // Token: 0x04000001 RID: 1
+        private Harmony harmony;
+
+        // Token: 0x04000002 RID: 2
+        private static bool bool_Toggle_Total;
+
+        public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
+
         private List<BaseFrontPatch> allPatch = new List<BaseFrontPatch>()
         {
             // 较艺必胜
@@ -49,6 +64,8 @@ namespace ConvenienceFrontend
         // Token: 0x06000002 RID: 2 RVA: 0x00002069 File Offset: 0x00000269
         public override void Initialize()
         {
+            InitConfig();
+
             this.harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceFrontend), null);
 
             allPatch.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
@@ -80,10 +97,26 @@ namespace ConvenienceFrontend
             Debug.Log("ShowUI: " + elem.Name);
         }
 
-        // Token: 0x04000001 RID: 1
-        private Harmony harmony;
+        private void InitConfig()
+        {
+            string directoryName = ModManager.GetModInfo(base.ModIdStr).DirectoryName;
+            _config_file_path = Path.Combine(directoryName, CONFIG_FILE_NAME);
 
-        // Token: 0x04000002 RID: 2
-        private static bool bool_Toggle_Total;
+            LoadConfig();
+        }
+
+        public static void SaveConfig()
+        {
+            JsonFileUtils.WriteFile(_config_file_path, Config);
+        }
+
+        public static void LoadConfig()
+        {
+            Config = JsonFileUtils.ReadFile<Dictionary<string, System.Object>>(_config_file_path);
+            if (Config == null)
+            { 
+                Config = new Dictionary<string, System.Object>();
+            }
+        }
     }
 }
