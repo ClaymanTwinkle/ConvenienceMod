@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using ConvenienceFrontend.BetterArmor;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
@@ -51,7 +52,9 @@ namespace ConvenienceFrontend
             // 太吾村管家
             new TaiwuBuildingManagerFrontPatch(),
             // 隐藏已读书籍
-            new IgnoreReadFinishBookFrontPatch()
+            new IgnoreReadFinishBookFrontPatch(),
+            // 平衡装备
+            new BetterArmorFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

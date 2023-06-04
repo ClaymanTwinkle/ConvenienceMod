@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,9 +31,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BaseFrontPatch.cs" />
+    <Compile Include="BetterArmor\BetterArmor.cs" />
+    <Compile Include="BetterArmor\BetterArmorFrontPatch.cs" />
     <Compile Include="CombatStrategy\BackendSettings.cs" />
     <Compile Include="CombatStrategy\BaseTypeContractResolver.cs" />
     <Compile Include="CombatStrategy\config\data\AutoMoveAction.cs" />

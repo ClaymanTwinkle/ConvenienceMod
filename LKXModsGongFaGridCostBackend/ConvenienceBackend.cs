@@ -4,6 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using ConvenienceBackend.BetterArmor;
 using ConvenienceBackend.CombatStrategy;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
@@ -48,6 +49,8 @@ namespace ConvenienceBackend
             new ModifyCombatSkillBackendPatch(),
             // 太吾村管家
             new TaiwuBuildingManagerBackendPatch(),
+            // 平衡装备
+            new BetterArmorBackendPatch(),
         };
 
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
