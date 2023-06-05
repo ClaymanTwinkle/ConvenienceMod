@@ -72,8 +72,8 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             popupWindow.TitleLabel.transform.parent.position = new Vector3(popupWindow.TitleLabel.transform.parent.position.x, popupWindow.TitleLabel.transform.parent.position.y + 50, popupWindow.TitleLabel.transform.parent.position.z);
             GameObject gameObject = GameObjectCreationUtils.InstantiateUIElement(popupWindow.transform, "VerticalScrollView");
             gameObject.SetActive(true);
-            gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(component.rect.size.x, component.rect.size.y - 180);
-            gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y - 120, gameObject.transform.position.z);
+            gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(component.rect.size.x, component.rect.size.y - 220);
+            gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y - 60, gameObject.transform.position.z);
             this._scroll = gameObject.GetComponent<CScrollRect>();
             GameObject gameObject2 = this._scroll.Content.gameObject;
             RectTransform content = this._scroll.Content;
@@ -82,6 +82,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
 
             this.BuildBuildingSettings(content);
             this.BuildCollectResourceSettings(content);
+            this.BuildHarvestSettings(content);
         }
 
         public override void OnInit(ArgumentBox argsBox)
@@ -133,6 +134,14 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
 
             UIUtils.CreateSubTitle(transform, "人员分配");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoWork", "建筑默认勾选自动工作"), "Toggle_EnableBuildingAutoWork");
+
+            GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键分配工作").ClearAndAddListener(delegate () {
+                GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Assign_Jobs, "");
+            });
+
+            GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键升级建筑").ClearAndAddListener(delegate () {
+                GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Upgrade_buildings, "");
+            });
         }
 
         private void BuildCollectResourceSettings(Transform parent)
@@ -150,6 +159,14 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
                 "药材"
             };
             AddComponent(UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "Toggle_IntCollectResourceType", "要采集的资源类型(不选则默认采最少资源)", options, 1, true, true), "Toggle_IntCollectResourceType");
+        }
+
+        private void BuildHarvestSettings(Transform parent)
+        {
+            Transform transform = UIUtils.CreateSettingPanel(parent, "HarvestSettings", "收获设置").transform;
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoHarvest", "过月时，自动全部收获", "自动收获太吾村所有可收获的资源、物品、人才，收获的物品会放入到仓库中（不包括需要花费资源的贤士馆、当铺）"), "Toggle_EnableAutoHarvest");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoBuy", "过月时，自动银钱购买物品", "开启后，过月自动购买建筑产出的银钱物品，如当铺售卖的物品等，银钱不足时不会购买"), "Toggle_EnableAutoBuy");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoRecruit", "过月时，威望招揽人才", "开启后，过月自动购买建筑产出的威望人才，如贤士馆的人才等，威望不足时不会招揽"), "Toggle_EnableAutoRecruit");
         }
 
         private void AddComponent(CToggle component, string name)

@@ -52,6 +52,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         {
             // ExpandQuickSelectBtn
             // ConfirmBtn
+            // ShopQuickSelectBtn
             Debug.Log("OnClick: " + btn.name);
         }
 

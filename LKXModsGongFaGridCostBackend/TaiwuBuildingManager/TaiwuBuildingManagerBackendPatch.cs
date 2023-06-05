@@ -22,6 +22,7 @@ using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {
@@ -31,14 +32,12 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
         // 过月自动拆资源
         private static bool _enableRemoveUselessResource = false;
-        // 过月自动采资源
-        private static bool _enableCollectResource = false;
+
         // 建筑建完后自动工作
         private static bool _enableBuildingAutoWork = false;
 
-        private static bool[] _IntUselessResourceType = new bool[3] { false, false, false };
 
-        private static bool[] _IntCollectResourceType = new bool[6] { false, false, false, false, false, false };
+        private static bool[] _IntUselessResourceType = new bool[3] { false, false, false };
 
         private static List<Location> _collectResourceLocations = new List<Location>();
 
@@ -75,17 +74,18 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
         private static void InitConfig(Dictionary<string, System.Object> config)
         {
+            AutoCollectResourcesHelper.UpdateConfig(config);
+            AutoHarvestHelper.UpdateConfig(config);
+
             _enableRemoveUselessResource = (bool)config.GetValueOrDefault("Toggle_EnableRemoveUselessResource", false);
-            _enableCollectResource = (bool)config.GetValueOrDefault("Toggle_EnableCollectResource", false);
             _IntUselessResourceType = ((JArray)config.GetValueOrDefault("Toggle_IntUselessResourceType", new JArray(false, false, false))).ToList().ConvertAll(x => (bool)x).ToArray();
-            _IntCollectResourceType = ((JArray)config.GetValueOrDefault("Toggle_IntCollectResourceType", new JArray(false, false, false, false, false, false))).ToList().ConvertAll(x => (bool)x).ToArray();
 
             _enableBuildingAutoWork = (bool)config.GetValueOrDefault("Toggle_EnableBuildingAutoWork", false);
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(TaiwuDomain), "CallMethod")]
-        public static bool TaiwuDomain_CallMethod_Prefix(TaiwuDomain __instance, Operation operation, RawDataPool argDataPool, ref int __result)
+        public static bool TaiwuDomain_CallMethod_Prefix(TaiwuDomain __instance, Operation operation, RawDataPool argDataPool, DataContext context, ref int __result)
         {
             if (operation.MethodId == GameDataBridgeConst.MethodId)
             {
@@ -97,20 +97,38 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                     switch (num2)
                     {
                         case GameDataBridgeConst.Flag.Flag_Load_Settings:
-                            string json = null;
-                            Serializer.Deserialize(argDataPool, num, ref json);
-                            try
                             {
-                                if (json != null)
+                                string json = null;
+                                Serializer.Deserialize(argDataPool, num, ref json);
+                                try
                                 {
-                                    InitConfig(JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json));
+                                    if (json != null)
+                                    {
+                                        InitConfig(JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json));
+                                    }
                                 }
+                                catch (Exception ex)
+                                {
+                                    AdaptableLog.Warning("TaiwuBuildingManager Backend: Deserialize settings Json Failed:" + ex.Message, false);
+                                }
+                                break;
                             }
-                            catch (Exception ex)
+                        case GameDataBridgeConst.Flag.Flag_Assign_Jobs:
                             {
-                                AdaptableLog.Warning("TaiwuBuildingManager Backend: Deserialize settings Json Failed:" + ex.Message, false);
+                                string text = null;
+                                Serializer.Deserialize(argDataPool, num, ref text);
+
+                                AssignAllVillagersJobs(context);
+                                break;
                             }
-                            break;
+                        case GameDataBridgeConst.Flag.Flag_Upgrade_buildings:
+                            {
+                                string text = null;
+                                Serializer.Deserialize(argDataPool, num, ref text);
+
+                                UpgradeAllBuildings(context);
+                                break;
+                            }
                     }
                 }
 
@@ -142,10 +160,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             {
                 CleanAllUselessResource(context);
             }
-            if (_enableCollectResource)
-            {
-                AssignIdlePeopleToCollectResources(context);
-            }
+            AutoCollectResourcesHelper.AssignIdlePeopleToCollectResources(context);
         }
 
         /// <summary>
@@ -157,86 +172,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         {
             if (!_enableMod) return;
 
-            if (_enableCollectResource)
-            {
-                DemobilizePeopleToCollectResources(context);
-            }
-        }
-
-        private void AssignIdlePeopleToCollectResources(DataContext context)
-        {
-            _collectResourceLocations.Clear();
-            // 0 Food
-            // 1 Wood
-            // 2 Stone
-            // 3 Jade
-            // 4 Silk
-            // 5 Herbal
-            var resourceNames = new string[6] { "食材", "木材", "金铁", "玉石", "织物", "药材" };
-            // 查找最少资源项
-            sbyte collectResourceType = 0;
-            for (sbyte i = 0; i < 6; i++)
-            {
-                if (DomainManager.Taiwu.GetTaiwu().GetResource(i) < DomainManager.Taiwu.GetTaiwu().GetResource(collectResourceType))
-                {
-                    collectResourceType = i;
-                }
-            }
-            // 如果不是最小项，则选用户选择的
-            for (sbyte i = 0; i < _IntCollectResourceType.Length; i++)
-            {
-                if (_IntCollectResourceType[i])
-                {
-                    collectResourceType = i;
-                    break;
-                }
-            }
-
-            Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
-            var allAreaBlocks = DomainManager.Map.GetAreaBlocks(taiwuVillageLocation.AreaId).ToArray().FindAll(x=>x.CurrResources.Get(collectResourceType)>0 && !DomainManager.Taiwu.TryGetElement_VillagerWorkLocations(x.GetLocation(), out var xx));
-            allAreaBlocks.Sort((a, b) => b.CurrResources.Get(collectResourceType) - a.CurrResources.Get(collectResourceType));
-            foreach (var mapBlockData in allAreaBlocks)
-            {
-                var charId = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true).FirstOrDefault(-1);
-
-                if (charId > -1)
-                {
-                    _collectResourceLocations.Add(mapBlockData.GetLocation());
-
-                    var hasMark = DomainManager.Extra.TryGetElement_LocationMarkHashSet(mapBlockData.GetLocation(), out var ignore);
-                    // 派遣工作
-                    DomainManager.Taiwu.SetVillagerCollectResourceWork(context, charId, mapBlockData.AreaId, mapBlockData.BlockId, collectResourceType);
-                    // 移动到目的地
-                    GameData.Domains.Character.Character character = DomainManager.Character.GetElement_Objects(charId);
-                    Location srcLocation = character.GetLocation();
-                    if (srcLocation.AreaId != mapBlockData.AreaId || srcLocation.BlockId != mapBlockData.BlockId)
-                    {
-                        DomainManager.Character.LeaveGroup(context, character, true);
-                        DomainManager.Character.GroupMove(context, character, mapBlockData.GetLocation());
-                    }
-                    // 不要标记
-                    if (!hasMark)
-                    {
-                        DomainManager.Extra.RemoveLocationMark(context, mapBlockData.GetLocation());
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-            AdaptableLog.Info("派遣闲人采资源团" + _collectResourceLocations.Count + "人，去采集" + resourceNames[collectResourceType] + "，预计能采集到" + DomainManager.Taiwu.CalcResourceChangeByVillageWork(context)[collectResourceType]);
-        }
-
-        private void DemobilizePeopleToCollectResources(DataContext context)
-        {
-            foreach (var location in _collectResourceLocations)
-            {
-                DomainManager.Taiwu.StopVillagerWork(context, location.AreaId, location.BlockId, 10);
-            }
-
-            AdaptableLog.Info("遣散闲人采资源团" + _collectResourceLocations.Count + "人");
-            _collectResourceLocations.Clear();
+            AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
+            AutoHarvestHelper.HandleAutoHarvest(context);
         }
 
         private void CleanAllUselessResource(DataContext context)
@@ -278,7 +215,21 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             var villagers = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true);
             if (villagers.Count == 0) return;
 
-            var buildingBlockItem = Config.BuildingBlock.Instance[buildingBlockData.TemplateId];
+            var wokers = SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Remove);
+
+            if (wokers.All(x => x == -1)) return;
+
+            DomainManager.Building.Remove(context, blockKey, wokers);
+        }
+
+        private static int[] SelectWorkersByPropertyValue(int templateId, int buildingOperationType)
+        {
+            var wokers = new int[3] { -1, -1, -1 };
+
+            var villagers = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true);
+            if (villagers.Count == 0) return wokers;
+
+            var buildingBlockItem = Config.BuildingBlock.Instance[templateId];
             Dictionary<int, short> _propertyValueDict = new Dictionary<int, short>();
             foreach (var villager in villagers)
             {
@@ -302,9 +253,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             }
             villagers.Sort((int workerA, int workerB) => _propertyValueDict[workerA].CompareTo(_propertyValueDict[workerB]));
 
-            var costProgress = buildingBlockItem.OperationTotalProgress[BuildingOperationType.Remove];
+            var costProgress = buildingBlockItem.OperationTotalProgress[buildingOperationType];
             var expectProgress = 0;
-            var wokers = new int[3] { -1, -1, -1 };
             var maxCharCount = Math.Min(villagers.Count, wokers.Length);
             var index = 0;
             if (costProgress > 0)
@@ -318,8 +268,170 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                         break;
                     }
                 }
-                DomainManager.Building.Remove(context, blockKey, wokers);
             }
+
+            return wokers;
+        }
+
+        private static sbyte GetOperationNeedSkillType(BuildingBlockItem _configData, BuildingBlockKey buildingBlockKey)
+        {
+            sbyte b = 15;
+            if (_configData.IsCollectResourceBuilding)
+            {
+                sbyte collectBuildingResourceType = DomainManager.Building.GetCollectBuildingResourceType(buildingBlockKey);
+                return (sbyte)((collectBuildingResourceType < 6) ? Config.ResourceType.Instance[collectBuildingResourceType].LifeSkillType : 9);
+            }
+
+            return _configData.RequireLifeSkillType;
+        }
+
+        private static int[] SelectWorkersByLifeSkillAttainment(int templateId, BuildingBlockKey buildingBlockKey)
+        {
+            var _availableWorker = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true);
+
+            var _configData = Config.BuildingBlock.Instance[templateId];
+
+            sbyte lifeSkillType = GetOperationNeedSkillType(_configData, buildingBlockKey);
+
+            AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + _configData.Name);
+
+            _availableWorker.Sort((int workerA, int workerB) => DomainManager.Character.GetAllLifeSkillAttainment(workerA)[lifeSkillType].CompareTo(DomainManager.Character.GetAllLifeSkillAttainment(workerB)[lifeSkillType]));
+
+            AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + _availableWorker.Count);
+
+            int num9 = _availableWorker.Count - 1;
+            int maxProduceValue = _configData.MaxProduceValue;
+
+            var wokers = new int[3] { -1, -1, -1 };
+
+            AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + maxProduceValue);
+
+            if (maxProduceValue > 0)
+            {
+                int produceValue = 0;
+                var _selectingShopManagerIndex = 0;
+                while (_selectingShopManagerIndex < wokers.Length && num9 >= 0 && (_configData.TemplateId == 105 || produceValue < _configData.MaxProduceValue))
+                {
+                    int num12 = -1;
+                    for (int num13 = 0; num13 < _availableWorker.Count; num13++)
+                    {
+                        if (DomainManager.Character.GetAllLifeSkillAttainment(_availableWorker[num13])[lifeSkillType] + 100 + produceValue >= maxProduceValue)
+                        {
+                            num12 = num13;
+                            break;
+                        }
+                    }
+
+                    if (num12 == -1)
+                    {
+                        wokers[_selectingShopManagerIndex] = _availableWorker[num9];
+                        produceValue += 100 + DomainManager.Character.GetAllLifeSkillAttainment(_availableWorker[num9])[lifeSkillType];
+                        if (produceValue >= maxProduceValue)
+                        {
+                            break;
+                        }
+
+                        num9--;
+                        _selectingShopManagerIndex++;
+                        continue;
+                    }
+                    wokers[_selectingShopManagerIndex] = _availableWorker[num12];
+                    break;
+                }
+            }
+
+            return wokers;
+        }
+
+        /// <summary>
+        /// 分配所有村民工作
+        /// </summary>
+        private static void AssignAllVillagersJobs(DataContext context)
+        {
+            Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
+            var buildingAreaData = DomainManager.Building.GetBuildingAreaData(taiwuVillageLocation);
+            // 所有建筑
+            var allBuildingBlockList = FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.Building);
+            AdaptableLog.Info("allBuildingBlockList = " + allBuildingBlockList.Count);
+            foreach ( var buildingBlockKey in allBuildingBlockList )
+            {
+                // 清理选择
+                for (sbyte i = 0; i < 3; i++)
+                {
+                    DomainManager.Building.SetShopManager(context, buildingBlockKey, i, -1);
+                }
+
+                // 重新选择
+                BuildingBlockData element_BuildingBlocks = DomainManager.Building.GetElement_BuildingBlocks(buildingBlockKey);
+                var workers = SelectWorkersByLifeSkillAttainment(element_BuildingBlocks.TemplateId, buildingBlockKey);
+                if (workers.All(x => x < 0))
+                {
+                    continue;
+                }
+                for (sbyte i = 0; i < workers.Length; i++)
+                {
+                    if (workers[i] > -1)
+                    {
+                        AdaptableLog.Info("SetShopManager = " + workers[i]);
+                        DomainManager.Building.SetShopManager(context, buildingBlockKey, i, workers[i]);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 升级所有建筑
+        /// </summary>
+        private static void UpgradeAllBuildings(DataContext context)
+        {
+            var villagers = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true);
+            if (villagers.Count == 0) return;
+
+            Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
+            var buildingAreaData = DomainManager.Building.GetBuildingAreaData(taiwuVillageLocation);
+
+            // 优先building
+            FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.Building).ForEach(x => {
+                BuildingBlockData buildingBlockData = DomainManager.Building.GetElement_BuildingBlocks(x);
+                var wokers = SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
+                if (wokers.Any(x => x > -1)) 
+                {
+                    if (DomainManager.Building.CanUpgrade(x))
+                    {
+                        DomainManager.Building.Upgrade(context, x, wokers);
+                    }
+                }
+            });
+
+            // 优先main building
+            FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.MainBuilding).ForEach(x => {
+                BuildingBlockData buildingBlockData = DomainManager.Building.GetElement_BuildingBlocks(x);
+                var wokers = SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
+                if (wokers.Any(x => x > -1))
+                {
+                    if (DomainManager.Building.CanUpgrade(x))
+                    {
+                        DomainManager.Building.Upgrade(context, x, wokers);
+                    }
+                }
+            });
+        }
+
+        private static List<BuildingBlockKey> FindBuildingsByType(Location location, BuildingAreaData buildingArea, EBuildingBlockType type)
+        {
+            List<BuildingBlockKey> list = new List<BuildingBlockKey>();
+            for (short num = 0; num < buildingArea.Width * buildingArea.Width; num = (short)(num + 1))
+            {
+                BuildingBlockKey buildingBlockKey = new(location.AreaId, location.BlockId, num);
+                BuildingBlockData element_BuildingBlocks = DomainManager.Building.GetElement_BuildingBlocks(buildingBlockKey);
+                var buildingBlockItem = Config.BuildingBlock.Instance[element_BuildingBlocks.TemplateId];
+                if (buildingBlockItem != null && buildingBlockItem.Type == type && element_BuildingBlocks.CanUse())
+                {
+                    list.Add(buildingBlockKey);
+                }
+            }
+
+            return list;
         }
     }
 }
