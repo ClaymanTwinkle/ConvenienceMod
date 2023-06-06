@@ -15,6 +15,7 @@ using UnityEngine.UI;
 using GameData.Utilities;
 using System.Collections;
 using Newtonsoft.Json.Linq;
+using TMPro;
 
 namespace ConvenienceFrontend.TaiwuBuildingManager
 {
@@ -122,7 +123,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             Transform transform = UIUtils.CreateSettingPanel(parent, "BuildingSettings", "建筑设置").transform;
             UIUtils.CreateSubTitle(transform, "拆除无用资源");
             
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableRemoveUselessResource", "过月时，自动拆除无用资源"), "Toggle_EnableRemoveUselessResource");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableRemoveUselessResource", "自动拆除无用资源", "过月前自动分配人员拆，不用再手动一个个拆了"), "Toggle_EnableRemoveUselessResource");
 
             string[] options = new string[]
             {
@@ -133,8 +134,10 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             AddComponent(UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "Toggle_IntUselessResourceType", "要拆除的无用资源类型", options, 3, true, true), "Toggle_IntUselessResourceType");
 
             UIUtils.CreateSubTitle(transform, "人员分配");
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoWork", "建筑默认勾选自动工作"), "Toggle_EnableBuildingAutoWork");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoWork", "建筑自动分配人员工作", "过月前自动分配，再也不用手动给村民分配工作了"), "Toggle_EnableBuildingAutoWork");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoUpdate", "建筑自动分配人员升级", "过月前自动分配，再也不用手动给建筑升级了"), "Toggle_EnableBuildingAutoUpdate");
 
+            UIUtils.CreateSubTitle(transform, "强迫症患者按钮");
             GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键分配工作").ClearAndAddListener(delegate () {
                 GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Assign_Jobs, "");
             });
@@ -147,7 +150,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         private void BuildCollectResourceSettings(Transform parent)
         {
             Transform transform = UIUtils.CreateSettingPanel(parent, "CollectResourceSettings", "采集设置").transform;
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableCollectResource", "过月时，自动采资源"), "Toggle_EnableCollectResource");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableCollectResource", "自动采资源", "过月前，自动派空闲的人员出去采集资源"), "Toggle_EnableCollectResource");
 
             string[] options = new string[]
             {
@@ -164,9 +167,9 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         private void BuildHarvestSettings(Transform parent)
         {
             Transform transform = UIUtils.CreateSettingPanel(parent, "HarvestSettings", "收获设置").transform;
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoHarvest", "过月时，自动全部收获", "自动收获太吾村所有可收获的资源、物品、人才，收获的物品会放入到仓库中（不包括需要花费资源的贤士馆、当铺）"), "Toggle_EnableAutoHarvest");
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoBuy", "过月时，自动银钱购买物品", "开启后，过月自动购买建筑产出的银钱物品，如当铺售卖的物品等，银钱不足时不会购买"), "Toggle_EnableAutoBuy");
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoRecruit", "过月时，威望招揽人才", "开启后，过月自动购买建筑产出的威望人才，如贤士馆的人才等，威望不足时不会招揽"), "Toggle_EnableAutoRecruit");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoHarvest", "自动全部收获建筑资源", "过月后，自动收获太吾村所有可收获的资源、物品、人才，收获的物品会放入到仓库中（不包括需要花费资源的贤士馆、当铺）"), "Toggle_EnableAutoHarvest");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoBuy", "银钱自动购买物品", "开启后，过月自动购买建筑产出的银钱物品，如当铺售卖的物品等，银钱不足时不会购买"), "Toggle_EnableAutoBuy");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoRecruit", "威望自动招揽人才", "开启后，过月自动购买建筑产出的威望人才，如贤士馆的人才等，威望不足时不会招揽"), "Toggle_EnableAutoRecruit");
         }
 
         private void AddComponent(CToggle component, string name)
