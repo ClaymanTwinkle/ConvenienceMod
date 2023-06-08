@@ -58,6 +58,14 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             RegisterHandlers();
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(WorldDomain), "AdvanceMonth")]
+        public static void WorldDomain_AdvanceMonth_Postfix(DataContext context)
+        {
+            // 自动收获建筑资源
+            AutoHarvestHelper.HandleAutoHarvest(context);
+        }
+
         private void RegisterHandlers()
         {
             Events.RegisterHandler_AdvanceMonthBegin(OnAdvanceMonthBegin);
@@ -70,17 +78,20 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             Events.UnRegisterHandler_AdvanceMonthFinish(OnAdvanceMonthFinish);
         }
 
+
         private static void InitConfig(Dictionary<string, System.Object> config)
         {
             AutoCollectResourcesHelper.UpdateConfig(config);
             AutoHarvestHelper.UpdateConfig(config);
             AutoWorkHelper.UpdateConfig(config);
             UselessResourceCleaner.UpdateConfig(config);
+            ResidenceAutoLiveHelper.UpdateConfig(config);
 
             _enableRemoveUselessResource = (bool)config.GetValueOrDefault("Toggle_EnableRemoveUselessResource", false);
 
             _enableBuildingAutoWork = (bool)config.GetValueOrDefault("Toggle_EnableBuildingAutoWork", false);
             _enableBuildingAutoUpdate = (bool)config.GetValueOrDefault("Toggle_EnableBuildingAutoUpdate", false);
+
         }
 
         [HarmonyPrefix]
@@ -174,6 +185,9 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 BuildingUpgradeHelper.UpgradeAllBuildings(context);
             }
 
+            // 居所自动住人
+            ResidenceAutoLiveHelper.AutoLive(context);
+
             // 自动外出收集资源
             AutoCollectResourcesHelper.AssignIdlePeopleToCollectResources(context);
         }
@@ -189,8 +203,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // 取消外出收集资源
             AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
-            // 自动收获建筑资源
-            AutoHarvestHelper.HandleAutoHarvest(context);
+
         }
     }
 }

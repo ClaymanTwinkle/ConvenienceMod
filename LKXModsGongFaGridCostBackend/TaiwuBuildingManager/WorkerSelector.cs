@@ -23,10 +23,12 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             var _configData = Config.BuildingBlock.Instance[templateId];
 
             sbyte lifeSkillType = GetOperationNeedSkillType(_configData, buildingBlockKey);
-
             AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + _configData.Name);
 
-            _availableWorker.Sort((int workerA, int workerB) => DomainManager.Character.GetAllLifeSkillAttainment(workerA)[lifeSkillType].CompareTo(DomainManager.Character.GetAllLifeSkillAttainment(workerB)[lifeSkillType]));
+            if (lifeSkillType > -1)
+            {
+                _availableWorker.Sort((int workerA, int workerB) => DomainManager.Character.GetAllLifeSkillAttainment(workerA)[lifeSkillType].CompareTo(DomainManager.Character.GetAllLifeSkillAttainment(workerB)[lifeSkillType]));
+            }
 
             AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + _availableWorker.Count);
 

@@ -38,6 +38,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             UI_MapBlockCharList.print("");
             UI_Worldmap.print("");
             UI_BuildingManage.print("");
+            UI_Reading.print("");
             UI_BuildingBlockList.print("");
             // Events.RaiseAdvanceMonthBegin
             MouseTipMapBlock.print("");

@@ -136,6 +136,8 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             UIUtils.CreateSubTitle(transform, "人员分配");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoWork", "建筑自动分配人员工作", "过月前自动分配，再也不用手动给村民分配工作了"), "Toggle_EnableBuildingAutoWork");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoUpdate", "建筑自动分配人员升级", "过月前自动分配，再也不用手动给建筑升级了"), "Toggle_EnableBuildingAutoUpdate");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableResidenceAutoLive", "居所自动入住", "过月前自动安排村民入住居所"), "Toggle_EnableResidenceAutoLive");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableWingRoomAutoLive", "厢房自动入住", "过月前自动安排村民入住厢房"), "Toggle_EnableWingRoomAutoLive");
 
             UIUtils.CreateSubTitle(transform, "强迫症患者按钮");
             GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键分配工作").ClearAndAddListener(delegate () {

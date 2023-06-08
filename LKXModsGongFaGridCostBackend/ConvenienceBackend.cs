@@ -11,6 +11,7 @@ using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.ModifyCombatSkill;
 using ConvenienceBackend.NotNTR;
+using ConvenienceBackend.QuicklyCreateCharacter;
 using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
 using GameData.Domains;
@@ -49,8 +50,10 @@ namespace ConvenienceBackend
             new ModifyCombatSkillBackendPatch(),
             // 太吾村管家
             new TaiwuBuildingManagerBackendPatch(),
+            // 
+            new QuicklyCreateCharacterBackend(),
             // 平衡装备
-            new BetterArmorBackendPatch(),
+            //new BetterArmorBackendPatch(),
         };
 
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250

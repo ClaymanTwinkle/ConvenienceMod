@@ -9,7 +9,7 @@ using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.ModifyCombatSkill;
-using ConvenienceFrontend.RollCreateRole;
+using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
@@ -48,13 +48,13 @@ namespace ConvenienceFrontend
             // 修改功法
             new ModifyCombatSkillFrontPatch(),
             // roll角色属性
-            // new RollCreateRoleFrontPatch(),
+            new QuicklyCreateCharacterFrontend(),
             // 太吾村管家
             new TaiwuBuildingManagerFrontPatch(),
             // 隐藏已读书籍
             new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
-            new BetterArmorFrontPatch(),
+            //new BetterArmorFrontPatch(),
         };
 
         public override void OnModSettingUpdate()
@@ -88,9 +88,16 @@ namespace ConvenienceFrontend
             this.harmony = null;
         }
 
+        public override void OnEnterNewWorld()
+        {
+            base.OnEnterNewWorld();
+            allPatch.ForEach((BaseFrontPatch patch) => patch.OnEnterNewWorld());
+        }
+
         // Token: 0x06000004 RID: 4 RVA: 0x000020F0 File Offset: 0x000002F0
         public override void OnLoadedArchiveData()
         {
+            allPatch.ForEach((BaseFrontPatch patch) => patch.OnLoadedArchiveData());
         }
 
         [HarmonyPostfix]

@@ -23,10 +23,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
         public static void CleanAllUselessResource(DataContext context)
         {
-            Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
-
-            var buildingAreaData = DomainManager.Building.GetBuildingAreaData(taiwuVillageLocation);
-
             for (short i = 0; i < _IntUselessResourceType.Length; i++)
             {
                 // 1. 杂草堆
