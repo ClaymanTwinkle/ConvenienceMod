@@ -7,6 +7,9 @@ using static LifeSkillCombatLogic;
 using TaiwuModdingLib.Core.Plugin;
 using UnityEngine.Events;
 using UnityEngine;
+using GameData.Domains.Character;
+using GameData.GameDataBridge;
+using GameData.Serializer;
 
 namespace ConvenienceFrontend.QuicklyCreateCharacter
 {
@@ -32,13 +35,11 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000003 RID: 3 RVA: 0x00002088 File Offset: 0x00000288
         public override void Dispose()
         {
-            bool flag2 = QuicklyCreateCharacterFrontend.emptyGo != null;
-            if (flag2)
+            if (QuicklyCreateCharacterFrontend.emptyGo != null)
             {
                 Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
             }
-            bool flag3 = QuicklyCreateCharacterFrontend.UGUIGo != null;
-            if (flag3)
+            if (QuicklyCreateCharacterFrontend.UGUIGo != null)
             {
                 Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
             }
@@ -48,13 +49,11 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000004 RID: 4 RVA: 0x000020F0 File Offset: 0x000002F0
         public override void OnLoadedArchiveData()
         {
-            bool flag = QuicklyCreateCharacterFrontend.emptyGo != null;
-            if (flag)
+            if (QuicklyCreateCharacterFrontend.emptyGo != null)
             {
                 Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
             }
-            bool flag2 = QuicklyCreateCharacterFrontend.UGUIGo != null;
-            if (flag2)
+            if (QuicklyCreateCharacterFrontend.UGUIGo != null)
             {
                 Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
             }
@@ -66,25 +65,25 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(UI_NewGame), "Awake")]
         public static void UI_NewGame_Awake_PostPatch(UI_NewGame __instance)
         {
-            bool flag = !QuicklyCreateCharacterFrontend.bool_Toggle_Total;
-            if (!flag)
-            {
-                QuicklyCreateCharacterFrontend.bool_IsEnterNewGame = true;
-                CToggleGroup ctoggleGroup = __instance.CGet<CToggleGroup>("SwitchMode");
-                Canvas componentInParent = ctoggleGroup.transform.GetComponentInParent<Canvas>();
-                QuicklyCreateCharacterFrontend.UGUIGo = new GameObject("mainWindowGoForQCCF");
-                QuicklyCreateCharacterFrontend.dataController_Instance = QuicklyCreateCharacterFrontend.UGUIGo.AddComponent<CharacterDataController>();
-                QuicklyCreateCharacterFrontend.dataController_Instance.UI_NewGame_Member = __instance;
-                RollAttributeWindow rollAttributeWindow = QuicklyCreateCharacterFrontend.UGUIGo.AddComponent<RollAttributeWindow>();
-                rollAttributeWindow.characterDataController = QuicklyCreateCharacterFrontend.dataController_Instance;
-                rollAttributeWindow.SetRootCanvas(componentInParent);
-                QuicklyCreateCharacterFrontend.guideGo = UIFactory.GetCommonButtonGo("人物属性", new UnityAction(rollAttributeWindow.Open), false);
-                QuicklyCreateCharacterFrontend.guideGo.transform.SetParent(ctoggleGroup.transform, false);
-                Vector2 sizeDelta = QuicklyCreateCharacterFrontend.guideGo.transform.GetComponent<RectTransform>().sizeDelta;
-                Vector2 vector = new Vector2(500f, 500f) + sizeDelta / 2f - new Vector2(0f, sizeDelta.y);
-                QuicklyCreateCharacterFrontend.guideGo.transform.localPosition = Vector3.zero;
-                QuicklyCreateCharacterFrontend.guideGo.name = "guideGoForQCCF";
-            }
+            if (!QuicklyCreateCharacterFrontend.bool_Toggle_Total) return;
+
+            QuicklyCreateCharacterFrontend.bool_IsEnterNewGame = true;
+
+            CToggleGroup ctoggleGroup = __instance.CGet<CToggleGroup>("SwitchMode");
+            Canvas componentInParent = ctoggleGroup.transform.GetComponentInParent<Canvas>();
+            QuicklyCreateCharacterFrontend.UGUIGo = new GameObject("mainWindowGoForQCCF");
+            QuicklyCreateCharacterFrontend.dataController_Instance = QuicklyCreateCharacterFrontend.UGUIGo.AddComponent<CharacterDataController>();
+            QuicklyCreateCharacterFrontend.dataController_Instance.UI_NewGame_Member = __instance;
+            RollAttributeWindow rollAttributeWindow = QuicklyCreateCharacterFrontend.UGUIGo.AddComponent<RollAttributeWindow>();
+            rollAttributeWindow.characterDataController = QuicklyCreateCharacterFrontend.dataController_Instance;
+            rollAttributeWindow.SetRootCanvas(componentInParent);
+
+            QuicklyCreateCharacterFrontend.guideGo = UIFactory.GetCommonButtonGo("人物属性", new UnityAction(rollAttributeWindow.Open), false);
+            QuicklyCreateCharacterFrontend.guideGo.transform.SetParent(ctoggleGroup.transform, false);
+            Vector2 sizeDelta = QuicklyCreateCharacterFrontend.guideGo.transform.GetComponent<RectTransform>().sizeDelta;
+            Vector2 vector = new Vector2(500f, 500f) + sizeDelta / 2f - new Vector2(0f, sizeDelta.y);
+            QuicklyCreateCharacterFrontend.guideGo.transform.localPosition = Vector3.zero;
+            QuicklyCreateCharacterFrontend.guideGo.name = "guideGoForQCCF";
         }
 
         // Token: 0x06000006 RID: 6 RVA: 0x0000226C File Offset: 0x0000046C
@@ -92,14 +91,11 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(UI_NewGame), "UpdateScrolls")]
         public static void UI_NewGame_UpdateScrolls_PostPatch(UI_NewGame __instance)
         {
-            bool flag = !QuicklyCreateCharacterFrontend.bool_Toggle_Total;
-            if (!flag)
+            if (!QuicklyCreateCharacterFrontend.bool_Toggle_Total) return;
+
+            if (QuicklyCreateCharacterFrontend.bool_IsEnterNewGame)
             {
-                bool flag2 = !QuicklyCreateCharacterFrontend.bool_IsEnterNewGame;
-                if (!flag2)
-                {
-                    QuicklyCreateCharacterFrontend.dataController_Instance.DoRollCharacterData();
-                }
+                QuicklyCreateCharacterFrontend.dataController_Instance.DoRollCharacterData();
             }
         }
 
@@ -108,22 +104,17 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(UI_NewGame), "OnClickOpenInscriptionWindow")]
         public static void UI_NewGame_OnClickOpenInscriptionWindow_PostPatch(UI_NewGame __instance)
         {
-            bool flag = !QuicklyCreateCharacterFrontend.bool_Toggle_Total;
-            if (!flag)
+            if (!QuicklyCreateCharacterFrontend.bool_Toggle_Total) return;
+
+            if (QuicklyCreateCharacterFrontend.bool_IsEnterNewGame)
             {
-                bool flag2 = !QuicklyCreateCharacterFrontend.bool_IsEnterNewGame;
-                if (!flag2)
+                if (QuicklyCreateCharacterFrontend.emptyGo != null)
                 {
-                    bool flag3 = QuicklyCreateCharacterFrontend.emptyGo != null;
-                    if (flag3)
-                    {
-                        Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
-                    }
-                    bool flag4 = QuicklyCreateCharacterFrontend.UGUIGo != null;
-                    if (flag4)
-                    {
-                        Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
-                    }
+                    Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
+                }
+                if (QuicklyCreateCharacterFrontend.UGUIGo != null)
+                {
+                    Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
                 }
             }
         }
@@ -133,35 +124,19 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(UI_NewGame), "OnDestroy")]
         public static bool UI_NewGame_OnLoadFinish_PrePatch(UI_NewGame __instance)
         {
-            bool flag = !QuicklyCreateCharacterFrontend.bool_Toggle_Total;
-            bool result;
-            if (flag)
+            if (!QuicklyCreateCharacterFrontend.bool_Toggle_Total) return true;
+            if (!QuicklyCreateCharacterFrontend.bool_IsEnterNewGame) return true;
+
+
+            if (QuicklyCreateCharacterFrontend.emptyGo != null)
             {
-                result = true;
+                Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
             }
-            else
+            if (QuicklyCreateCharacterFrontend.UGUIGo != null)
             {
-                bool flag2 = !QuicklyCreateCharacterFrontend.bool_IsEnterNewGame;
-                if (flag2)
-                {
-                    result = true;
-                }
-                else
-                {
-                    bool flag3 = QuicklyCreateCharacterFrontend.emptyGo != null;
-                    if (flag3)
-                    {
-                        Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
-                    }
-                    bool flag4 = QuicklyCreateCharacterFrontend.UGUIGo != null;
-                    if (flag4)
-                    {
-                        Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
-                    }
-                    result = true;
-                }
+                Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
             }
-            return result;
+            return true;
         }
 
         // Token: 0x04000002 RID: 2

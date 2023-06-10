@@ -74,6 +74,7 @@
     <Compile Include="QuicklyCreateCharacter\CharacterDataController.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataTool.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataType.cs" />
+    <Compile Include="QuicklyCreateCharacter\GameDataBridgeConst.cs" />
     <Compile Include="QuicklyCreateCharacter\QuicklyCreateCharacterFrontend.cs" />
     <Compile Include="QuicklyCreateCharacter\RollAttributeWindow.cs" />
     <Compile Include="QuicklyCreateCharacter\UIController.cs" />

@@ -79,7 +79,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             subTitleGo.transform.localPosition = new Vector3(0f, 50f, 0f);
             GameObject blankLabelGo = UIFactory.GetBlankLabelGo();
             blankLabelGo.transform.SetParent(gameObject.transform, false);
-            blankLabelGo.transform.localPosition = new Vector3(100f, 50f, 0f);
+            blankLabelGo.transform.localPosition = new Vector3(120f, 50f, 0f);
             this._lifeGrowthLabelGo = blankLabelGo;
             for (int i = 0; i < 8; i++)
             {
@@ -118,7 +118,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             subTitleGo2.transform.localPosition = new Vector3(0f, 50f, 0f);
             GameObject blankLabelGo2 = UIFactory.GetBlankLabelGo();
             blankLabelGo2.transform.SetParent(gameObject2.transform, false);
-            blankLabelGo2.transform.localPosition = new Vector3(100f, 50f, 0f);
+            blankLabelGo2.transform.localPosition = new Vector3(120f, 50f, 0f);
             this._combatGrowthLabelGo = blankLabelGo2;
             for (int k = 0; k < 7; k++)
             {
@@ -162,7 +162,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             subTitleGo3.transform.localPosition = Vector3.zero;
             GameObject totalMedalGo = UIFactory.GetTotalMedalGo();
             totalMedalGo.transform.SetParent(gameObject3.transform, false);
-            totalMedalGo.transform.localPosition = new Vector3(100f, 20, 0f);
+            totalMedalGo.transform.localPosition = new Vector3(360f, 20, 0f);
             RectTransform component = totalMedalGo.GetComponent<RectTransform>();
             this.totalMedal = component;
             GameObject featureScrollGo = UIFactory.GetFeatureScrollGo();

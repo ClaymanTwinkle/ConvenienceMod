@@ -10,6 +10,7 @@ using GameData.Domains.Character.AvatarSystem;
 using GameData.Domains.Character.Creation;
 using GameData.Domains.Item;
 using GameData.GameDataBridge;
+using GameData.Serializer;
 using HarmonyLib;
 using Newtonsoft.Json;
 using TMPro;
@@ -30,7 +31,6 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             if (bool_IsGetCharacterData)
             {
                 this.SendTheCreationInfo();
-                base.Invoke("GetCharacterData", 0.5f);
             }
         }
 
@@ -63,25 +63,36 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000016 RID: 22 RVA: 0x0000302E File Offset: 0x0000122E
         public void SendTheCreationInfo()
         {
-            GameDataBridge.AddMethodCall<ProtagonistCreationInfo>(-1, 4, 0, this.protagonistCreationInfo);
+            if (_listenerId == -1)
+            {
+                _listenerId = GameDataBridge.RegisterListener(OnNotifyGameData);
+            }
+            GameDataBridge.AddMethodCall<ProtagonistCreationInfo>(_listenerId, 4, GameDataBridgeConst.MethodId, this.protagonistCreationInfo);
             this._bool_IsSendCreationInfo = true;
             this._bool_IsGetCharacterData = false;
         }
 
-        // Token: 0x06000017 RID: 23 RVA: 0x00003050 File Offset: 0x00001250
-        public void GetCharacterData()
+        private void OnNotifyGameData(List<NotificationWrapper> notifications)
         {
-            string @string;
-            using (MemoryMappedFile memoryMappedFile = MemoryMappedFile.OpenExisting("QuicklyCreateCharacterData"))
+            foreach (NotificationWrapper notification2 in notifications)
             {
-                using (MemoryMappedViewAccessor memoryMappedViewAccessor = memoryMappedFile.CreateViewAccessor())
+                Notification notification = notification2.Notification;
+                if (notification.Type == 1)
                 {
-                    byte[] array = new byte[memoryMappedViewAccessor.Capacity];
-                    memoryMappedViewAccessor.ReadArray<byte>(0L, array, 0, array.Length);
-                    @string = Encoding.Unicode.GetString(array);
+                    if (notification.DomainId == 4 && notification.MethodId == GameDataBridgeConst.MethodId)
+                    {
+                        string json = "{}";
+                        Serializer.Deserialize(notification2.DataPool, notification.ValueOffset, ref json);
+                        GetCharacterData(json);
+                    }
                 }
             }
-            this.characterDataList = JsonConvert.DeserializeObject<List<string>>(@string);
+        }
+
+        // Token: 0x06000017 RID: 23 RVA: 0x00003050 File Offset: 0x00001250
+        public void GetCharacterData(string json)
+        {
+            this.characterDataList = JsonConvert.DeserializeObject<List<string>>(json);
             this.characterDataDict = CharacterDataTool.CharacterDataListToDataDict(this.characterDataList);
             this.characterDataColorDict = CharacterDataTool.CharacterDataDictToColorDict(this.characterDataDict);
             this.characterDataNameDict = CharacterDataTool.CharacterDataDictToNameDict(this.characterDataDict);
@@ -93,8 +104,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000018 RID: 24 RVA: 0x00003134 File Offset: 0x00001334
         public void DoUpdate()
         {
-            bool flag = this.updateDataEvent != null;
-            if (flag)
+            if (this.updateDataEvent != null)
             {
                 this.updateDataEvent();
             }
@@ -126,5 +136,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
 
         // Token: 0x04000016 RID: 22
         private bool _bool_IsGetCharacterData = true;
+
+        private int _listenerId = -1;
     }
 }

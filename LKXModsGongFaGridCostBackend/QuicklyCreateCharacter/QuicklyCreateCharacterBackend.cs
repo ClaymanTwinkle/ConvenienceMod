@@ -18,6 +18,8 @@ using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
+using System.Diagnostics;
+using GameData.Domains.Character.Display;
 
 namespace ConvenienceBackend.QuicklyCreateCharacter
 {
@@ -30,12 +32,12 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             int dropdown_LifeSkillGrowthType = 0;
             int dropdown_CombatSkillGrowthType = 0;
             int dropdown_LifeSkillType = 0;
-            int slider_LifeSkillQualification = 60;
+            int slider_LifeSkillQualification = 0;
             int dropdown_CombatSkillType = 0;
-            int slider_CombatSkillQualification = 60;
+            int slider_CombatSkillQualification = 0;
             int dropdown_MainAttributeType = 0;
-            int slider_MainAttribute = 60;
-            int slider_RollCountLimit = 1500;
+            int slider_MainAttribute = 0;
+            int slider_RollCountLimit = 1;
             DomainManager.Mod.GetSetting(modIdStr, "Dropdown_LifeSkillGrowthType", ref dropdown_LifeSkillGrowthType);
             DomainManager.Mod.GetSetting(modIdStr, "Dropdown_CombatSkillGrowthType", ref dropdown_CombatSkillGrowthType);
             DomainManager.Mod.GetSetting(modIdStr, "Dropdown_LifeSkillType", ref dropdown_LifeSkillType);
@@ -102,29 +104,19 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(CharacterDomain), "CallMethod")]
         public static bool CharacterDomain_CallMethod_PrePatch(CharacterDomain __instance, int __result, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, DataContext context)
         {
-            bool flag = !QuicklyCreateCharacterBackend.bool_Toggle_Total;
-            bool result;
-            if (flag)
+            if(!QuicklyCreateCharacterBackend.bool_Toggle_Total) return true;
+
+            if (operation.DomainId == 4 && operation.MethodId == GameDataBridgeConst.MethodId && operation.ArgsCount == 1 && QuicklyCreateCharacterBackend.bool_IsEnterNewSave && !QuicklyCreateCharacterBackend.bool_IsCreatWorld)
             {
-                result = true;
+                int num = operation.ArgsOffset;
+                QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
+                num += Serializer.DeserializeDefault<ProtagonistCreationInfo>(argDataPool, num, ref QuicklyCreateCharacterBackend.protagonistCreationInfo);
+                __result = GameData.Serializer.Serializer.Serialize(QuicklyCreateCharacterBackend.GetCharacterDataByInfo(QuicklyCreateCharacterBackend.protagonistCreationInfo), returnDataPool);
+
+                return false;
             }
-            else
-            {
-                bool flag2 = operation.DomainId == 4 && operation.MethodId == 0 && operation.ArgsCount == 1 && QuicklyCreateCharacterBackend.bool_IsEnterNewSave && !QuicklyCreateCharacterBackend.bool_IsCreatWorld;
-                if (flag2)
-                {
-                    int num = operation.ArgsOffset;
-                    QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
-                    num += Serializer.DeserializeDefault<ProtagonistCreationInfo>(argDataPool, num, ref QuicklyCreateCharacterBackend.protagonistCreationInfo);
-                    QuicklyCreateCharacterBackend.GetCharacterDataByInfo(QuicklyCreateCharacterBackend.protagonistCreationInfo);
-                    result = false;
-                }
-                else
-                {
-                    result = true;
-                }
-            }
-            return result;
+
+            return true;
         }
 
         // Token: 0x06000007 RID: 7 RVA: 0x000022FC File Offset: 0x000004FC
@@ -132,11 +124,9 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(WorldDomain), "CallMethod")]
         public static void WorldDomain_CallMethod_PostPatch(WorldDomain __instance, int __result, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, DataContext context)
         {
-            bool flag = !QuicklyCreateCharacterBackend.bool_Toggle_Total;
-            if (!flag)
-            {
-                QuicklyCreateCharacterBackend.bool_IsCreatWorld = true;
-            }
+            if (!QuicklyCreateCharacterBackend.bool_Toggle_Total) return;
+
+            QuicklyCreateCharacterBackend.bool_IsCreatWorld = true;
         }
 
         // Token: 0x06000008 RID: 8 RVA: 0x00002320 File Offset: 0x00000520
@@ -144,28 +134,24 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         [HarmonyPatch(typeof(Character), "OfflineCreateProtagonist")]
         public static void Character_OfflineCreateProtagonist_PostPatch(Character __instance, Character.ProtagonistFeatureRelatedStatus __result, DataContext context, ProtagonistCreationInfo info)
         {
-            bool flag = !QuicklyCreateCharacterBackend.bool_Toggle_Total;
-            if (!flag)
+            if (!QuicklyCreateCharacterBackend.bool_Toggle_Total) return;
+
+            if (QuicklyCreateCharacterBackend.bool_IsEnterNewSave && QuicklyCreateCharacterBackend.bool_IsCreatWorld)
             {
-                bool flag2 = QuicklyCreateCharacterBackend.bool_IsEnterNewSave && QuicklyCreateCharacterBackend.bool_IsCreatWorld;
-                if (flag2)
+                QuicklyCreateCharacterBackend.OverwriteCharacterAttribute(__instance, __result);
+                QuicklyCreateCharacterBackend.bool_IsCreatWorld = false;
+                QuicklyCreateCharacterBackend.bool_IsEnterNewSave = false;
+                QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
+                QuicklyCreateCharacterBackend.characterData = null;
+                if (QuicklyCreateCharacterBackend.mappedFile != null)
                 {
-                    QuicklyCreateCharacterBackend.OverwriteCharacterAttribute(__instance, __result);
-                    QuicklyCreateCharacterBackend.bool_IsCreatWorld = false;
-                    QuicklyCreateCharacterBackend.bool_IsEnterNewSave = false;
-                    QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
-                    QuicklyCreateCharacterBackend.characterData = null;
-                    bool flag3 = QuicklyCreateCharacterBackend.mappedFile != null;
-                    if (flag3)
-                    {
-                        QuicklyCreateCharacterBackend.mappedFile.Dispose();
-                    }
+                    QuicklyCreateCharacterBackend.mappedFile.Dispose();
                 }
             }
         }
 
         // Token: 0x06000009 RID: 9 RVA: 0x00002390 File Offset: 0x00000590
-        public unsafe static void GetCharacterDataByInfo(ProtagonistCreationInfo info)
+        private unsafe static string GetCharacterDataByInfo(ProtagonistCreationInfo info)
         {
             bool flag = QuicklyCreateCharacterBackend.mappedFile != null;
             if (flag)
@@ -189,8 +175,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                     character = QuicklyCreateCharacterBackend.CreateTempCharacter(info, characterTemplateId, memberId, out statusValue);
                     flag3 = QuicklyCreateCharacterBackend.customizedInfo.CheckIsPassed(character);
                     num++;
-                    bool flag4 = num >= QuicklyCreateCharacterBackend.customizedInfo.rollCountLimit;
-                    if (flag4)
+                    if (num >= QuicklyCreateCharacterBackend.customizedInfo.rollCountLimit)
                     {
                         break;
                     }
@@ -207,9 +192,16 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             CombatSkillShorts combatSkill_ForDisplay = (CombatSkillShorts)traverse.Method("CalcCombatSkillQualifications", Array.Empty<object>()).GetValue();
             MainAttributes maxMainAttributes = character.GetMaxMainAttributes();
             Inventory inventory = character.GetInventory();
-            TempIteamData itemDataValue = new TempIteamData(inventory);
+            TempIteamData itemDataValue = new(inventory);
+
             QuicklyCreateCharacterBackend.characterData = new TempCharacterData(character, statusValue, lifeSkillQualificationGrowthType, combatSkillQualificationGrowthType, featureIds, lifeSkill__ForOverwrite, combatSkill_ForOverwrite, baseMainAttributes, lifeSkill__ForDisplay, combatSkill_ForDisplay, maxMainAttributes, itemDataValue);
-            QuicklyCreateCharacterBackend.TransferCharacterAttributeList();
+            string text = JsonSerializer.Serialize<List<string>>(QuicklyCreateCharacterBackend.characterData.displayList, new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+
+            return text;
+            // QuicklyCreateCharacterBackend.TransferCharacterAttributeList();
         }
 
         // Token: 0x0600000A RID: 10 RVA: 0x00002534 File Offset: 0x00000734
@@ -288,7 +280,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         public static bool bool_IsCreatWorld = false;
 
         // Token: 0x04000007 RID: 7
-        public static ProtagonistCreationInfo protagonistCreationInfo = new ProtagonistCreationInfo();
+        public static ProtagonistCreationInfo protagonistCreationInfo = new();
 
         // Token: 0x04000008 RID: 8
         public static TempCharacterData characterData;
