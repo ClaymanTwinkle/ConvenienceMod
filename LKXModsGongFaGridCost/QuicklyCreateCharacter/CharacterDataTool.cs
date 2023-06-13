@@ -616,6 +616,15 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             "守心"
         };
 
+        public static string[] GeneralPrinciplesNameArray = new string[]
+        {
+            "承",
+            "合",
+            "解",
+            "异",
+            "独"
+        };
+
         // Token: 0x0200000C RID: 12
         // (Invoke) Token: 0x0600005B RID: 91
         public delegate string GetColorFunc(string argString);

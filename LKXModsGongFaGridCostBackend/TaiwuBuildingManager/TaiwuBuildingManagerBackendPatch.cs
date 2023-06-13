@@ -101,11 +101,11 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             if (operation.MethodId == GameDataBridgeConst.MethodId)
             {
                 int num = operation.ArgsOffset;
-                ushort num2 = 0;
-                num += Serializer.Deserialize(argDataPool, num, ref num2);
+                ushort flag = 0;
+                num += Serializer.Deserialize(argDataPool, num, ref flag);
                 if (operation.ArgsCount == 2)
                 {
-                    switch (num2)
+                    switch (flag)
                     {
                         case GameDataBridgeConst.Flag.Flag_Load_Settings:
                             {

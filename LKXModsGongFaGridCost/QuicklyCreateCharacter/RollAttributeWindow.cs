@@ -8,6 +8,11 @@ using UICommon.Character.Elements;
 using UICommon.Character;
 using UnityEngine.Events;
 using UnityEngine;
+using ConvenienceFrontend.TaiwuBuildingManager;
+using FrameWork;
+using DG.Tweening;
+using ConvenienceFrontend.CombatStrategy;
+using FrameWork.ModSystem;
 
 namespace ConvenienceFrontend.QuicklyCreateCharacter
 {
@@ -42,6 +47,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             GameObject newUIMaskGo = UIFactory.GetNewUIMaskGo(new Color(0f, 0f, 0f, 0.8f));
             newUIMaskGo.transform.SetParent(this._layer.transform, false);
             newUIMaskGo.name = "customUIMask";
+            newUIMaskGo.SetActive(false);
             this._maskGo = newUIMaskGo;
             GameObject newBackgroundContainerGoA = UIFactory.GetNewBackgroundContainerGoA();
             this._backgroundGo = newBackgroundContainerGoA;
@@ -63,10 +69,26 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             this._closeButton.transform.SetParent(newBackgroundContainerGoA.transform, false);
             this._closeButton.transform.localPosition = this._windowSize * 0.5f;
             this._closeButton.name = "customCloseBtn";
-            this._rollButton = UIFactory.GetRollButtonGo("重置属性", new UnityAction(this.characterDataController.DoRollCharacterData));
+            this._rollButton = UIFactory.GetRollButtonGo("开始摇属性", new UnityAction(() => {
+                if (characterDataController.IsRolling)
+                {
+                    this.characterDataController.StopRollCharacterData();
+                }
+                else
+                {
+                    this.characterDataController.StartRollCharacterData();
+                }
+            }));
             this._rollButton.transform.SetParent(newBackgroundContainerGoA.transform, false);
             this._rollButton.transform.localPosition = new Vector2(0f, -this._windowSize.y * 0.6f);
             this._rollButton.name = "customRollBtn";
+
+            var settingButton = GameObjectCreationUtils.UGUICreateCButton(newBackgroundContainerGoA.transform, new Vector2(200f, -this._windowSize.y * 0.6f), new Vector2(100, 40), 18, "设置");
+            settingButton.ClearAndAddListener(delegate() { 
+                ShowConfigPanel();
+            });
+            this._settingsButton = settingButton.gameObject;
+
             GameObject newBackgroundContainerGoB = UIFactory.GetNewBackgroundContainerGoB();
             newBackgroundContainerGoB.transform.SetParent(this._maskGo.transform, false);
             newBackgroundContainerGoB.GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 400f);
@@ -86,8 +108,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                 GameObject lifeQulificationGo = UIFactory.GetLifeQulificationGo(i);
                 lifeQulificationGo.transform.SetParent(gameObject.transform, false);
                 this.lifeQulificationContainerDict.Add(i, new RollAttributeWindow.QulificationContainer(CharacterDataTool.LifeSkillNameArray[i].ToString(), lifeQulificationGo));
-                bool flag = i > 0;
-                if (flag)
+                if (i > 0)
                 {
                     lifeQulificationGo.transform.localPosition = this.lifeQulificationContainerDict[i - 1].Go.transform.localPosition + this._horizontalOffset;
                 }
@@ -218,6 +239,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000031 RID: 49 RVA: 0x00004F4D File Offset: 0x0000314D
         private void UpdateData()
         {
+            this.UpdateRollButtonText();
             this.SetSkillGrowthValue();
             this.SetLifeQualificationValue();
             this.SetCombatQualificationValue();
@@ -228,11 +250,34 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             this.SetCombatSkillBookValue();
         }
 
+        private void UpdateRollButtonText()
+        {
+            if (_rollButton != null)
+            {
+                var rollButtonText = _rollButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (rollButtonText != null)
+                {
+                    if (characterDataController.IsRolling)
+                    {
+                        rollButtonText.text = "停止摇属性";
+                    }
+                    else
+                    {
+                        rollButtonText.text = "开始摇属性";
+                    }
+                }
+            }
+
+            if (_settingsButton != null)
+            {
+                _settingsButton.SetActive(!characterDataController.IsRolling);
+            }
+        }
+
         // Token: 0x06000032 RID: 50 RVA: 0x00004F88 File Offset: 0x00003188
         private void SetLifeQualificationValue()
         {
-            bool flag = this.lifeQulificationContainerDict.Count == 0;
-            if (!flag)
+            if (this.lifeQulificationContainerDict.Count > 0)
             {
                 foreach (int num in this.lifeQulificationContainerDict.Keys)
                 {
@@ -337,14 +382,13 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             AttributeItem[] array4 = (AttributeItem[])traverse.Field("_defHitAttributeItems").GetValue();
             AttributeItem[] array5 = (AttributeItem[])traverse.Field("_defPenetrabilityItems").GetValue();
             AttributeSlider[] array6 = (AttributeSlider[])traverse2.Field("_attributeSliders").GetValue();
-            bool flag = this.characterDataController.characterDataShortDict.ContainsKey(CharacterDataType.MainAttribute);
             short[] array7;
             short[] array8;
             short[] array9;
             short[] array10;
             short[] array11;
             short[] array12;
-            if (flag)
+            if (this.characterDataController.characterDataShortDict.ContainsKey(CharacterDataType.MainAttribute))
             {
                 array7 = this.characterDataController.characterDataShortDict[CharacterDataType.MainAttribute].ToArray();
                 array8 = this.characterDataController.characterDataShortDict[CharacterDataType.AtkHitAttribute].ToArray();
@@ -427,6 +471,14 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             }
         }
 
+        private void ShowConfigPanel()
+        {
+            var element = UI_RollFilter.GetUI();
+            ArgumentBox box = EasyPool.Get<ArgumentBox>();
+            element.SetOnInitArgs(box);
+            UIManager.Instance.ShowUI(element);
+        }
+
         // Token: 0x0600003A RID: 58 RVA: 0x00005858 File Offset: 0x00003A58
         private void ReSetPosition(float hight)
         {
@@ -437,12 +489,20 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         public void Open()
         {
             this._maskGo.SetActive(true);
-            this.UpdateData();
+            if (characterDataController.protagonistCreationInfo == null)
+            {
+                characterDataController.DoRollCharacterData();
+            }
+            else 
+            {
+                this.UpdateData();
+            }
         }
 
         // Token: 0x0600003C RID: 60 RVA: 0x000058C8 File Offset: 0x00003AC8
         public void Close()
         {
+            this.characterDataController.StopRollCharacterData();
             this._maskGo.SetActive(false);
         }
 
@@ -518,6 +578,8 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
 
         // Token: 0x04000044 RID: 68
         private GameObject _rollButton;
+
+        private GameObject _settingsButton;
 
         // Token: 0x04000045 RID: 69
         private GameObject _combatGrowthLabelGo;

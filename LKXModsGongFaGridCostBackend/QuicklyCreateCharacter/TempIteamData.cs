@@ -15,40 +15,35 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         // Token: 0x06000013 RID: 19 RVA: 0x00003070 File Offset: 0x00001270
         public TempIteamData(Inventory inventory)
         {
-            bool flag = inventory == null;
-            if (!flag)
+            if (inventory == null) return;
+
+            foreach (ItemKey itemKey in inventory.Items.Keys)
             {
-                foreach (ItemKey itemKey in inventory.Items.Keys)
+                ItemBase baseItem = DomainManager.Item.GetBaseItem(itemKey);
+                if (baseItem.GetItemSubType() == 1000)
                 {
-                    ItemBase baseItem = DomainManager.Item.GetBaseItem(itemKey);
-                    bool flag2 = baseItem.GetItemSubType() == 1000;
-                    if (flag2)
-                    {
-                        this.lifeSkillBook = (SkillBook)baseItem;
-                    }
-                    bool flag3 = baseItem.GetItemSubType() == 1001;
-                    if (flag3)
-                    {
-                        this.combatSkillBook = (SkillBook)baseItem;
-                    }
-                    this.itemList.Add(baseItem);
+                    this.lifeSkillBook = (SkillBook)baseItem;
                 }
-                this.Count = this.itemList.Count;
-                bool flag4 = this.combatSkillBook != null;
-                if (flag4)
+                if (baseItem.GetItemSubType() == 1001)
                 {
-                    this.combatSkillBookPageTypes = new List<int>();
-                    byte pageTypes = this.combatSkillBook.GetPageTypes();
-                    BitArray bitArray = new BitArray((int)pageTypes);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 1) == 1) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 2) == 2) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 4) == 4) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 8) == 8) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 16) == 16) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 32) == 32) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 64) == 64) ? 1 : 0);
-                    this.combatSkillBookPageTypes.Add(((pageTypes & 128) == 128) ? 1 : 0);
+                    this.combatSkillBook = (SkillBook)baseItem;
                 }
+                this.itemList.Add(baseItem);
+            }
+            this.Count = this.itemList.Count;
+            if (this.combatSkillBook != null)
+            {
+                this.combatSkillBookPageTypes = new List<int>();
+                byte pageTypes = this.combatSkillBook.GetPageTypes();
+                BitArray bitArray = new BitArray((int)pageTypes);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 1) == 1) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 2) == 2) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 4) == 4) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 8) == 8) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 16) == 16) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 32) == 32) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 64) == 64) ? 1 : 0);
+                this.combatSkillBookPageTypes.Add(((pageTypes & 128) == 128) ? 1 : 0);
             }
         }
 

@@ -74,12 +74,15 @@
     <Compile Include="QuicklyCreateCharacter\CharacterDataController.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataTool.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataType.cs" />
+    <Compile Include="QuicklyCreateCharacter\Data\RollAttributeFilter.cs" />
+    <Compile Include="QuicklyCreateCharacter\Data\RollFilterConstant.cs" />
     <Compile Include="QuicklyCreateCharacter\GameDataBridgeConst.cs" />
     <Compile Include="QuicklyCreateCharacter\QuicklyCreateCharacterFrontend.cs" />
     <Compile Include="QuicklyCreateCharacter\RollAttributeWindow.cs" />
     <Compile Include="QuicklyCreateCharacter\UIController.cs" />
     <Compile Include="QuicklyCreateCharacter\UIFactory.cs" />
     <Compile Include="QuicklyCreateCharacter\UITool.cs" />
+    <Compile Include="QuicklyCreateCharacter\UI_RollFilter.cs" />
     <Compile Include="TaiwuBuildingManager\GameDataBridgeConst.cs" />
     <Compile Include="TaiwuBuildingManager\TaiwuBuildingManagerFrontPatch.cs" />
     <Compile Include="TaiwuBuildingManager\UI_TaiwuBuildingManager.cs" />

@@ -17,8 +17,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
     {
         public override void OnModSettingUpdate(string modIdStr)
         {
-            ModManager.GetSetting(modIdStr, "Toggle_Total", ref QuicklyCreateCharacterFrontend.bool_Toggle_Total);
-            QuicklyCreateCharacterFrontend.bool_Toggle_Total = true;
+            ModManager.GetSetting(modIdStr, "Toggle_SLRole", ref QuicklyCreateCharacterFrontend.bool_Toggle_Total);
         }
 
         public override void Initialize(Harmony harmony, string modIdStr)
@@ -95,7 +94,14 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
 
             if (QuicklyCreateCharacterFrontend.bool_IsEnterNewGame)
             {
-                QuicklyCreateCharacterFrontend.dataController_Instance.DoRollCharacterData();
+                try
+                {
+                    QuicklyCreateCharacterFrontend.dataController_Instance.DoRollCharacterData();
+                }
+                catch (System.Exception ex)
+                { 
+                    
+                }
             }
         }
 

@@ -311,6 +311,25 @@ namespace ConvenienceFrontend.CombatStrategy
             return componentInChildren;
         }
 
+        public static TMP_InputField CreateInputField(Transform parent, Vector2 anchoredPos, Vector2 sizeDelta, string name = "InputField", string text = "Enter Text...", string hint = "", string label = "")
+        {
+            var newParent = parent;
+            if (!label.Equals(""))
+            {
+                newParent = CreateRow(parent);
+                GetFreeLabel(newParent, label);
+            }
+
+            var inputField = GameObjectCreationUtils.UGUICreateTMPInputField(newParent, anchoredPos, sizeDelta, 18, name, text);
+            inputField.text = text;
+            inputField.gameObject.name = name;
+
+            TextMeshProUGUI placeholder = (TextMeshProUGUI)inputField.placeholder;
+            placeholder.text = hint;
+
+            return inputField;
+        }
+
         // Token: 0x06000030 RID: 48 RVA: 0x00003EF4 File Offset: 0x000020F4
         public static CToggle CreateToggle(Transform parent, string name, string label)
         {
@@ -455,6 +474,26 @@ namespace ConvenienceFrontend.CombatStrategy
             GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.dropDown, parent);
             gameObject.SetActive(true);
             return gameObject;
+        }
+
+        public static CDropdown CreateCDropDown(Transform parent, float width, string label = "", List<string> options = null)
+        {
+            var newParent = parent;
+            if (!label.Equals(""))
+            {
+                newParent = CreateRow(parent);
+                GetFreeLabel(newParent, label);
+            }
+
+            GameObject gameObject = GameObjectCreationUtils.InstantiateUIElement(newParent, "CommonDropdown");
+            Extentions.SetWidth(gameObject.GetComponent<RectTransform>(), width);
+            CDropdown dropdown = gameObject.GetComponent<CDropdown>();
+            if (options != null)
+            {
+                dropdown.AddOptions(options);
+            }
+            
+            return dropdown;
         }
 
         // Token: 0x06000037 RID: 55 RVA: 0x00004384 File Offset: 0x00002584
