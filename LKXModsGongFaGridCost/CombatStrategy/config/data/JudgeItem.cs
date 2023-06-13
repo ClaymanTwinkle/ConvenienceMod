@@ -27,9 +27,9 @@ namespace ConvenienceFrontend.CombatStrategy
         WeaponType,
 
         /// <summary>
-        /// 施展中的技能类型
+        /// 施展的动作
         /// </summary>
-        PreparingSkillType,
+        PreparingAction,
         
         /// <summary>
         /// 身法值

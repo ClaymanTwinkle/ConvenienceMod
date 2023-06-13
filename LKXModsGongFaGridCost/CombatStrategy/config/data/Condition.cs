@@ -66,7 +66,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 stringBuilder.Append(StrategyConst.WeaponTypeOptions[value]);
             }
-            else if (judgeItem == JudgeItem.PreparingSkillType)
+            else if (judgeItem == JudgeItem.PreparingAction)
             {
                 stringBuilder.Append(StrategyConst.SkillTypeOptions[value]);
             }

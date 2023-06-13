@@ -15,7 +15,7 @@ namespace ConvenienceBackend.CombatStrategy
         // Token: 0x04000008 RID: 8
         WeaponType,
         // Token: 0x04000009 RID: 9
-        PreparingSkillType,
+        PreparingAction,
         // Token: 0x0400000A RID: 10
         SkillMobility,
         // Token: 0x0400000B RID: 11

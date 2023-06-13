@@ -10,6 +10,7 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
+using GameData.Domains.SpecialEffect.CombatSkill.Kongsangpai.Throw;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
@@ -539,8 +540,29 @@ namespace ConvenienceBackend.CombatStrategy
                     case JudgeItem.WeaponType:
                         meetTheConditions = CheckCondition((int)Config.Weapon.Instance[DomainManager.Item.GetElement_Weapons(instance.GetUsingWeaponKey(combatCharacter).Id).GetTemplateId()].ItemSubType, condition);
                         break;
-                    case JudgeItem.PreparingSkillType:
-                        meetTheConditions = (combatCharacter.GetPreparingSkillId() >= 0 && CheckCondition((int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1), condition));
+                    case JudgeItem.PreparingAction:
+                        if (condition.value < 3)
+                        {
+                            meetTheConditions = (combatCharacter.GetPreparingSkillId() >= 0 && CheckCondition((int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1), condition));
+                        }
+                        else
+                        {
+                            switch (condition.value)
+                            {
+                                case 3:
+                                    // 治疗
+                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 0;
+                                    break;
+                                case 4:
+                                    // 解毒
+                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 1;
+                                    break;
+                                case 5:
+                                    // 逃跑
+                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 2;
+                                    break;
+                            }
+                        }
                         break;
                     case JudgeItem.SkillMobility:
                         meetTheConditions = CheckCondition((int)(combatCharacter.GetSkillMobility() * 1000 / GlobalConfig.Instance.AgileSkillMobility), condition);

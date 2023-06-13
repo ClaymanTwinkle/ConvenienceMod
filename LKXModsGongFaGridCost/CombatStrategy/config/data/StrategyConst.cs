@@ -84,7 +84,10 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             "摧破功法",
             "轻灵功法",
-            "护体功法"
+            "护体功法",
+            "治疗",
+            "解毒",
+            "逃跑"
         };
 
         // Token: 0x04000034 RID: 52
