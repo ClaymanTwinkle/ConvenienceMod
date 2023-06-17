@@ -9,6 +9,7 @@ using GameData.Domains.Item;
 using GameData.Domains;
 using GameData.Utilities;
 using HarmonyLib;
+using GameData.Domains.Taiwu.Profession;
 
 namespace ConvenienceBackend.BetterArmor
 {
@@ -24,15 +25,12 @@ namespace ConvenienceBackend.BetterArmor
             if (!_enableMod) return;
             base.Initialize(harmony, modIdStr);
 
-            AdaptableLog.Info("更平衡的装备 后端 初始化开始");
-            BetterArmor betterArmor = new BetterArmor(this.showModification);
-            betterArmor.Modify();
-            AdaptableLog.Info("更平衡的装备 后端 初始化结束");
+            // BetterArmor betterArmor = new BetterArmor(this.showModification);
+            // betterArmor.Modify();
         }
 
         public override void Dispose()
         {
-            AdaptableLog.Info("更平衡的装备 后端 卸载");
         }
 
         public override void OnModSettingUpdate(string modIdStr)
@@ -41,7 +39,7 @@ namespace ConvenienceBackend.BetterArmor
         }
 
         /// <summary>
-        /// 获取命中因子
+        /// 精致武器-获取命中因子
         /// </summary>
         /// <param name="__result"></param>
         /// <param name="__instance"></param>
@@ -56,8 +54,7 @@ namespace ConvenienceBackend.BetterArmor
             if (!_enableMod) return __result;
 
             HitOrAvoidShorts baseHitFactors = __instance.GetBaseHitFactors();
-            bool flag = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 RefiningEffects refinedEffects = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey());
                 for (int i = 0; i < 4; i++)
@@ -70,7 +67,7 @@ namespace ConvenienceBackend.BetterArmor
         }
 
         /// <summary>
-        /// 获取闪避因子
+        /// 精致护具-获取闪避因子
         /// </summary>
         /// <param name="__result"></param>
         /// <param name="__instance"></param>
@@ -85,8 +82,7 @@ namespace ConvenienceBackend.BetterArmor
             if (!_enableMod) return __result;
 
             HitOrAvoidShorts baseAvoidFactors = __instance.GetBaseAvoidFactors();
-            bool flag = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 RefiningEffects refinedEffects = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey());
                 for (int i = 0; i < 4; i++)
@@ -98,7 +94,12 @@ namespace ConvenienceBackend.BetterArmor
             return baseAvoidFactors;
         }
 
-        // Token: 0x0600001C RID: 28 RVA: 0x00003F14 File Offset: 0x00002114
+        /// <summary>
+        /// 精致护具-计算攻击
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Armor), "CalcEquipmentAttack")]
         private static short CalcArmorEquipmentAttack_Postfix(short __result, GameData.Domains.Item.Armor __instance)
@@ -108,22 +109,26 @@ namespace ConvenienceBackend.BetterArmor
             int materialResourceBonusValuePercentage = ItemTemplateHelper.GetMaterialResourceBonusValuePercentage(__instance.GetItemType(), __instance.GetTemplateId(), 0, __instance.GetMaterialResources());
             int num = (int)__instance.GetBaseEquipmentAttack() * materialResourceBonusValuePercentage / 100;
             int equipmentEffectId = (int)__instance.GetEquipmentEffectId();
-            bool flag = equipmentEffectId >= 0;
-            if (flag)
+            if (equipmentEffectId >= 0)
             {
                 EquipmentEffectItem equipmentEffectItem = EquipmentEffect.Instance[equipmentEffectId];
                 num += num * (int)equipmentEffectItem.EquipmentAttackChange / 100;
             }
-            bool flag2 = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag2)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 int armorPropertyBonus = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey()).GetArmorPropertyBonus(ERefiningEffectArmorType.EquipmentAttack);
+                armorPropertyBonus = ProfessionSkillHandle.GetRefineBonus_CraftSkill_2(armorPropertyBonus, __instance.GetEquippedCharId());
                 num += armorPropertyBonus * 10;
             }
             return (short)num;
         }
 
-        // Token: 0x0600001D RID: 29 RVA: 0x00003FB8 File Offset: 0x000021B8
+        /// <summary>
+        /// 精致护具-计算防御
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Armor), "CalcEquipmentDefense")]
         private static short CalcArmorEquipmentDefense_Postfix(short __result, GameData.Domains.Item.Armor __instance)
@@ -133,23 +138,22 @@ namespace ConvenienceBackend.BetterArmor
             int materialResourceBonusValuePercentage = ItemTemplateHelper.GetMaterialResourceBonusValuePercentage(__instance.GetItemType(), __instance.GetTemplateId(), 1, __instance.GetMaterialResources());
             int num = (int)__instance.GetBaseEquipmentDefense() * materialResourceBonusValuePercentage / 100;
             int equipmentEffectId = (int)__instance.GetEquipmentEffectId();
-            bool flag = equipmentEffectId >= 0;
-            if (flag)
+            if (equipmentEffectId >= 0)
             {
                 EquipmentEffectItem equipmentEffectItem = EquipmentEffect.Instance[equipmentEffectId];
                 num += num * (int)equipmentEffectItem.EquipmentDefenseChange / 100;
             }
-            bool flag2 = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag2)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 int armorPropertyBonus = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey()).GetArmorPropertyBonus(ERefiningEffectArmorType.EquipmentDefense);
+                armorPropertyBonus = ProfessionSkillHandle.GetRefineBonus_CraftSkill_2(armorPropertyBonus, __instance.GetEquippedCharId());
                 num += armorPropertyBonus * 10;
             }
             return (short)num;
         }
 
         /// <summary>
-        /// 计算攻击
+        /// 精致武器-计算攻击
         /// </summary>
         /// <param name="__result"></param>
         /// <param name="__instance"></param>
@@ -163,23 +167,22 @@ namespace ConvenienceBackend.BetterArmor
             int materialResourceBonusValuePercentage = ItemTemplateHelper.GetMaterialResourceBonusValuePercentage(__instance.GetItemType(), __instance.GetTemplateId(), 0, __instance.GetMaterialResources());
             int num = (int)__instance.GetBaseEquipmentAttack() * materialResourceBonusValuePercentage / 100;
             int equipmentEffectId = (int)__instance.GetEquipmentEffectId();
-            bool flag = equipmentEffectId >= 0;
-            if (flag)
+            if (equipmentEffectId >= 0)
             {
                 EquipmentEffectItem equipmentEffectItem = EquipmentEffect.Instance[equipmentEffectId];
                 num += num * (int)equipmentEffectItem.EquipmentAttackChange / 100;
             }
-            bool flag2 = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag2)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 int weaponPropertyBonus = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey()).GetWeaponPropertyBonus(ERefiningEffectWeaponType.EquipmentAttack);
+                weaponPropertyBonus = ProfessionSkillHandle.GetRefineBonus_CraftSkill_2(weaponPropertyBonus, __instance.GetEquippedCharId());
                 num += weaponPropertyBonus * 10;
             }
             return (short)num;
         }
 
         /// <summary>
-        /// 计算防御
+        /// 精致武器-计算防御
         /// </summary>
         /// <param name="__result"></param>
         /// <param name="__instance"></param>
@@ -201,6 +204,7 @@ namespace ConvenienceBackend.BetterArmor
             if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 int weaponPropertyBonus = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey()).GetWeaponPropertyBonus(ERefiningEffectWeaponType.EquipmentDefense);
+                weaponPropertyBonus = ProfessionSkillHandle.GetRefineBonus_CraftSkill_2(weaponPropertyBonus, __instance.GetEquippedCharId());
                 num += weaponPropertyBonus * 10;
             }
             return (short)num;

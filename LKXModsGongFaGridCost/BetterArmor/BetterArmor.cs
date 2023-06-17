@@ -231,88 +231,79 @@ namespace ConvenienceFrontend.BetterArmor
                 }
                 int num3 = this.outPercentage[num];
                 int num4 = this.inPercentage[num];
-                bool flag3 = makeItemSubType == 124 || makeItemSubType == 138 || makeItemSubType == 153 || makeItemSubType == 168;
-                if (flag3)
+                if (makeItemSubType == 124 || makeItemSubType == 138 || makeItemSubType == 153 || makeItemSubType == 168)
                 {
                     num3 += 50;
                 }
-                bool flag4 = makeItemSubType == 131 || makeItemSubType == 145 || makeItemSubType == 161 || makeItemSubType == 175;
-                if (flag4)
+                if (makeItemSubType == 131 || makeItemSubType == 145 || makeItemSubType == 161 || makeItemSubType == 175)
                 {
                     num4 += 50;
                 }
-                bool flag5 = makeItemSubType == 147 || makeItemSubType == 155;
-                if (flag5)
+                if (makeItemSubType == 147 || makeItemSubType == 155)
                 {
                     num3 -= 25;
                     num4 += 25;
                 }
-                int num5 = num2 * num3 / 100;
-                int num6 = num2 * num4 / 100;
-                int num7 = this.calcReduction(num5, makeItemSubType);
-                int num8 = this.calcReduction(num6, makeItemSubType);
-                bool flag6 = item.ItemSubType == 101;
-                if (flag6)
+                int yutiValue = num2 * num3 / 100;
+                int yuqiValue = num2 * num4 / 100;
+                int waishangjianmianValue = this.calcReduction(yutiValue, makeItemSubType);
+                int neishangjianmianValue = this.calcReduction(yuqiValue, makeItemSubType);
+                if (item.ItemSubType == 101)
                 {
-                    num5 += num5 / 2;
-                    num6 += num6 / 2;
+                    yutiValue += yutiValue / 2;
+                    yuqiValue += yuqiValue / 2;
                 }
-                OuterAndInnerShorts outerAndInnerShorts = new OuterAndInnerShorts((short)num5, (short)num6);
-                text += this.descGenerator("御体", (int)item.BasePenetrationResistFactors.Outer, num5, true);
-                text += this.descGenerator("御气", (int)item.BasePenetrationResistFactors.Inner, num6, true);
+                OuterAndInnerShorts outerAndInnerShorts = new OuterAndInnerShorts((short)yutiValue, (short)yuqiValue);
+                text += this.descGenerator("御体", (int)item.BasePenetrationResistFactors.Outer, yutiValue, true);
+                text += this.descGenerator("御气", (int)item.BasePenetrationResistFactors.Inner, yuqiValue, true);
                 Traverse.Create(item).Field("BasePenetrationResistFactors").SetValue(outerAndInnerShorts);
-                OuterAndInnerShorts outerAndInnerShorts2 = new OuterAndInnerShorts((short)num7, (short)num8);
-                text += this.descGenerator("外伤减免", (int)item.InjuryEffectLevelReduction.Outer, num7, true);
-                text += this.descGenerator("内伤减免", (int)item.InjuryEffectLevelReduction.Inner, num8, true);
+                OuterAndInnerShorts outerAndInnerShorts2 = new OuterAndInnerShorts((short)waishangjianmianValue, (short)neishangjianmianValue);
+                text += this.descGenerator("外伤减免", (int)item.InjuryEffectLevelReduction.Outer, waishangjianmianValue, true);
+                text += this.descGenerator("内伤减免", (int)item.InjuryEffectLevelReduction.Inner, neishangjianmianValue, true);
                 Traverse.Create(item).Field("InjuryEffectLevelReduction").SetValue(outerAndInnerShorts2);
-                int num9 = this.baseDefense[num] + this.deltaDefense[num] * grade;
-                bool flag7 = item.ItemSubType == 101;
-                if (flag7)
+
+                int jianrenValue = this.baseDefense[num] + this.deltaDefense[num] * grade;
+                if (item.ItemSubType == 101)
                 {
-                    num9 += num9 / 2;
+                    jianrenValue += jianrenValue / 2;
                 }
-                text += this.descGenerator("坚韧", (int)item.BaseEquipmentDefense, num9, true);
-                Traverse.Create(item).Field("BaseEquipmentDefense").SetValue((short)num9);
-                int num10 = this.baseAttack[num] + this.deltaAttack[num] * grade;
-                bool flag8 = item.ItemSubType == 101;
-                if (flag8)
+                text += this.descGenerator("坚韧", (int)item.BaseEquipmentDefense, jianrenValue, true);
+                Traverse.Create(item).Field("BaseEquipmentDefense").SetValue((short)jianrenValue);
+                int porenValue = this.baseAttack[num] + this.deltaAttack[num] * grade;
+                if (item.ItemSubType == 101)
                 {
-                    num10 += num10 / 2;
+                    porenValue += porenValue / 2;
                 }
-                text += this.descGenerator("破刃", (int)item.BaseEquipmentAttack, num10, true);
-                Traverse.Create(item).Field("BaseEquipmentAttack").SetValue((short)num10);
-                int num11 = this.baseWeight[num] + this.deltaWeight[num] * grade;
-                bool flag9 = item.ItemSubType == 101;
-                if (flag9)
+                text += this.descGenerator("破刃", (int)item.BaseEquipmentAttack, porenValue, true);
+                Traverse.Create(item).Field("BaseEquipmentAttack").SetValue((short)porenValue);
+                int weightValue = this.baseWeight[num] + this.deltaWeight[num] * grade;
+                if (item.ItemSubType == 101)
                 {
-                    num11 += this.chestWeight[num];
+                    weightValue += this.chestWeight[num];
                 }
-                text += this.descGenerator("重量", item.BaseWeight, num11, true);
-                Traverse.Create(item).Field("BaseWeight").SetValue(num11);
+                text += this.descGenerator("重量", item.BaseWeight, weightValue, true);
+                Traverse.Create(item).Field("BaseWeight").SetValue(weightValue);
+
                 int num12 = 20 + grade * 5;
-                bool flag10 = num % 4 == 1;
-                if (flag10)
+                if (num % 4 == 1)
                 {
                     num12 += 5;
                 }
                 else
                 {
-                    bool flag11 = num % 4 == 3;
-                    if (flag11)
+                    if (num % 4 == 3)
                     {
                         num12 += 10;
                     }
                     else
                     {
-                        bool flag12 = num % 4 == 2;
-                        if (flag12)
+                        if (num % 4 == 2)
                         {
                             num12 += 15;
                         }
                     }
                 }
-                bool flag13 = item.ItemSubType == 101;
-                if (flag13)
+                if (item.ItemSubType == 101)
                 {
                     num12 += 10;
                 }
@@ -323,8 +314,7 @@ namespace ConvenienceFrontend.BetterArmor
                     list.Add(new PropertyAndValue(item.RequiredCharacterProperties[i].PropertyId, (short)num12));
                 }
                 Traverse.Create(item).Field("RequiredCharacterProperties").SetValue(list);
-                bool flag14 = !this.showModification;
-                if (flag14)
+                if (!this.showModification)
                 {
                     text += item.Desc;
                 }
