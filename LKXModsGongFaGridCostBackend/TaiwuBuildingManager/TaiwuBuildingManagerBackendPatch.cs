@@ -79,6 +79,12 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         }
 
 
+        public override void OnConfigUpdate(Dictionary<string, object> config)
+        {
+            base.OnConfigUpdate(config);
+            InitConfig(config);
+        }
+
         private static void InitConfig(Dictionary<string, System.Object> config)
         {
             AutoCollectResourcesHelper.UpdateConfig(config);
@@ -107,23 +113,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 {
                     switch (flag)
                     {
-                        case GameDataBridgeConst.Flag.Flag_Load_Settings:
-                            {
-                                string json = null;
-                                Serializer.Deserialize(argDataPool, num, ref json);
-                                try
-                                {
-                                    if (json != null)
-                                    {
-                                        InitConfig(JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json));
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    AdaptableLog.Warning("TaiwuBuildingManager Backend: Deserialize settings Json Failed:" + ex.Message, false);
-                                }
-                                break;
-                            }
                         case GameDataBridgeConst.Flag.Flag_Assign_Jobs:
                             {
                                 string text = null;
@@ -203,7 +192,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // 取消外出收集资源
             AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
-
         }
     }
 }

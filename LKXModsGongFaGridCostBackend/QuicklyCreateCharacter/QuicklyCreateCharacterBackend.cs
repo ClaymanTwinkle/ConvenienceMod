@@ -14,6 +14,7 @@ using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 
 namespace ConvenienceBackend.QuicklyCreateCharacter
 {
@@ -50,6 +51,12 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             QuicklyCreateCharacterBackend.bool_IsEnterNewSave = false;
         }
 
+        public override void OnConfigUpdate(Dictionary<string, object> config)
+        {
+            base.OnConfigUpdate(config);
+            _keepGoodResult = config.GetTypedValue<bool>("Toggle_KeepGoodResult");
+        }
+
         // Token: 0x06000006 RID: 6 RVA: 0x00002278 File Offset: 0x00000478
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CharacterDomain), "CallMethod")]
@@ -68,9 +75,18 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                     {
                         case GameDataBridgeConst.Flag.Flag_RollCharacter:
                             {
+                                KeyValuePair<bool, ProtagonistCreationInfo> result = default;
+
                                 QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
-                                num += Serializer.DeserializeDefault<ProtagonistCreationInfo>(argDataPool, num, ref QuicklyCreateCharacterBackend.protagonistCreationInfo);
-                                __result = GameData.Serializer.Serializer.Serialize(QuicklyCreateCharacterBackend.GetCharacterDataByInfo(QuicklyCreateCharacterBackend.protagonistCreationInfo), returnDataPool);
+                                Serializer.DeserializeDefault<KeyValuePair<bool, ProtagonistCreationInfo>>(argDataPool, num, ref result);
+                                QuicklyCreateCharacterBackend.protagonistCreationInfo = result.Value;
+
+                                if (result.Key)
+                                {
+                                    QuicklyCreateCharacterBackend.characterData = null;
+                                }
+
+                                __result = GameData.Serializer.Serializer.SerializeDefault(new KeyValuePair<int, KeyValuePair<bool, string>>(flag, QuicklyCreateCharacterBackend.GetCharacterDataByInfo(QuicklyCreateCharacterBackend.protagonistCreationInfo)),returnDataPool);
                             }
                             break;
                         default:
@@ -113,7 +129,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         }
 
         // Token: 0x06000009 RID: 9 RVA: 0x00002390 File Offset: 0x00000590
-        private unsafe static string GetCharacterDataByInfo(ProtagonistCreationInfo info)
+        private unsafe static KeyValuePair<bool, string> GetCharacterDataByInfo(ProtagonistCreationInfo info)
         {
             sbyte sectOrgTemplateIdByStateTemplateId = MapDomain.GetSectOrgTemplateIdByStateTemplateId(info.TaiwuVillageStateTemplateId);
             short memberId = OrganizationDomain.GetMemberId(sectOrgTemplateIdByStateTemplateId, 8);
@@ -138,13 +154,35 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             TempIteamData itemDataValue = new(inventory);
 
             // 返回结果
-            QuicklyCreateCharacterBackend.characterData = new TempCharacterData(character, statusValue, lifeSkillQualificationGrowthType, combatSkillQualificationGrowthType, featureIds, lifeSkill__ForOverwrite, combatSkill_ForOverwrite, baseMainAttributes, lifeSkill__ForDisplay, combatSkill_ForDisplay, maxMainAttributes, itemDataValue);
+            var characterData = new TempCharacterData(character, statusValue, lifeSkillQualificationGrowthType, combatSkillQualificationGrowthType, featureIds, lifeSkill__ForOverwrite, combatSkill_ForOverwrite, baseMainAttributes, lifeSkill__ForDisplay, combatSkill_ForDisplay, maxMainAttributes, itemDataValue);
+
+            var matchScore = CharacterDataChecker.CheckCharacterDataScore(characterData, ConvenienceBackend.Config);
+            var isOk = matchScore == 100;
+            if ( QuicklyCreateCharacterBackend.characterData == null || !_keepGoodResult || isOk)
+            {
+                QuicklyCreateCharacterBackend.characterData = characterData;
+            }
+            else if (_keepGoodResult)
+            {
+                var currentMatchScore = CharacterDataChecker.CheckCharacterDataScore(QuicklyCreateCharacterBackend.characterData, ConvenienceBackend.Config);
+
+                if (matchScore == currentMatchScore &&
+                    characterData.CalcScope() > QuicklyCreateCharacterBackend.characterData.CalcScope())
+                {
+                    QuicklyCreateCharacterBackend.characterData = characterData;
+                }
+                else if (matchScore > currentMatchScore)
+                {
+                    QuicklyCreateCharacterBackend.characterData = characterData;
+                }
+            }
+
             string text = JsonSerializer.Serialize<List<string>>(QuicklyCreateCharacterBackend.characterData.displayList, new JsonSerializerOptions
             {
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
 
-            return text;
+            return new KeyValuePair<bool, string>(isOk, text);
         }
 
         // Token: 0x0600000A RID: 10 RVA: 0x00002534 File Offset: 0x00000734
@@ -197,7 +235,8 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         // Token: 0x04000007 RID: 7
         public static ProtagonistCreationInfo protagonistCreationInfo = new();
 
-        // Token: 0x04000008 RID: 8
         public static TempCharacterData characterData;
+
+        private static bool _keepGoodResult = false;
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GameData.Domains.Character;
+using GameData.Utilities;
 
 namespace ConvenienceBackend.QuicklyCreateCharacter
 {
@@ -29,11 +31,6 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         // Token: 0x06000010 RID: 16 RVA: 0x00002900 File Offset: 0x00000B00
         private unsafe void UpdateTransferDisplayList()
         {
-            bool flag = this.displayList != null;
-            if (flag)
-            {
-                this.displayList = null;
-            }
             this.displayList = new List<string>();
             this.displayList.Add("lifeSkillQualificationGrowthType");
             this.displayList.Add(this.ListToString<sbyte>(new List<sbyte>
@@ -155,8 +152,103 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             this.displayList.Add(this.ListToString<int>(list6, ',') ?? "");
         }
 
+        public unsafe int CalcScope()
+        {
+            int scope = 0;
+
+            // 功法资质
+            fixed (short* ptr3 = this.combatSkillQualifications_ForDisplay.Items)
+            {
+                short* ptr4 = ptr3;
+                for (sbyte b2 = 0; b2 < 14; b2 += 1)
+                {
+                    short item2 = ptr4[b2];
+                    scope += item2;
+                }
+            }
+
+            // 生活资质
+            fixed (short* ptr = this.lifeSkillQualifications_ForDisplay.Items)
+            {
+                short* ptr2 = ptr;
+                for (sbyte b = 0; b < 16; b += 1)
+                {
+                    short item = ptr2[b];
+                    scope += item;
+                }
+            }
+
+            // 主要属性
+            fixed (short* ptr5 = this.mainAttributes__ForDisplay.Items)
+            {
+                short* ptr6 = ptr5;
+                for (sbyte b3 = 0; b3 < 6; b3 += 1)
+                {
+                    short item3 = ptr6[b3];
+                    scope += item3;
+                }
+            }
+
+            HitOrAvoidInts hitValues = this.character.GetHitValues();
+            OuterAndInnerInts penetrations = this.character.GetPenetrations();
+            HitOrAvoidInts avoidValues = this.character.GetAvoidValues();
+            OuterAndInnerInts penetrationResists = this.character.GetPenetrationResists();
+            OuterAndInnerShorts recoveryOfStanceAndBreath = this.character.GetRecoveryOfStanceAndBreath();
+            short moveSpeed = this.character.GetMoveSpeed();
+            short recoveryOfFlaw = this.character.GetRecoveryOfFlaw();
+            short castSpeed = this.character.GetCastSpeed();
+            short recoveryOfBlockedAcupoint = this.character.GetRecoveryOfBlockedAcupoint();
+            short weaponSwitchSpeed = this.character.GetWeaponSwitchSpeed();
+            short attackSpeed = this.character.GetAttackSpeed();
+            short innerRatio = this.character.GetInnerRatio();
+            short recoveryOfQiDisorder = this.character.GetRecoveryOfQiDisorder();
+
+            // 攻击属性
+            for (sbyte b4 = 0; b4 < 4; b4 += 1)
+            {
+                int item4 = hitValues.Items[b4];
+                scope += item4;
+            }
+
+            // 防御属性
+            for (sbyte b5 = 0; b5 < 4; b5 += 1)
+            {
+                int item5 = avoidValues.Items[b5];
+                scope += item5;
+            }
+
+            scope += penetrations.Outer;
+            scope += penetrations.Inner;
+            scope += penetrationResists.Outer;
+            scope += penetrationResists.Inner;
+
+            // 次要属性
+            if (recoveryOfStanceAndBreath.Outer < 100) return 0;
+            scope += (int)recoveryOfStanceAndBreath.Outer;
+            if (recoveryOfStanceAndBreath.Inner < 100) return 0;
+            scope += (int)recoveryOfStanceAndBreath.Inner;
+            if (moveSpeed < 100) return 0;
+            scope += (int)moveSpeed;
+            if (recoveryOfFlaw < 100) return 0;
+            scope += (int)recoveryOfFlaw;
+            if (castSpeed < 100) return 0;
+            scope += (int)castSpeed;
+            if (recoveryOfBlockedAcupoint < 100) return 0;
+            scope += (int)recoveryOfBlockedAcupoint;
+            if (weaponSwitchSpeed < 100) return 0;
+            scope += (int)weaponSwitchSpeed;
+            if (attackSpeed < 100) return 0;
+            scope += (int)attackSpeed;
+            if (innerRatio < 100) return 0;
+            scope += (int)innerRatio;
+            if (recoveryOfQiDisorder < 100) return 0;
+            scope += (int)recoveryOfQiDisorder;
+
+            return scope;
+        }
+
         // Token: 0x06000011 RID: 17 RVA: 0x00002F54 File Offset: 0x00001154
-        public string ListToString<T>(List<T> list, char charPstr)
+        private string ListToString<T>(List<T> list, char charPstr)
         {
             string text = "";
             bool flag = list.Count == 1;
@@ -184,7 +276,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
         }
 
         // Token: 0x06000012 RID: 18 RVA: 0x00002FEC File Offset: 0x000011EC
-        public string ListToString<T>(List<T> list)
+        private string ListToString<T>(List<T> list)
         {
             string text = "";
             bool flag = list.Count == 1;

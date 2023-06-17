@@ -18,5 +18,7 @@ namespace ConvenienceBackend
         public virtual void OnEnterNewWorld() { }
 
         public virtual void OnLoadedArchiveData() { }
+
+        public virtual void OnConfigUpdate(Dictionary<string, System.Object> config) { }
     }
 }

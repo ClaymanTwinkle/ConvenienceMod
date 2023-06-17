@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TMPro;
 using UnityEngine;
+using static UnityEngine.GUI;
 
 namespace ConvenienceFrontend.QuicklyCreateCharacter
 {
@@ -33,13 +34,13 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         }
 
         // Token: 0x06000014 RID: 20 RVA: 0x00002E10 File Offset: 0x00001010
-        public void DoRollCharacterData()
+        public void DoRollCharacterData(bool clearCache = true)
         {
             UpdateTheCreationInfo();
             bool bool_IsGetCharacterData = this._bool_IsGetCharacterData;
             if (bool_IsGetCharacterData)
             {
-                this.SendTheCreationInfo();
+                this.SendTheCreationInfo(clearCache);
             }
         }
 
@@ -76,14 +77,18 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         }
 
         // Token: 0x06000016 RID: 22 RVA: 0x0000302E File Offset: 0x0000122E
-        private void SendTheCreationInfo()
+        private void SendTheCreationInfo(bool clearCache = true)
         {
             if (_listenerId == -1)
             {
                 _listenerId = GameDataBridge.RegisterListener(OnNotifyGameData);
             }
-            GameDataBridge.AddMethodCall<short, ProtagonistCreationInfo>(_listenerId, 4, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_RollCharacter,  this.protagonistCreationInfo);
+            if (clearCache)
+            {
+                RollingCount = 0;
+            }
             this._bool_IsGetCharacterData = false;
+            GameDataBridge.AddMethodCall<short, KeyValuePair<bool, ProtagonistCreationInfo>>(_listenerId, 4, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_RollCharacter, new KeyValuePair<bool, ProtagonistCreationInfo>(clearCache, this.protagonistCreationInfo));
         }
 
         private void OnNotifyGameData(List<NotificationWrapper> notifications)
@@ -95,224 +100,42 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                 {
                     if (notification.DomainId == 4 && notification.MethodId == GameDataBridgeConst.MethodId)
                     {
-                        string json = "{}";
-                        Serializer.Deserialize(notification2.DataPool, notification.ValueOffset, ref json);
-                        GetCharacterData(json);
+                        System.Object keyValuePair = default;
+                        Serializer.DeserializeDefault(notification2.DataPool, notification.ValueOffset, ref keyValuePair);
+                        if (keyValuePair is KeyValuePair<int, KeyValuePair<bool, string>>)
+                        {
+
+                            KeyValuePair<bool, string> jsonKeyValuePair = ((KeyValuePair<int, KeyValuePair<bool, string>>)keyValuePair).Value;
+
+                            _bool_IsGetCharacterData = true;
+
+                            if (jsonKeyValuePair.Key)
+                            {
+                                IsRolling = false;
+                            }
+                            RefreshUIData(jsonKeyValuePair.Value);
+                            if (IsRolling)
+                            {
+                                DoRollCharacterData(false);
+                            }
+                        }
+                        else if (keyValuePair is KeyValuePair<int, bool>)
+                        {
+                        }
                     }
                 }
             }
         }
 
-        // Token: 0x06000017 RID: 23 RVA: 0x00003050 File Offset: 0x00001250
-        private void GetCharacterData(string json)
+        private void RefreshUIData(string json)
         {
-            this.characterDataList = JsonConvert.DeserializeObject<List<string>>(json);
-            this.characterDataDict = CharacterDataTool.CharacterDataListToDataDict(this.characterDataList);
-            this.characterDataColorDict = CharacterDataTool.CharacterDataDictToColorDict(this.characterDataDict);
-            this.characterDataNameDict = CharacterDataTool.CharacterDataDictToNameDict(this.characterDataDict);
-            this.characterDataShortDict = CharacterDataTool.CharacterDataDictToShortDataDict(this.characterDataDict);
-            this._bool_IsGetCharacterData = true;
-            CheckContinueRollData();
-            this.updateDataEvent();
-
-            if (IsRolling)
-            {
-                DoRollCharacterData();
-            }
-        }
-
-        public void CheckContinueRollData()
-        {
-            // 全蓝特性
-            var enableAllBlue = ConvenienceFrontend.Config.GetTypedValue<bool>("Toggle_FilterEnableAllBlueFeature");
-            if (enableAllBlue)
-            {
-                var featureIds = characterDataDict[CharacterDataType.FeatureIds];
-                foreach (var featureId in featureIds)
-                {
-                    int id = int.Parse(featureId);
-                    CharacterFeatureItem characterFeatureItem = CharacterFeature.Instance[id];
-                    if (characterFeatureItem.CandidateGroupId == 1)
-                    {
-                        return;
-                    }
-                }
-            }
-            // 特性
-            string[] filterFeatureList = (ConvenienceFrontend.Config.GetTypedValue<string>("InputField_FilterAllFeatures") ?? "").Split(' ');
-            if (filterFeatureList.Length > 0)
-            {
-                var featureNames = characterDataDict[CharacterDataType.FeatureIds].ConvertAll<string>(x => CharacterFeature.Instance[int.Parse(x)].Name);
-                foreach (var filterFeature in filterFeatureList)
-                {
-                    if (!filterFeature.Trim().IsNullOrEmpty() && !featureNames.Contains(filterFeature))
-                    {
-                        return;
-                    }
-                }
-            }
-
-            // 技艺成长
-            JArray lifeSkillGrowthTypeJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationGrowthType") ?? new JArray();
-            var lifeSkillGrowthType = int.Parse(characterDataDict[CharacterDataType.LifeSkillGrowthType][0]);
-            if (lifeSkillGrowthTypeJArray.Count > lifeSkillGrowthType)
-            {
-                if (!(bool)lifeSkillGrowthTypeJArray[lifeSkillGrowthType])
-                {
-                    foreach (bool item in lifeSkillGrowthTypeJArray)
-                    {
-                        if (item)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-            // 功法成长
-            JArray combatSkillGrowthTypeJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterCombatSkillQualificationGrowthType") ?? new JArray();
-            var combatSkillGrowthType = int.Parse(characterDataDict[CharacterDataType.CombatSkillGrowthType][0]);
-            if (combatSkillGrowthTypeJArray.Count > combatSkillGrowthType)
-            {
-                if (!(bool)combatSkillGrowthTypeJArray[combatSkillGrowthType])
-                {
-                    foreach (bool item in combatSkillGrowthTypeJArray)
-                    {
-                        if (item)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // 技艺资质
-            if (this.characterDataShortDict.ContainsKey(CharacterDataType.LifeSkillQualification))
-            {
-                JArray lifeSkillQualificationsTypesJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationsTypes") ?? new JArray();
-                if (lifeSkillQualificationsTypesJArray.Count > 0)
-                {
-                    var lifeSkillQualificationsValue = (float)ConvenienceFrontend.Config.GetTypedValue<Double>("SliderBar_LifeSkillQualificationsValue");
-                    var lifeSkillQualificationData = characterDataShortDict[CharacterDataType.LifeSkillQualification];
-                    for (int i = 0; i < lifeSkillQualificationData.Count; i++)
-                    {
-                        if ((bool)lifeSkillQualificationsTypesJArray[i])
-                        {
-                            if (lifeSkillQualificationData[i] < lifeSkillQualificationsValue) return;
-                        }
-                    }
-                }
-            }
-
-            //功法资质
-            if (this.characterDataShortDict.ContainsKey(CharacterDataType.CombatSkillQualification))
-            {
-                JArray combatSkillQualificationsTypesJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterCombatSkillQualificationsTypes") ?? new JArray();
-                if (combatSkillQualificationsTypesJArray.Count > 0)
-                {
-                    var combatSkillQualificationsValue = (float)ConvenienceFrontend.Config.GetTypedValue<Double>("SliderBar_FilterCombatSkillQualificationsValue");
-                    var combatSkillQualificationData = characterDataShortDict[CharacterDataType.CombatSkillQualification];
-                    for (int i = 0; i < combatSkillQualificationData.Count; i++)
-                    {
-                        if ((bool)combatSkillQualificationsTypesJArray[i])
-                        {
-                            if (combatSkillQualificationData[i] < combatSkillQualificationsValue) return;
-                        }
-                    }
-                }
-            }
-
-            // 主要属性
-            if (this.characterDataShortDict.ContainsKey(CharacterDataType.MainAttribute))
-            {
-                JArray mainAttributeTypesJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterMainAttributeTypes") ?? new JArray();
-                if (mainAttributeTypesJArray.Count > 0)
-                {
-                    var minMainAttributeValue = (float)ConvenienceFrontend.Config.GetTypedValue<Double>("SliderBar_FilterMainAttributeValue");
-                    var mainAttributeData = this.characterDataShortDict[CharacterDataType.MainAttribute];
-                    for (int i = 0; i < mainAttributeData.Count; i++)
-                    {
-                        if ((bool)mainAttributeTypesJArray[i])
-                        {
-                            if (mainAttributeData[i] < minMainAttributeValue) return;
-                        }
-                    }
-                }
-            }
-
-            // 古冢遗刻-技艺书
-            if (characterDataNameDict.ContainsKey(CharacterDataType.LifeSkillBookType))
-            {
-                JArray lifeSkillBookTypeJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillBookName") ?? new JArray();
-                if (lifeSkillBookTypeJArray.Count > 0)
-                {
-                    var index = CharacterDataTool.LifeSkillNameArray.IndexOf(this.characterDataNameDict[CharacterDataType.LifeSkillBookType][0]);
-                    if (index > -1)
-                    {
-                        if (!(bool)lifeSkillBookTypeJArray[index])
-                        {
-                            foreach (bool item in lifeSkillBookTypeJArray)
-                            {
-                                if (item)
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            // 古冢遗刻-功法书
-            if (characterDataNameDict.ContainsKey(CharacterDataType.CombatSkillBookName))
-            {
-                // 书名
-                var filterCombatSkillBookName = ConvenienceFrontend.Config.GetTypedValue<string>("InputField_FilterCombatSkillBookName");
-                if (!filterCombatSkillBookName.IsNullOrEmpty())
-                {
-                    if (!filterCombatSkillBookName.Trim().IsNullOrEmpty())
-                    {
-                        var combatSkillBookName = characterDataNameDict[CharacterDataType.CombatSkillBookName][0];
-                        if (!combatSkillBookName.IsNullOrEmpty())
-                        {
-                            if (!combatSkillBookName.Contains(filterCombatSkillBookName))
-                            {
-                                return;
-                            }
-                        }
-                    }
-                }
-                // 正逆练
-                var filterDirectAndReverse = ConvenienceFrontend.Config.GetTypedValue<string>("InputField_FilterDirectAndReverse");
-                if (filterDirectAndReverse != null && filterDirectAndReverse.Length == 5)
-                {
-                    if (!string.Join("", this.characterDataNameDict[CharacterDataType.CombatSkillBookPageType]).Contains(filterDirectAndReverse))
-                    {
-                        return;
-                    }
-                }
-                // 总纲
-                JArray generalPrinciplesJArray = (JArray)ConvenienceFrontend.Config.GetTypedValue<JArray>("ToggleGroup_FilterGeneralPrinciples") ?? new JArray();
-                if (generalPrinciplesJArray.Count > 0)
-                {
-                    var index = CharacterDataTool.GeneralPrinciplesNameArray.IndexOf(this.characterDataNameDict[CharacterDataType.CombatSkillBookPageType][0]);
-                    if (index > -1)
-                    {
-                        if (!(bool)generalPrinciplesJArray[index])
-                        {
-                            foreach (bool item in generalPrinciplesJArray)
-                            {
-                                if (item)
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            } 
-
-            IsRolling = false;
+            RollingCount++;
+            characterDataList = JsonConvert.DeserializeObject<List<string>>(json);
+            characterDataDict = CharacterDataTool.CharacterDataListToDataDict(characterDataList);
+            characterDataColorDict = CharacterDataTool.CharacterDataDictToColorDict(characterDataDict);
+            characterDataNameDict = CharacterDataTool.CharacterDataDictToNameDict(characterDataDict);
+            characterDataShortDict = CharacterDataTool.CharacterDataDictToShortDataDict(characterDataDict);
+            DoUpdate();
         }
 
         // Token: 0x06000018 RID: 24 RVA: 0x00003134 File Offset: 0x00001334
@@ -351,5 +174,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         private int _listenerId = -1;
     
         public bool IsRolling = false;
+
+        public int RollingCount = 0;
     }
 }

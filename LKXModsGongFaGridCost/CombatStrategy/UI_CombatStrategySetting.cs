@@ -102,8 +102,8 @@ namespace ConvenienceFrontend.CombatStrategy
             Transform transform = UIUtils.CreateSettingPanel(parent, "MoveSettings", "移动设置").transform;
             UIUtils.CreateSubTitle(transform, "一般设置");
             base.AddMono(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "AutoMove", "自动移动"), "AutoMove");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance", 0, 120, 10, "f1", "目标距离", null), "TargetDistance");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance2", 0, 120, 10, "f1", "备用目标距离", null), "TargetDistance2");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance", 20, 120, 10, "f1", "目标距离", null), "TargetDistance");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance2", 20, 120, 10, "f1", "备用目标距离", null), "TargetDistance2");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowForward", 50, 100, 100, "p0", "当脚力值大于", "时，允许前进"), "MobilityAllowForward");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowBackward", 50, 100, 100, "p0", "当脚力值大于", "时，允许后退"), "MobilityAllowBackward");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityRecoverCap", 50, 100, 100, "p0", "脚力值恢复到", "后，重新开始移动"), "MobilityRecoverCap");
@@ -386,6 +386,8 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x0600005F RID: 95 RVA: 0x000068A8 File Offset: 0x00004AA8
         private void OnGUI()
         {
+            Debug.Log("UI_CombatStrategySetting::OnGUI");
+
             if (this._handlingKey != null)
             {
                 this.ListenHotKey();
@@ -960,7 +962,7 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000070 RID: 112 RVA: 0x0000764C File Offset: 0x0000584C
         private void ListenHotKey()
         {
-            Debug.Log("ListenHotKey");
+            Debug.Log("UI_CombatStrategySetting::ListenHotKey");
             KeyCode keyCode = 0;
             if (Input.anyKey)
             {

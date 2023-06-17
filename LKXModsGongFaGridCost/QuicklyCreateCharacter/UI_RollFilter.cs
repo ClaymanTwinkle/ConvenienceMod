@@ -76,6 +76,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             Extentions.SetWidth(content, component.rect.size.x * 0.9f);
             UIUtils.CreateVerticalAutoSizeLayoutGroup(gameObject2).spacing = 15f;
 
+            BuildOtherSettings(content);
             BuildCharacterCharacteristics(content);
             BuildQualifications(content);
             BuildMainAttribute(content);
@@ -118,6 +119,13 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                     RefreshComponent((TMP_InputField)keyValuePair.Value, keyValuePair.Key);
                 }
             }
+        }
+
+        private void BuildOtherSettings(Transform parent)
+        {
+            Transform transform = UIUtils.CreateSettingPanel(parent, "CharacterCharacteristics", "护肝选项").transform;
+
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_KeepGoodResult", "只要更好的结果", "每次Roll出来的属性会比对上一次Roll的结果，如果比上次结果差，则不显示出来，护眼!!!"), "Toggle_KeepGoodResult");
         }
 
         private void BuildCharacterCharacteristics(Transform parent)

@@ -89,6 +89,8 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             });
             this._settingsButton = settingButton.gameObject;
 
+            this._rollingCountText = GameObjectCreationUtils.UGUICreateTMPText(newBackgroundContainerGoA.transform, new Vector2(0f, -this._windowSize.y * 0.6f - 80), new Vector2(500, 50), 26, "");
+
             GameObject newBackgroundContainerGoB = UIFactory.GetNewBackgroundContainerGoB();
             newBackgroundContainerGoB.transform.SetParent(this._maskGo.transform, false);
             newBackgroundContainerGoB.GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 400f);
@@ -272,6 +274,8 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             {
                 _settingsButton.SetActive(!characterDataController.IsRolling);
             }
+
+            _rollingCountText.text = "当前已Roll了 <color=yellow>" + characterDataController.RollingCount +"</color> 次";
         }
 
         // Token: 0x06000032 RID: 50 RVA: 0x00004F88 File Offset: 0x00003188
@@ -580,6 +584,8 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         private GameObject _rollButton;
 
         private GameObject _settingsButton;
+
+        private TextMeshProUGUI _rollingCountText;
 
         // Token: 0x04000045 RID: 69
         private GameObject _combatGrowthLabelGo;

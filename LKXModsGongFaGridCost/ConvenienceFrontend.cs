@@ -13,7 +13,9 @@ using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
+using GameData.GameDataBridge;
 using HarmonyLib;
+using Newtonsoft.Json;
 using TaiwuModdingLib.Core.Plugin;
 using UnityEngine;
 
@@ -23,6 +25,7 @@ namespace ConvenienceFrontend
     public class ConvenienceFrontend : TaiwuRemakePlugin
     {
         private const string CONFIG_FILE_NAME = "ModConfig.json";
+        private const int LOAD_CONFIG_METHOD_ID = 1994;
         private static string _config_file_path = CONFIG_FILE_NAME;
 
         // Token: 0x04000001 RID: 1
@@ -73,6 +76,8 @@ namespace ConvenienceFrontend
 
             allPatch.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
             allPatch.ForEach((BaseFrontPatch patch) => patch.Initialize(harmony, base.ModIdStr));
+
+            SendLoadSettings();
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x00002088 File Offset: 0x00000288
@@ -115,9 +120,13 @@ namespace ConvenienceFrontend
             LoadConfig();
         }
 
-        public static void SaveConfig()
+        public static void SaveConfig(bool send = true)
         {
             JsonFileUtils.WriteFile(_config_file_path, Config);
+            if (send) 
+            {
+                SendLoadSettings();
+            }
         }
 
         public static void LoadConfig()
@@ -127,6 +136,11 @@ namespace ConvenienceFrontend
             { 
                 Config = new Dictionary<string, System.Object>();
             }
+        }
+
+        public static void SendLoadSettings()
+        {
+            GameDataBridge.AddMethodCall<string>(-1, 0, LOAD_CONFIG_METHOD_ID, JsonConvert.SerializeObject(ConvenienceFrontend.Config));
         }
     }
 }

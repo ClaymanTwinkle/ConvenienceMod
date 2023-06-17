@@ -17,15 +17,18 @@ using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Character.Creation;
+using GameData.Domains.Global;
 using GameData.Domains.Global.Inscription;
 using GameData.Domains.Map;
 using GameData.Domains.Organization;
 using GameData.Domains.SpecialEffect;
+using GameData.Domains.Taiwu;
 using GameData.Domains.World;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
+using Newtonsoft.Json;
 using TaiwuModdingLib.Core.Plugin;
 
 namespace ConvenienceBackend
@@ -34,7 +37,7 @@ namespace ConvenienceBackend
     [PluginConfig("ConvenienceBackend", "kesar", "1.0.0")]
     public class ConvenienceBackend : TaiwuRemakePlugin
     {
-        private List<BaseBackendPatch> allPatch = new List<BaseBackendPatch>()
+        private static List<BaseBackendPatch> allPatch = new List<BaseBackendPatch>()
         {
             // sl偷窃、哄骗
             new CustomStealBackendPatch(),
@@ -95,11 +98,34 @@ namespace ConvenienceBackend
             allPatch.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
         }
 
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GlobalDomain), "CallMethod")]
+        public static bool GlobalDomain_CallMethod_Prefix(TaiwuDomain __instance, Operation operation, RawDataPool argDataPool, DataContext context, ref int __result)
+        {
+            if (operation.MethodId == LOAD_CONFIG_METHOD_ID)
+            {
+                AdaptableLog.Info("CallMethod Load Config");
+                string json = null;
+                int num = operation.ArgsOffset;
+                num += Serializer.Deserialize(argDataPool, num, ref json);
+                Config = JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json);
+                allPatch.ForEach((BaseBackendPatch patch) => patch.OnConfigUpdate(Config));
+                __result = -1;
+                return false;
+            }
+
+            return true;
+        }
+
         // Token: 0x04000001 RID: 1
         private Harmony harmony;
 
         // Token: 0x04000003 RID: 3
         public static bool bool_Toggle_Total;
+
+        private const int LOAD_CONFIG_METHOD_ID = 1994;
+
+        public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
     }
 
 }

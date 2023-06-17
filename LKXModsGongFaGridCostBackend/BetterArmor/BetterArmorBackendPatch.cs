@@ -40,7 +40,12 @@ namespace ConvenienceBackend.BetterArmor
             DomainManager.Mod.GetSetting(modIdStr, "Toggle_EnableBetterArmor", ref _enableMod);
         }
 
-        // Token: 0x0600001A RID: 26 RVA: 0x00003E24 File Offset: 0x00002024
+        /// <summary>
+        /// 获取命中因子
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Weapon), "GetHitFactors", new Type[]
         {
@@ -64,7 +69,12 @@ namespace ConvenienceBackend.BetterArmor
             return baseHitFactors;
         }
 
-        // Token: 0x0600001B RID: 27 RVA: 0x00003E9C File Offset: 0x0000209C
+        /// <summary>
+        /// 获取闪避因子
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Armor), "GetAvoidFactors", new Type[]
         {
@@ -138,7 +148,12 @@ namespace ConvenienceBackend.BetterArmor
             return (short)num;
         }
 
-        // Token: 0x0600001E RID: 30 RVA: 0x0000405C File Offset: 0x0000225C
+        /// <summary>
+        /// 计算攻击
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Weapon), "CalcEquipmentAttack")]
         private static short CalcWeaponEquipmentAttack_Postfix(short __result, GameData.Domains.Item.Weapon __instance)
@@ -163,7 +178,12 @@ namespace ConvenienceBackend.BetterArmor
             return (short)num;
         }
 
-        // Token: 0x0600001F RID: 31 RVA: 0x00004100 File Offset: 0x00002300
+        /// <summary>
+        /// 计算防御
+        /// </summary>
+        /// <param name="__result"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameData.Domains.Item.Weapon), "CalcEquipmentDefense")]
         private static short CalcWeaponEquipmentDefense_Postfix(short __result, GameData.Domains.Item.Weapon __instance)
@@ -173,14 +193,12 @@ namespace ConvenienceBackend.BetterArmor
             int materialResourceBonusValuePercentage = ItemTemplateHelper.GetMaterialResourceBonusValuePercentage(__instance.GetItemType(), __instance.GetTemplateId(), 1, __instance.GetMaterialResources());
             int num = (int)__instance.GetBaseEquipmentDefense() * materialResourceBonusValuePercentage / 100;
             int equipmentEffectId = (int)__instance.GetEquipmentEffectId();
-            bool flag = equipmentEffectId >= 0;
-            if (flag)
+            if (equipmentEffectId >= 0)
             {
                 EquipmentEffectItem equipmentEffectItem = EquipmentEffect.Instance[equipmentEffectId];
                 num += num * (int)equipmentEffectItem.EquipmentDefenseChange / 100;
             }
-            bool flag2 = ModificationStateHelper.IsActive(__instance.GetModificationState(), 2);
-            if (flag2)
+            if (ModificationStateHelper.IsActive(__instance.GetModificationState(), 2))
             {
                 int weaponPropertyBonus = DomainManager.Item.GetRefinedEffects(__instance.GetItemKey()).GetWeaponPropertyBonus(ERefiningEffectWeaponType.EquipmentDefense);
                 num += weaponPropertyBonus * 10;

@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using ConvenienceFrontend.CustomWeapon;
 using FrameWork;
 using FrameWork.ModSystem;
+using GameData.GameDataBridge;
 using HarmonyLib;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 

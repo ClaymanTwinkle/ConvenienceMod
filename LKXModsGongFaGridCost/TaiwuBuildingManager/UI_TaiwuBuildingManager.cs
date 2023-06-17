@@ -114,7 +114,6 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         public override void QuickHide()
         {
             ConvenienceFrontend.SaveConfig();
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Load_Settings, JsonConvert.SerializeObject(ConvenienceFrontend.Config));
             base.QuickHide();
         }
 
