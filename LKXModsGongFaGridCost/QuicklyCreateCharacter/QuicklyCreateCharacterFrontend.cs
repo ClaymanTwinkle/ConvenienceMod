@@ -108,22 +108,27 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
 
         // Token: 0x06000007 RID: 7 RVA: 0x000022A4 File Offset: 0x000004A4
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_NewGame), "OnClickOpenInscriptionWindow")]
-        public static void UI_NewGame_OnClickOpenInscriptionWindow_PostPatch(UI_NewGame __instance)
+        [HarmonyPatch(typeof(UI_NewGame), "SetUseInscribedCharacter")]
+        public static void UI_NewGame_SetUseInscribedCharacter_PostPatch(UI_NewGame __instance, bool useInscribedChar)
         {
             if (!QuicklyCreateCharacterFrontend.bool_Toggle_Total) return;
 
-            if (QuicklyCreateCharacterFrontend.bool_IsEnterNewGame)
+            if (QuicklyCreateCharacterFrontend.guideGo != null)
             {
-                if (QuicklyCreateCharacterFrontend.emptyGo != null)
-                {
-                    Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
-                }
-                if (QuicklyCreateCharacterFrontend.UGUIGo != null)
-                {
-                    Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
-                }
+                QuicklyCreateCharacterFrontend.guideGo.SetActive(!useInscribedChar);
             }
+
+            //if (QuicklyCreateCharacterFrontend.bool_IsEnterNewGame)
+            //{
+            //    if (QuicklyCreateCharacterFrontend.emptyGo != null)
+            //    {
+            //        Object.Destroy(QuicklyCreateCharacterFrontend.emptyGo);
+            //    }
+            //    if (QuicklyCreateCharacterFrontend.UGUIGo != null)
+            //    {
+            //        Object.Destroy(QuicklyCreateCharacterFrontend.UGUIGo);
+            //    }
+            //}
         }
 
         // Token: 0x06000008 RID: 8 RVA: 0x00002308 File Offset: 0x00000508

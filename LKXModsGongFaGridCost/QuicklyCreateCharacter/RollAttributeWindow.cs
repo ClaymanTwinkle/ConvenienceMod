@@ -492,6 +492,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x0600003B RID: 59 RVA: 0x000058B1 File Offset: 0x00003AB1
         public void Open()
         {
+            Debug.Log("Open RollAttributeWindow");
             this._maskGo.SetActive(true);
             if (characterDataController.protagonistCreationInfo == null)
             {
@@ -506,6 +507,8 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x0600003C RID: 60 RVA: 0x000058C8 File Offset: 0x00003AC8
         public void Close()
         {
+            Debug.Log("Close RollAttributeWindow");
+
             this.characterDataController.StopRollCharacterData();
             this._maskGo.SetActive(false);
         }

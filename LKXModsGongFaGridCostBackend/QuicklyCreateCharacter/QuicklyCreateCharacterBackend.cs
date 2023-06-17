@@ -120,7 +120,14 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
 
             if (QuicklyCreateCharacterBackend.bool_IsEnterNewSave && QuicklyCreateCharacterBackend.bool_IsCreatWorld)
             {
-                QuicklyCreateCharacterBackend.OverwriteCharacterAttribute(__instance, __result);
+                if (info.InscribedChar == null)
+                {
+                    QuicklyCreateCharacterBackend.OverwriteCharacterAttribute(__instance, __result);
+                }
+                else
+                {
+                    AdaptableLog.Info("铭刻角色忽略");
+                }
                 QuicklyCreateCharacterBackend.bool_IsCreatWorld = false;
                 QuicklyCreateCharacterBackend.bool_IsEnterNewSave = false;
                 QuicklyCreateCharacterBackend.protagonistCreationInfo = null;
