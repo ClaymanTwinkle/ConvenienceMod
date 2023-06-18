@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ConvenienceFrontend.CombatStrategy.config.data
 {
+    [Serializable]
     public class NormalAttackAction
     {
         public int type = 0;

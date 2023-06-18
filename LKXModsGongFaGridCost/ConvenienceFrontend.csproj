@@ -86,6 +86,7 @@
     <Compile Include="TaiwuBuildingManager\GameDataBridgeConst.cs" />
     <Compile Include="TaiwuBuildingManager\TaiwuBuildingManagerFrontPatch.cs" />
     <Compile Include="TaiwuBuildingManager\UI_TaiwuBuildingManager.cs" />
+    <Compile Include="Utils\GameDataBridgeUtils.cs" />
     <Compile Include="Utils\JsonFileUtils.cs" />
   </ItemGroup>
   <ItemGroup>

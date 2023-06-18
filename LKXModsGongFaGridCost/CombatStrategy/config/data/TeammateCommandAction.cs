@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
+    [Serializable]
     public class TeammateCommandAction
     {
         public int id;

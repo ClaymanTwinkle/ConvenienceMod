@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConvenienceBackend.CombatStrategy
+namespace ConvenienceBackend.CombatStrategy.Data
 {
     public class ChangeTrickAction
     {

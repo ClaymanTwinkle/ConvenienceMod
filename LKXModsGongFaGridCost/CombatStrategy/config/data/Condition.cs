@@ -7,6 +7,7 @@ using Config;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
+    [Serializable]
     public class Condition
     {
         // Token: 0x0600001D RID: 29 RVA: 0x000031AC File Offset: 0x000013AC

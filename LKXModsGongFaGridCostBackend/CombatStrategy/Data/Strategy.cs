@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using GameData.Domains.Combat;
 
-namespace ConvenienceBackend.CombatStrategy
+namespace ConvenienceBackend.CombatStrategy.Data
 {
     // Token: 0x02000005 RID: 5
     public class Strategy

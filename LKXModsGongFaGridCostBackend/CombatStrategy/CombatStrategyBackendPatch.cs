@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using BehTree;
 using Config;
+using ConvenienceBackend.CombatStrategy.Data;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
@@ -31,7 +32,7 @@ namespace ConvenienceBackend.CombatStrategy
         [HarmonyPatch(typeof(CombatCharacter), "InitTeammateCommand")]
         public static void CombatCharacter_InitTeammateCommand_Postfix(DataContext context, CombatCharacter __instance)
         {
-            if (isEnable()) return;
+            if (IsEnable()) return;
             if (!__instance.IsAlly) return;
             AdaptableLog.Info("CombatCharacter::InitTeammateCommand");
             var currTeammateCommands = __instance.GetCurrTeammateCommands();
@@ -42,7 +43,7 @@ namespace ConvenienceBackend.CombatStrategy
         [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
         public static void CombatDomain_SetPlayerAutoCombat_Prefix(DataContext context, ref bool autoCombat)
         {
-            if (isEnable() && autoCombat)
+            if (IsEnable() && autoCombat)
             {
                 autoCombat = false;
                 AdaptableLog.Info("系统设置打开原版自动战斗，但是因为战斗策略打开，所有禁用原版的自动战斗");
@@ -55,7 +56,7 @@ namespace ConvenienceBackend.CombatStrategy
         public static void CombatDomain_OnUpdate_Postfix(CombatDomain __instance, DataContext context)
         {
             // 没有开启战斗策略
-            if (!isEnable()) return;
+            if (!IsEnable()) return;
 
             // 没有配置
             if (_settings == null) return;
@@ -102,11 +103,13 @@ namespace ConvenienceBackend.CombatStrategy
         /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "CallMethod")]
-        public static bool CombatDomain_CallMethod_Prefix(CombatDomain __instance, Operation operation, RawDataPool argDataPool, ref int __result)
+        public static bool CombatDomain_CallMethod_Prefix(CombatDomain __instance, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, ref int __result)
         {
             bool result;
             if (operation.MethodId == GameDataBridgeConst.MethodId)
             {
+                __result = -1;
+
                 int num = operation.ArgsOffset;
                 ushort num2 = 0;
                 num += Serializer.Deserialize(argDataPool, num, ref num2);
@@ -180,21 +183,22 @@ namespace ConvenienceBackend.CombatStrategy
                             }
                         case GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson:
                             {
-                                string json2 = null;
-                                Serializer.Deserialize(argDataPool, num, ref json2);
-                                try
-                                {
-                                    UpdateStrategies(JsonConvert.DeserializeObject<List<Strategy>>(json2), __instance);
-                                }
-                                catch (Exception ex2)
-                                {
-                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize strategy Json Failed:" + ex2.Message, false);
-                                }
+                                string json = null;
+                                Serializer.Deserialize(argDataPool, num, ref json);
+
+                                UpdateStrategies(JsonConvert.DeserializeObject<List<Strategy>>(json), __instance);
                                 break;
                             }
+                        case GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy:
+                            {
+                                string json = null;
+                                Serializer.Deserialize(argDataPool, num, ref json);
+                                List<Strategy> strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
+                                __result = Serializer.SerializeDefault<KeyValuePair<int, string>>(new KeyValuePair<int, string>(num2, JsonConvert.SerializeObject(AutoHelper.AutoGenerateStrategies())), returnDataPool);
+                            }
+                            break;
                     }
                 }
-                __result = -1;
                 result = false;
             }
             else
@@ -215,7 +219,7 @@ namespace ConvenienceBackend.CombatStrategy
         [HarmonyPatch(typeof(CombatCharacterStateAttack), "OnEnter")]
         public static void CCombatCharacterStateAttack_OnEnter_Postfix(CombatCharacterStateAttack __instance, CombatCharacter ___CombatChar, sbyte ____trickType, ref bool ____inAttackRange)
         {
-            if (!isEnable()) return;
+            if (!IsEnable()) return;
             if (!___CombatChar.IsAlly) return;
 
             if (_settings!= null && _settings.isEnable && _settings.RemoveTrick[____trickType]) 
@@ -420,7 +424,7 @@ namespace ConvenienceBackend.CombatStrategy
                             // 功法目前不可使用
                             if (!strategy.skillData.GetCanUse()) break;
                             // 检查功法施展范围
-                            bool beyondRange = strategy.conditions.Find((Condition condition) => condition.item == JudgeItem.Distance) == null;
+                            bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
                             if (beyondRange && strategy.skillData != null && Config.CombatSkill.Instance[strategy.skillId].EquipType == 1)
                             {
                                 // 检查催破功法是否在施法范围中
@@ -521,12 +525,12 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="selfChar"></param>
         /// <param name="conditions"></param>
         /// <returns>true可用执行，false不能执行</returns>
-        private static bool CheckCondition(CombatDomain instance, CombatCharacter selfChar, List<Condition> conditions) 
+        private static bool CheckCondition(CombatDomain instance, CombatCharacter selfChar, List<Data.Condition> conditions) 
         {
             bool canExecute = true;
             for (int i = 0; i < conditions.Count; i++)
             {
-                Condition condition = conditions[i];
+                Data.Condition condition = conditions[i];
                 CombatCharacter combatCharacter = condition.isAlly ? selfChar : instance.GetCombatCharacter(false, false);
                 JudgeItem item = condition.item;
 
@@ -750,7 +754,7 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="checkNum"></param>
         /// <param name="condition"></param>
         /// <returns></returns>
-        private static bool CheckCondition(int checkNum, Condition condition)
+        private static bool CheckCondition(int checkNum, Data.Condition condition)
         {
             Judgement judge = condition.judge;
             bool result;
@@ -797,7 +801,7 @@ namespace ConvenienceBackend.CombatStrategy
             }
         }
 
-        private static bool isEnable()
+        private static bool IsEnable()
         {
             return _replaceAi;
         }

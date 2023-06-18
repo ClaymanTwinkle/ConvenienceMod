@@ -7,12 +7,14 @@ using Config;
 using ConvenienceFrontend.CombatStrategy.config;
 using ConvenienceFrontend.CombatStrategy.config.data;
 using ConvenienceFrontend.CombatStrategy.ui;
+using ConvenienceFrontend.Utils;
 using DG.Tweening;
 using FrameWork;
 using FrameWork.ModSystem;
 using GameData.Domains.CombatSkill;
 using GameData.GameDataBridge;
 using HarmonyLib;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TaiwuModdingLib.Core.Utils;
 using TMPro;
@@ -183,28 +185,65 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 ConfigManager.Settings.SelectStrategyIndex = val;
 
-                var anchoredPosition = this._scroll.Content.anchoredPosition;
-                ClearAllStrategy();
-                InitStrategy();
-
-                this._scroll.ScrollTo(anchoredPosition);
-                
-                Invoke("RefreshUI", 0.2f);
+                RefreshCurrentStrategyUI();
                 // LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             });
             base.AddMono(dropdown, "StrategyProgrammeOptions");
 
-            CButton addStrategyProgrammeButton = GameObjectCreationUtils.UGUICreateCButton(parent2, 10f, "新建方案");
-            Extentions.SetHeight(addStrategyProgrammeButton.gameObject.GetComponent<RectTransform>(), 40f);
-            addStrategyProgrammeButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
-            addStrategyProgrammeButton.ClearAndAddListener(delegate () {
+            CButton manageStrategyProgrammeButton = GameObjectCreationUtils.UGUICreateCButton(parent2, 10f, "管理方案", width: 150, height: 40);
+            manageStrategyProgrammeButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 18f;
+            manageStrategyProgrammeButton.ClearAndAddListener(delegate ()
+            {
+                var btnList = new List<UI_PopupMenu.BtnData>
+                {
+                    new UI_PopupMenu.BtnData("新建方案", true, new Action(() =>
+                    {
+                        ShowInputTextPanel(parent2, "输入方案名称", "", delegate (string val)
+                        {
+                            if (val != null && val != string.Empty)
+                            {
+                                var programme = new StrategyProgramme
+                                {
+                                    name = val
+                                };
+                                ConfigManager.Programmes.Add(programme);
 
-                ShowInputTextPanel(parent2, "输入方案名称", "", delegate(string val) {
-                    if (val != null && val != string.Empty)
+                                dropdown.ClearOptions();
+                                dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+                                dropdown.value = dropdown.options.Count - 1;
+                                dropdown.onValueChanged.Invoke(dropdown.value);
+                            }
+                        });
+                    }), tipContent: "不同功法BD有不同的战斗策略方案！"),
+                    new UI_PopupMenu.BtnData("方案改名", true, new Action(() =>
+                    {
+                        ShowInputTextPanel(parent2, "重新输入方案名称", dropdown.options[dropdown.value].text, delegate (string val)
+                        {
+                            if (val != null && val != string.Empty)
+                            {
+                                ConfigManager.Programmes[ConfigManager.Settings.SelectStrategyIndex].name = val;
+                                dropdown.options[dropdown.value].text = val;
+                                dropdown.RefreshShownValue();
+                            }
+                        });
+                    }), tipContent: "给方案改个好名字"),
+                    new UI_PopupMenu.BtnData("复制方案", true, new Action(() =>
+                    {
+                        var currentStrategy = ConfigManager.Programmes[ConfigManager.Settings.SelectStrategyIndex];
+                        var copyStrategy = (StrategyProgramme)currentStrategy.CreateDeepCopy();
+                        copyStrategy.name += "（复制版）" + ConfigManager.Programmes.Count;
+                        ConfigManager.Programmes.Add(copyStrategy);
+                        // 刷新UI
+                        dropdown.ClearOptions();
+                        dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+                        dropdown.value = dropdown.options.Count - 1;
+                        dropdown.onValueChanged.Invoke(dropdown.value);
+                    }), tipContent: "复制当前方案"),
+                    new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", IsInGame(), new Action(() =>
                     {
                         var programme = new StrategyProgramme
                         {
-                            name = val
+                            name = "自动生成策略" + ConfigManager.Programmes.Count
                         };
                         ConfigManager.Programmes.Add(programme);
 
@@ -212,54 +251,48 @@ namespace ConvenienceFrontend.CombatStrategy
                         dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
                         dropdown.value = dropdown.options.Count - 1;
                         dropdown.onValueChanged.Invoke(dropdown.value);
-                    }
-                });
-            });
 
-            CButton renameStrategyProgrammeButton = GameObjectCreationUtils.UGUICreateCButton(parent2, 10f, "重命名");
-            Extentions.SetHeight(renameStrategyProgrammeButton.gameObject.GetComponent<RectTransform>(), 40f);
-            renameStrategyProgrammeButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
-            renameStrategyProgrammeButton.ClearAndAddListener(delegate () {
-                ShowInputTextPanel(parent2, "重新输入方案名称", dropdown.options[dropdown.value].text, delegate (string val) {
-                    if (val != null && val != string.Empty)
+                        GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetStrategiesJson(), new Action<string>(json=>{
+                            if (json != null)
+                            {
+                                programme.strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
+                                programme.strategies.ForEach(x => x.enabled = true);
+                                RefreshCurrentStrategyUI();
+                            }
+                        }));
+                    }), tipContent: "根据当前配置的功法BD，生成简单的策略"),
+                    new UI_PopupMenu.BtnData("<color=red>删除方案</color>", true, new Action(() =>
                     {
-                        ConfigManager.Programmes[ConfigManager.Settings.SelectStrategyIndex].name = val;
-                        dropdown.options[dropdown.value].text = val;
-                        dropdown.RefreshShownValue();
-                    }
-                });
-            });
+                        if (dropdown.options.Count > 1)
+                        {
+                            Action action = delegate ()
+                            {
+                                ConfigManager.Programmes.RemoveAt(dropdown.value);
 
-            CButton deleteStrategyProgrammeButton = GameObjectCreationUtils.UGUICreateCButton(parent2, 10f, "删除方案");
-            Extentions.SetHeight(deleteStrategyProgrammeButton.gameObject.GetComponent<RectTransform>(), 40f);
-            deleteStrategyProgrammeButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
-            deleteStrategyProgrammeButton.ClearAndAddListener(delegate () {
-                if (dropdown.options.Count > 1)
-                {
-                    Action action = delegate ()
-                    {
-                        ConfigManager.Programmes.RemoveAt(dropdown.value);
+                                dropdown.ClearOptions();
+                                dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+                                dropdown.value = 0;
+                                dropdown.onValueChanged.Invoke(dropdown.value);
+                            };
 
-                        dropdown.ClearOptions();
-                        dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-                        dropdown.value = 0;
-                        dropdown.onValueChanged.Invoke(dropdown.value);
-                    };
+                            DialogCmd dialogCmd = new DialogCmd
+                            {
+                                Title = "删除方案",
+                                Content = "是否删除方案【" + dropdown.options[dropdown.value].text + "】？",
+                                Type = 1,
+                                Yes = action
+                            };
+                            UIElement.Dialog.SetOnInitArgs(EasyPool.Get<ArgumentBox>().SetObject("Cmd", dialogCmd));
+                            UIManager.Instance.ShowUI(UIElement.Dialog);
+                        }
+                        else
+                        {
+                            UIUtils.showTips("警告", "请至少保留一个方案!");
+                        }
+                    }), tipContent: "删除当前选中的方案")
+                };
 
-                    DialogCmd dialogCmd = new DialogCmd
-                    {
-                        Title = "删除方案",
-                        Content = "是否删除方案【" + dropdown.options[dropdown.value].text + "】？",
-                        Type = 1,
-                        Yes = action
-                    };
-                    UIElement.Dialog.SetOnInitArgs(EasyPool.Get<ArgumentBox>().SetObject("Cmd", dialogCmd));
-                    UIManager.Instance.ShowUI(UIElement.Dialog);
-                }
-                else
-                {
-                    UIUtils.showTips("警告", "请至少保留一个方案!");
-                }
+                ShowMenu(btnList, manageStrategyProgrammeButton.transform.position);
             });
 
             this._inputTextPanel = UIUtils.CreateInputTextPanel(this._focus.transform).GetComponent<RectTransform>();
@@ -305,9 +338,20 @@ namespace ConvenienceFrontend.CombatStrategy
             LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
         }
 
+        private void RefreshCurrentStrategyUI()
+        {
+            var anchoredPosition = this._scroll.Content.anchoredPosition;
+            ClearAllStrategy();
+            InitStrategy();
+
+            this._scroll.ScrollTo(anchoredPosition);
+
+            Invoke("RefreshUI", 0.2f);
+        }
+
         private void ShowSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
         {
-            if (Game.Instance.GetCurrentGameStateName() == EGameState.InGame)
+            if (IsInGame())
             {
                 var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) => {
                     onSelectedSkill.Invoke(type, skillId);
@@ -386,8 +430,6 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x0600005F RID: 95 RVA: 0x000068A8 File Offset: 0x00004AA8
         private void OnGUI()
         {
-            Debug.Log("UI_CombatStrategySetting::OnGUI");
-
             if (this._handlingKey != null)
             {
                 this.ListenHotKey();
@@ -575,9 +617,9 @@ namespace ConvenienceFrontend.CombatStrategy
 
             this.RenderStrategySkillText(strategy, skillRefers);
             var btnList = new List<UI_PopupMenu.BtnData>();
-            if (Game.Instance.GetCurrentGameStateName() != EGameState.InGame)
+            if (!IsInGame())
             {
-                btnList.Add(new UI_PopupMenu.BtnData("选择功法", false, null, null, null, "载入存档后才能进行选择", -1, null, null, null));
+                btnList.Add(new UI_PopupMenu.BtnData("选择功法", false, null, null, null, "进入游戏后才能选择功法", -1, null, null, null));
             }
             else
             {
@@ -616,7 +658,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 strategy.SetAction(new NormalAttackAction());
                 this.RenderStrategySkillText(strategy, skillRefers);
             }), tipContent: "触发普通攻击"));
-            btnList.Add(new UI_PopupMenu.BtnData("添加条件", true, delegate ()
+            btnList.Add(new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
             {
                 Condition condition = new Condition();
                 strategy.conditions.Add(condition);
@@ -627,7 +669,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                 LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
             }, null, null, "策略触发的前提条件，可添加多个条件", -1, null, null, null));
-            btnList.Add(new UI_PopupMenu.BtnData("删除策略", true, delegate ()
+            btnList.Add(new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
             {
                 CombatStrategyMod.Strategies.Remove(strategy);
                 for (int k = transform.GetSiblingIndex() + 1; k < _strategySettings.childCount; k++)
@@ -1071,6 +1113,11 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             refer.CGet<RectTransform>("FocusRoot").GetComponent<HorizontalLayoutGroup>().SetLayoutHorizontal();
             LayoutRebuilder.MarkLayoutForRebuild(refer.CGet<RectTransform>("FocusRoot"));
+        }
+
+        private bool IsInGame()
+        {
+            return Game.Instance.GetCurrentGameStateName() == EGameState.InGame;
         }
 
         // Token: 0x04000070 RID: 112

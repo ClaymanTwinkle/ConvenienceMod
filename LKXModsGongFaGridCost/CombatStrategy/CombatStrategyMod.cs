@@ -37,13 +37,6 @@ namespace ConvenienceFrontend.CombatStrategy
             ModManager.GetSetting(modIdStr, "ReplaceAI", ref ReplaceAI);
         }
 
-        // Token: 0x0600000A RID: 10 RVA: 0x0000236C File Offset: 0x0000056C
-        public static string GetStrategiesJson()
-        {
-            List<Strategy> list = Strategies.FindAll((Strategy strategy) => strategy.enabled && strategy.IsComplete());
-            return JsonConvert.SerializeObject(list);
-        }
-
         /// <summary>
         /// 设置中打开战斗策略设置面板
         /// </summary>

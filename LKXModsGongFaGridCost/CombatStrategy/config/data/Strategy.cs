@@ -7,6 +7,7 @@ using ConvenienceFrontend.CombatStrategy.config.data;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
+    [Serializable]
     public class Strategy
     {
         /// <summary>
