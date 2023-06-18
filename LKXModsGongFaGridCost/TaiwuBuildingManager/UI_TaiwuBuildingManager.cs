@@ -84,6 +84,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             this.BuildBuildingSettings(content);
             this.BuildCollectResourceSettings(content);
             this.BuildHarvestSettings(content);
+            this.BuildOtherSettings(content);
         }
 
         public override void OnInit(ArgumentBox argsBox)
@@ -171,6 +172,13 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoHarvest", "自动全部收获建筑资源", "过月后，自动收获太吾村所有可收获的资源、物品、人才，收获的物品会放入到仓库中（不包括需要花费资源的贤士馆、当铺）"), "Toggle_EnableAutoHarvest");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoBuy", "银钱自动购买物品", "开启后，过月自动购买建筑产出的银钱物品，如当铺售卖的物品等，银钱不足时不会购买"), "Toggle_EnableAutoBuy");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoRecruit", "威望自动招揽人才", "开启后，过月自动购买建筑产出的威望人才，如贤士馆的人才等，威望不足时不会招揽"), "Toggle_EnableAutoRecruit");
+        }
+
+        private void BuildOtherSettings(Transform parent)
+        {
+            Transform transform = UIUtils.CreateSettingPanel(parent, "OtherSettings", "其他设置").transform;
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoShave", "自动刮胡子", "过月后，自动刮掉胡子"), "Toggle_EnableAutoShave");
+
         }
 
         private void AddComponent(CToggle component, string name)

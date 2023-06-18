@@ -39,6 +39,9 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         // 建筑自动分配人员升级
         private static bool _enableBuildingAutoUpdate = false;
 
+        // 自动刮胡子
+        private static bool _enableAutoShave = false;
+
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "Toggle_EnableBuildManager", ref _enableMod);
@@ -97,6 +100,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             _enableBuildingAutoWork = (bool)config.GetValueOrDefault("Toggle_EnableBuildingAutoWork", false);
             _enableBuildingAutoUpdate = (bool)config.GetValueOrDefault("Toggle_EnableBuildingAutoUpdate", false);
+
+            _enableAutoShave = (bool)config.GetValueOrDefault("Toggle_EnableAutoShave", false);
 
         }
 
@@ -192,6 +197,36 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // 取消外出收集资源
             AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
+
+            if (_enableAutoShave)
+            {
+                var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
+                var avatar = DomainManager.Taiwu.GetTaiwu().GetAvatar();
+
+                var hadBeard = false;
+
+                if (avatar.Beard1Id != 0)
+                {
+                    hadBeard = true;
+                    avatar.Beard1Id = 0;
+                    avatar.SetGrowableElementShowingState(1, false);
+                    DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 1);
+                }
+
+
+                if (avatar.Beard2Id != 0)
+                {
+                    hadBeard = true;
+                    avatar.Beard2Id = 0;
+                    avatar.SetGrowableElementShowingState(2, false);
+                    DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 2);
+                }
+
+                if (hadBeard)
+                {
+                    DomainManager.Taiwu.GetTaiwu().SetAvatar(avatar, context);
+                }
+            }
         }
     }
 }
