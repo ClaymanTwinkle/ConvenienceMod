@@ -15,7 +15,6 @@ namespace ConvenienceFrontend.BetterArmor
 
         public override void Dispose()
         {
-            AdaptableLog.Info("更平衡的装备 前端 卸载");
         }
 
         public override void OnModSettingUpdate(string modIdStr)
@@ -29,11 +28,9 @@ namespace ConvenienceFrontend.BetterArmor
             base.Initialize(harmony, modIdStr);
             OnModSettingUpdate(modIdStr);
             if (!_enableMod) return;
-            AdaptableLog.Info("更平衡的装备 前端 初始化开始");
 
-            BetterArmor betterArmor = new BetterArmor(this.showModification);
-            betterArmor.Modify();
-            AdaptableLog.Info("更平衡的装备 前端 初始化结束");
+            // BetterArmor betterArmor = new BetterArmor(this.showModification);
+            // betterArmor.Modify();
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x000020E8 File Offset: 0x000002E8

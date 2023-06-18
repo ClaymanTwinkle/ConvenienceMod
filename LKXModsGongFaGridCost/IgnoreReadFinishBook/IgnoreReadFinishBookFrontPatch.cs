@@ -27,6 +27,7 @@ namespace ConvenienceFrontend.IgnoreReadFinishBook
         public override void OnModSettingUpdate(string modIdStr)
         {
             ModManager.GetSetting(modIdStr, "Toggle_EnableFilterReadFinishBook", ref _enableFilterReadFinishBook);
+            // UpdateReadingProgressOnMonthChange
 
         }
 

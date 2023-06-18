@@ -56,7 +56,7 @@ namespace ConvenienceBackend
             // 
             new QuicklyCreateCharacterBackend(),
             // 平衡装备
-            //new BetterArmorBackendPatch(),
+            // new BetterArmorBackendPatch(),
         };
 
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250

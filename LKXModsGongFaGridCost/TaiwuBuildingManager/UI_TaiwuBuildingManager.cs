@@ -122,7 +122,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             Transform transform = UIUtils.CreateSettingPanel(parent, "BuildingSettings", "建筑设置").transform;
             UIUtils.CreateSubTitle(transform, "拆除无用资源");
             
-            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableRemoveUselessResource", "自动拆除无用资源", "过月前自动分配人员拆，不用再手动一个个拆了"), "Toggle_EnableRemoveUselessResource");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableRemoveUselessResource", "自动拆除无用资源", "过月前自动分配人员拆，不用再手动一个个拆了，已限制不会导致仓库超重"), "Toggle_EnableRemoveUselessResource");
 
             string[] options = new string[]
             {

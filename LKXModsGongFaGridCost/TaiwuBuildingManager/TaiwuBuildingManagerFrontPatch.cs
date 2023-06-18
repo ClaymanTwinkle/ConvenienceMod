@@ -1,15 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Config;
+using Config.Common;
 using ConvenienceFrontend.CustomWeapon;
 using FrameWork;
 using FrameWork.ModSystem;
 using GameData.GameDataBridge;
 using HarmonyLib;
 using Newtonsoft.Json;
+using TaiwuModdingLib.Core.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -63,7 +67,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         [HarmonyPatch(typeof(UI_Bottom), "OnInit")]
         public static void UI_Bottom_OnInit_Postfix(UI_Bottom __instance)
         {
-            if (_openTaiwuBuildingManagerButton != null) 
+            if (_openTaiwuBuildingManagerButton != null)
             {
                 _openTaiwuBuildingManagerButton.gameObject.SetActive(_enableMod);
                 return;

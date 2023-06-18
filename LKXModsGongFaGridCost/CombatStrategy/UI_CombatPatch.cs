@@ -115,7 +115,6 @@ namespace ConvenienceFrontend.CombatStrategy
         public static bool UI_Combat_OnClick_Prefix(UI_Combat __instance, CButton btn, sbyte ____showMercyOption)
         {
             if (!CombatStrategyMod.ReplaceAI) return true;
-            if (!CombatStrategyMod.ShowUIInCombat) return true;
             if (____showMercyOption >= 0) return true;
 
             string btnName = btn.name;
@@ -164,26 +163,6 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             UI_CombatPatch.UpdateAutoAttackTips();
 
-            if (!CombatStrategyMod.ShowUIInCombat)
-            {
-                Debug.Log("!CombatStrategyMod.ShowUIInCombat = true");
-                GameObject gameObject = UI_CombatPatch.targetDistanceBack;
-                if (gameObject != null)
-                {
-                    gameObject.SetActive(false);
-                }
-                GameObject gameObject2 = UI_CombatPatch.targetDistance2Back;
-                if (gameObject2 != null)
-                {
-                    gameObject2.SetActive(false);
-                }
-                GameObject gameObject3 = UI_CombatPatch.distanceSliderBack;
-                if (gameObject3 != null)
-                {
-                    gameObject3.SetActive(false);
-                }
-            }
-            else
             {
                 Debug.Log("!CombatStrategyMod.ShowUIInCombat = false");
 

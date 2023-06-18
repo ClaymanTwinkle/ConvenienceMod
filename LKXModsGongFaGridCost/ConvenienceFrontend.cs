@@ -57,7 +57,7 @@ namespace ConvenienceFrontend
             // 隐藏已读书籍
             new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
-            //new BetterArmorFrontPatch(),
+            // new BetterArmorFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

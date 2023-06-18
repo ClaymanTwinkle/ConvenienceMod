@@ -35,8 +35,6 @@ namespace ConvenienceFrontend.CombatStrategy
         public override void OnModSettingUpdate(string modIdStr)
         {
             ModManager.GetSetting(modIdStr, "ReplaceAI", ref ReplaceAI);
-            ModManager.GetSetting(modIdStr, "ShowSettingsInCombat", ref CombatStrategyMod.ShowSettingsInCombat);
-            ModManager.GetSetting(modIdStr, "ShowUIInCombat", ref CombatStrategyMod.ShowUIInCombat);
         }
 
         // Token: 0x0600000A RID: 10 RVA: 0x0000236C File Offset: 0x0000056C
@@ -91,12 +89,6 @@ namespace ConvenienceFrontend.CombatStrategy
 
         // Token: 0x04000006 RID: 6
         public static List<Strategy> Strategies => ConfigManager.Strategies;
-
-        // Token: 0x04000007 RID: 7
-        public static bool ShowUIInCombat;
-
-        // Token: 0x04000008 RID: 8
-        public static bool ShowSettingsInCombat;
 
         public static bool ReplaceAI;
 

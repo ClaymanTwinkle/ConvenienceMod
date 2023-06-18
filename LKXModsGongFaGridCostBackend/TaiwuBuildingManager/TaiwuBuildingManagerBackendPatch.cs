@@ -156,12 +156,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         {
             if (!_enableMod) return;
 
-            if (_enableRemoveUselessResource)
-            {
-                // 自动拆资源
-                UselessResourceCleaner.CleanAllUselessResource(context);
-            }
-
             if (_enableBuildingAutoWork)
             {
                 // 村民自动工作
@@ -172,6 +166,12 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             {
                 // 建筑自动升级
                 BuildingUpgradeHelper.UpgradeAllBuildings(context);
+            }
+
+            if (_enableRemoveUselessResource)
+            {
+                // 自动拆资源
+                UselessResourceCleaner.CleanAllUselessResource(context);
             }
 
             // 居所自动住人
