@@ -191,7 +191,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         /// </summary>
         /// <param name="context"></param>
 
-        private void OnAdvanceMonthFinish(DataContext context)
+        private unsafe void OnAdvanceMonthFinish(DataContext context)
         {
             if (!_enableMod) return;
 
@@ -209,7 +209,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 {
                     hadBeard = true;
                     avatar.Beard1Id = 0;
-                    avatar.SetGrowableElementShowingState(1, false);
                     DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 1);
                 }
 
@@ -218,13 +217,13 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 {
                     hadBeard = true;
                     avatar.Beard2Id = 0;
-                    avatar.SetGrowableElementShowingState(2, false);
                     DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 2);
                 }
 
                 if (hadBeard)
                 {
                     DomainManager.Taiwu.GetTaiwu().SetAvatar(avatar, context);
+                    AdaptableLog.Info("刮胡子啦");
                 }
             }
         }
