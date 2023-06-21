@@ -71,19 +71,23 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         // Token: 0x06000040 RID: 64 RVA: 0x00005C48 File Offset: 0x00003E48
         public static GameObject GetRollButtonGo(string buttonText, UnityAction onClick)
         {
-            GameObject gameObject = Object.Instantiate<GameObject>(UIFactory.GetButtonPrefab());
-            GameObject gameObject2 = Object.Instantiate<GameObject>(UIFactory.GetRollIcoPrefab());
-            gameObject.transform.Find("LabelBack/Label").GetComponent<TextMeshProUGUI>().text = buttonText;
-            UIFactory.ButtonAddOnClick(gameObject, onClick);
-            gameObject2.transform.SetParent(gameObject.transform, false);
-            gameObject2.transform.localPosition = gameObject.transform.Find("Icon").localPosition;
-            gameObject2.transform.localScale = Vector3.one * 0.5f;
-            Object.Destroy(gameObject.transform.Find("Icon").gameObject);
-            return gameObject;
+            //GameObject gameObject = Object.Instantiate<GameObject>(UIFactory.GetButtonPrefab());
+            //GameObject gameObject2 = Object.Instantiate<GameObject>(UIFactory.GetRollIcoPrefab());
+            //gameObject.transform.Find("LabelBack/Label").GetComponent<TextMeshProUGUI>().text = buttonText;
+            //UIFactory.ButtonAddOnClick(gameObject, onClick);
+            //gameObject2.transform.SetParent(gameObject.transform, false);
+            //gameObject2.transform.localPosition = gameObject.transform.Find("Icon").localPosition;
+            //gameObject2.transform.localScale = Vector3.one * 0.5f;
+            //Object.Destroy(gameObject.transform.Find("Icon").gameObject);
+            var button = GameObjectCreationUtils.UGUICreateCButton(null, new Vector2(0, 0), new Vector2(200, 80), 25, buttonText);
+            button.ClearAndAddListener(delegate () {
+                onClick.Invoke();
+            });
+            return button.gameObject;
         }
 
         // Token: 0x06000041 RID: 65 RVA: 0x00005D00 File Offset: 0x00003F00
-        public static GameObject GetRollIcoPrefab()
+        private static GameObject GetRollIcoPrefab()
         {
             List<GameObject> uielementPrefabs = UITool.GetUIElementPrefabs(new List<UIElement>
             {
