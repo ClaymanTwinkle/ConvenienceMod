@@ -7,6 +7,7 @@ using GameData.Common;
 using GameData.Domains.Building;
 using GameData.Domains.Map;
 using GameData.Domains;
+using Config;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {
@@ -33,7 +34,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 var wokers = WorkerSelector.SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
                 if (wokers.Any(x => x > -1))
                 {
-                    if (DomainManager.Building.CanUpgrade(x))
+                    BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingBlockData.TemplateId];
+                    if (DomainManager.Building.CanUpgrade(x) && buildingBlockData.Level < buildingBlockItem.MaxLevel)
                     {
                         DomainManager.Building.Upgrade(context, x, wokers);
                     }
@@ -46,7 +48,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 var wokers = WorkerSelector.SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
                 if (wokers.Any(x => x > -1))
                 {
-                    if (DomainManager.Building.CanUpgrade(x))
+                    BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingBlockData.TemplateId];
+                    if (DomainManager.Building.CanUpgrade(x) && buildingBlockData.Level < buildingBlockItem.MaxLevel)
                     {
                         DomainManager.Building.Upgrade(context, x, wokers);
                     }

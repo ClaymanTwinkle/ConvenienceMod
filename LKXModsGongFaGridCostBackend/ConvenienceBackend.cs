@@ -6,6 +6,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using ConvenienceBackend.BetterArmor;
 using ConvenienceBackend.CombatStrategy;
+using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
@@ -39,6 +40,8 @@ namespace ConvenienceBackend
     {
         private static List<BaseBackendPatch> allPatch = new List<BaseBackendPatch>()
         {
+            // 较艺必胜
+            new ComparativeArtBackendPatch(),
             // sl偷窃、哄骗
             new CustomStealBackendPatch(),
             // 自动战斗

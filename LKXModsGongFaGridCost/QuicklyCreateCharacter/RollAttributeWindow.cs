@@ -548,7 +548,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         private float _titleUnderSpace = 40f;
 
         // Token: 0x04000038 RID: 56
-        private Vector2 _backgroundOffset = ConvenienceFrontend.isTestGame() ? new Vector2(100f, 100f) : new Vector2(0f, 100f);
+        private Vector2 _backgroundOffset = new Vector2(100f, 100f);
 
         // Token: 0x04000039 RID: 57
         private Vector2 _windowPadding = new Vector2(40f, 40f) + new Vector2(60f, 0f);
@@ -557,7 +557,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         private Vector2 _gameObjectMargin = new Vector2(20f, 20f);
 
         // Token: 0x0400003B RID: 59
-        private Vector2 _windowSize = ConvenienceFrontend.isTestGame() ? new Vector2(1800f, 1100f) : new Vector2(1600f, 1100f);
+        private Vector2 _windowSize = new Vector2(1800f, 1100f);
 
         // Token: 0x0400003C RID: 60
         private Vector2 _initialPostion;

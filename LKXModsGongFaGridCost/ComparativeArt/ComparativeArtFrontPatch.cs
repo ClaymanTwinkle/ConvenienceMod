@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using TaiwuModdingLib.Core.Utils;
 using UnityEngine;
 
 namespace ConvenienceFrontend
@@ -13,15 +14,12 @@ namespace ConvenienceFrontend
         }
 
 
-        [HarmonyPrefix, HarmonyPatch(typeof(LifeSkillCombatModel), "TaiwuTryForceWin")]
-        public static bool TaiwuTryForceWin_PrefixPatch(ref bool __result)
+        [HarmonyPostfix, HarmonyPatch(typeof(UI_LifeSkillCombat), "UpdateButtonDisplay")]
+        public static void UI_LifeSkillCombat_UpdateButtonDisplay_PostfixPatch(UI_LifeSkillCombat __instance, bool isTaiwuRound)
         {
-            Debug.Log("TaiwuTryForceWin");
-            if (!_artAlwaysWin) return true;
-            __result = true;
-            return false;
+            if (!_artAlwaysWin) return;
+
+            __instance.CGet<CButton>("BtnForceGiveUp").onClick.Invoke();
         }
-
-
     }
 }

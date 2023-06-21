@@ -36,10 +36,12 @@ namespace ConvenienceFrontend
 
         public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
 
+        public static ModId ModIdInfo;
+
         private List<BaseFrontPatch> allPatch = new List<BaseFrontPatch>()
         {
             // 较艺必胜
-            // new ComparativeArtFrontPatch(),
+            new ComparativeArtFrontPatch(),
             // 自动战斗
             new CombatStrategyMod(),
             // 自定义偷窃
@@ -62,6 +64,8 @@ namespace ConvenienceFrontend
 
         public override void OnModSettingUpdate()
         {
+            ModIdInfo = ModManager.GetModInfo(base.ModIdStr).ModId;
+
             ModManager.GetSetting(base.ModIdStr, "Toggle_Total", ref ConvenienceFrontend.bool_Toggle_Total);
 
             allPatch.ForEach((BaseFrontPatch patch) => patch.OnModSettingUpdate(base.ModIdStr));
@@ -70,6 +74,8 @@ namespace ConvenienceFrontend
         // Token: 0x06000002 RID: 2 RVA: 0x00002069 File Offset: 0x00000269
         public override void Initialize()
         {
+            ModIdInfo = ModManager.GetModInfo(base.ModIdStr).ModId;
+
             InitConfig();
 
             this.harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceFrontend), null);
@@ -143,7 +149,20 @@ namespace ConvenienceFrontend
             GameDataBridge.AddMethodCall<string>(-1, 0, LOAD_CONFIG_METHOD_ID, JsonConvert.SerializeObject(ConvenienceFrontend.Config));
         }
 
-        public static bool isTestGame()
+        /// <summary>
+        /// 本地mod
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsLocalTest()
+        {
+            return ModIdInfo.Source != 1;
+        }
+
+        /// <summary>
+        /// 判断当前是否是测试版本
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsTestGame()
         {
             return Game.Instance.GameVersion.Contains("test");
         }

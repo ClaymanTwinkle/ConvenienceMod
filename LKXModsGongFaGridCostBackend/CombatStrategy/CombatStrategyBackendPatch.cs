@@ -436,6 +436,7 @@ namespace ConvenienceBackend.CombatStrategy
                             }
                             // 同一个身法没必要重复施展
                             if (selfChar.GetAffectingMoveSkillId() == strategy.skillId) break;
+
                             instance.StartPrepareSkill(context, strategy.skillId, true);
                             execedStrategyList.Add(strategy);
                             break;
