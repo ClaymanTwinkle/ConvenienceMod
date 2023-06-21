@@ -198,6 +198,12 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             // 取消外出收集资源
             AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
 
+            // 禁用过月刮胡子
+            // ClearBeard(context);
+        }
+
+        private unsafe void ClearBeard(DataContext context)
+        {
             if (_enableAutoShave)
             {
                 var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
