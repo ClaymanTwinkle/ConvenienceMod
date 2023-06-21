@@ -11,7 +11,6 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
-using GameData.Domains.SpecialEffect.CombatSkill.Kongsangpai.Throw;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;

@@ -142,5 +142,10 @@ namespace ConvenienceFrontend
         {
             GameDataBridge.AddMethodCall<string>(-1, 0, LOAD_CONFIG_METHOD_ID, JsonConvert.SerializeObject(ConvenienceFrontend.Config));
         }
+
+        public static bool isTestGame()
+        {
+            return Game.Instance.GameVersion.Contains("test");
+        }
     }
 }
