@@ -320,7 +320,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 Strategy strategy = new Strategy();
                 CombatStrategyMod.Strategies.Add(strategy);
-                Transform transform = UIUtils.CreateStrategyPanel(this._strategySettings);
+                Transform transform = CreateOrTakeStrategyPanel(CombatStrategyMod.Strategies.Count-1);
                 this.RenderStrategy(transform.transform, strategy);
                 LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
             });
@@ -536,20 +536,29 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000066 RID: 102 RVA: 0x00006B48 File Offset: 0x00004D48
         private void InitStrategy()
         {
-            int num = -1;
             for (int i = 0; i < CombatStrategyMod.Strategies.Count; i++)
             {
-                Transform transform = (++num < this._strategySettings.childCount) ? this._strategySettings.GetChild(num) : UIUtils.CreateStrategyPanel(this._strategySettings);
-                transform.gameObject.SetActive(true);
+                Transform transform = CreateOrTakeStrategyPanel(i);
                 this.RenderStrategy(transform.transform, CombatStrategyMod.Strategies[i]);
             }
         }
 
+        private Transform CreateOrTakeStrategyPanel(int num)
+        {
+            var transform = num < this._strategySettings.childCount ? this._strategySettings.GetChild(num) : UIUtils.CreateStrategyPanel(this._strategySettings);
+            transform.gameObject.SetActive(true);
+
+            return transform;
+        }
+
         private void ClearAllStrategy()
         {
-            for (var i = 0; i < this._strategySettings.childCount; i++)
+            for (var i = this._strategySettings.childCount - 1; i >= 0; i--)
             {
-                this._strategySettings.GetChild(i).gameObject.SetActive(false);
+                var child = this._strategySettings.GetChild(i);
+                child.SetParent(null);
+
+                UnityEngine.Object.Destroy(child.gameObject);
             }
         }
 
