@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
+    [Serializable]
     public class Settings : BackendSettings
     {
         // Token: 0x06000012 RID: 18 RVA: 0x00002694 File Offset: 0x00000894

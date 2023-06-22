@@ -2,6 +2,7 @@
 
 namespace ConvenienceFrontend.CombatStrategy
 {
+    [Serializable]
     public class BackendSettings
     {
         public bool isEnable = true;

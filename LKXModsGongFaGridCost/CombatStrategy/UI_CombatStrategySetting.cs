@@ -86,16 +86,17 @@ namespace ConvenienceFrontend.CombatStrategy
             gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(component.rect.size.x, component.rect.size.y - 120);
             gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y - 60, gameObject.transform.position.z);
             this._scroll = gameObject.GetComponent<CScrollRect>();
+            this._scroll.OnScrollEvent += OnScrollEvent;
             GameObject gameObject2 = this._scroll.Content.gameObject;
             RectTransform content = this._scroll.Content;
             Extentions.SetWidth(content, component.rect.size.x * 0.96f);
             UIUtils.CreateVerticalAutoSizeLayoutGroup(gameObject2).spacing = 15f;
+            this.BuildStrategyProgramme(content);
+            this.BuildSkillStrategy(content);
             this.BuildMoveSettings(content);
             this.BuildAttackSettings(content);
             this.BuildTeammateCommandSettings(content);
             this.BuildHotKeySettings(content);
-            this.BuildStrategyProgramme(content);
-            this.BuildSkillStrategy(content);
         }
 
         // Token: 0x06000057 RID: 87 RVA: 0x00005F78 File Offset: 0x00004178
@@ -331,23 +332,28 @@ namespace ConvenienceFrontend.CombatStrategy
             this._moveActionSelectPanel = MoveActionSelectPanel.Create(this._focus.transform);
         }
 
-        private void RefreshUI()
+        private void RefreshCurrentStrategyUI()
+        {
+            ClearAllStrategy();
+            InitStrategy();
+
+            Invoke("RefreshStrategyUI", 0.2f);
+        }
+
+        private void RefreshStrategyUI()
         {
             // this._scroll.ScrollTo(this._otherSettings);
+            ScrollToTop();
             LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
         }
 
-        private void RefreshCurrentStrategyUI()
+        private void ScrollToTop()
         {
-            var anchoredPosition = this._scroll.Content.anchoredPosition;
-            ClearAllStrategy();
-            InitStrategy();
-
-            this._scroll.ScrollTo(anchoredPosition);
-
-            Invoke("RefreshUI", 0.2f);
+            this._scroll.Content.anchoredPosition = new Vector2(0, -this._scroll.Content.sizeDelta.y / 2);
+            this._scroll.ScrollTo(this._scroll.Content.anchoredPosition);
         }
+
 
         private void ShowSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
         {
@@ -425,6 +431,8 @@ namespace ConvenienceFrontend.CombatStrategy
             this.InitAllSettings();
             this.InitHotKeySettings();
             this.InitStrategy();
+
+            Invoke("ScrollToTop", 0.2f);
         }
 
         // Token: 0x0600005F RID: 95 RVA: 0x000068A8 File Offset: 0x00004AA8
@@ -1122,6 +1130,11 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             refer.CGet<RectTransform>("FocusRoot").GetComponent<HorizontalLayoutGroup>().SetLayoutHorizontal();
             LayoutRebuilder.MarkLayoutForRebuild(refer.CGet<RectTransform>("FocusRoot"));
+        }
+
+        private void OnScrollEvent()
+        {
+            // Debug.Log("OnScrollEvent " + this._scroll.Content.sizeDelta);
         }
 
         private bool IsInGame()
