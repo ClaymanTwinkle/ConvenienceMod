@@ -42,14 +42,6 @@ namespace ConvenienceBackend.CombatStrategy
             AdaptableLog.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatCharacterStatePrepareSkill), "OnEnter")]
-        public static void CombatCharacterStatePrepareSkill_OnEnter_Postfix()
-        {
-            AdaptableLog.Info("CombatCharacterStatePrepareSkill::OnEnter " + Thread.CurrentThread.ManagedThreadId);
-        }
-
-
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
         public static void CombatDomain_SetPlayerAutoCombat_Prefix(DataContext context, ref bool autoCombat)
@@ -89,7 +81,7 @@ namespace ConvenienceBackend.CombatStrategy
             if (!IsEnable()) return;
 
             // 还没开始，不能执行
-            // if (__instance.GetTimeScale() <= 0f || !__instance.IsInCombat() || !_startCombatCalled) return;
+            if (__instance.GetTimeScale() <= 0f || !__instance.IsInCombat() || !_startCombatCalled) return;
 
             // 没有配置
             if (_settings == null) return;
