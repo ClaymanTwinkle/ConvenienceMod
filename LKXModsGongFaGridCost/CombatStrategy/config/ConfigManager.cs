@@ -7,6 +7,8 @@ using System.IO;
 using GameData.Domains.Mod;
 using Newtonsoft.Json;
 using ConvenienceFrontend.CombatStrategy.config.data;
+using FrameWork.ModSystem;
+using static Spine.Unity.MeshGenerator;
 
 namespace ConvenienceFrontend.CombatStrategy.config
 {
@@ -29,18 +31,33 @@ namespace ConvenienceFrontend.CombatStrategy.config
 
         private static JsonSerializerSettings _backendJsonSerializerSettings;
 
-        public static Settings Settings;
+        public static Settings GlobalSettings;
 
         private static int _originSelectStrategyIndex = 0;
 
         public static List<StrategyProgramme> Programmes;
 
-        // Token: 0x04000006 RID: 6
+        public static StrategyProgramme CurrentStrategyProgramme
+        {
+            get
+            {
+                return Programmes[GlobalSettings.SelectStrategyIndex];
+            }
+        }
+
+        public static BackendSettings ProgrammeSettings
+        {
+            get
+            {
+                return CurrentStrategyProgramme.settings;
+            }
+        }
+
         public static List<Strategy> Strategies
         {
             get
             {
-                return Programmes[Settings.SelectStrategyIndex].strategies;
+                return CurrentStrategyProgramme.strategies;
             }
         }
 
@@ -56,13 +73,13 @@ namespace ConvenienceFrontend.CombatStrategy.config
         {
             if (_settingFile == string.Empty || !File.Exists(_settingFile))
             {
-                Settings = new Settings();
+                GlobalSettings = new Settings();
                 _settingsJson = null;
             }
             else
             {
                 _settingsJson = File.ReadAllText(_settingFile);
-                Settings = JsonConvert.DeserializeObject<Settings>(_settingsJson);
+                GlobalSettings = JsonConvert.DeserializeObject<Settings>(_settingsJson);
             }
 
             if (_programmesFile == string.Empty || !File.Exists(_programmesFile))
@@ -84,11 +101,23 @@ namespace ConvenienceFrontend.CombatStrategy.config
                 Programmes = JsonConvert.DeserializeObject<List<StrategyProgramme>>(_programmesJson);
             }
 
-            if (Settings.SelectStrategyIndex >= Programmes.Count || Settings.SelectStrategyIndex < 0)
+            // 兼容Settings
+            Programmes.ForEach(programmes => {
+                if (programmes.settings == null)
+                {
+                    programmes.settings = (BackendSettings)GlobalSettings.CreateDeepCopy();
+                }
+                else
+                {
+                    programmes.settings.isEnable = GlobalSettings.isEnable;
+                }
+            });
+
+            if (GlobalSettings.SelectStrategyIndex >= Programmes.Count || GlobalSettings.SelectStrategyIndex < 0)
             {
-                Settings.SelectStrategyIndex = 0;
+                ChangeStrategyProgramme(0);
             }
-            _originSelectStrategyIndex = Settings.SelectStrategyIndex;
+            _originSelectStrategyIndex = GlobalSettings.SelectStrategyIndex;
         }
 
         public static ValueTuple<bool, bool> SaveJsons()
@@ -97,7 +126,7 @@ namespace ConvenienceFrontend.CombatStrategy.config
             bool strategiesChanged = false;
             if (_settingFile != string.Empty)
             {
-                string text = JsonConvert.SerializeObject(Settings);
+                string text = JsonConvert.SerializeObject(GlobalSettings);
                 if (!text.Equals(_settingsJson))
                 {
                     _settingsJson = text;
@@ -106,9 +135,9 @@ namespace ConvenienceFrontend.CombatStrategy.config
                 }
             }
 
-            if (_originSelectStrategyIndex != Settings.SelectStrategyIndex)
+            if (_originSelectStrategyIndex != GlobalSettings.SelectStrategyIndex)
             {
-                _originSelectStrategyIndex = Settings.SelectStrategyIndex;
+                _originSelectStrategyIndex = GlobalSettings.SelectStrategyIndex;
                 strategiesChanged = true;
             }
 
@@ -126,11 +155,6 @@ namespace ConvenienceFrontend.CombatStrategy.config
             return new ValueTuple<bool, bool>(settingsChanged, strategiesChanged);
         }
 
-        public static String GetSettingsJson()
-        {
-            return _settingsJson;
-        }
-
         public static string GetStrategiesJson()
         {
             List<Strategy> list = Strategies.FindAll((Strategy strategy) => strategy.enabled && strategy.IsComplete());
@@ -146,7 +170,32 @@ namespace ConvenienceFrontend.CombatStrategy.config
                     ContractResolver = BaseTypeContractResolver.Instance
                 };
             }
-            return JsonConvert.SerializeObject(Settings, _backendJsonSerializerSettings);
+            ProgrammeSettings.isEnable = GlobalSettings.isEnable;
+            return JsonConvert.SerializeObject(ProgrammeSettings, _backendJsonSerializerSettings);
+        }
+
+        public static void ChangeStrategyProgramme(int index)
+        { 
+            GlobalSettings.SelectStrategyIndex = index;
+        }
+
+        public static StrategyProgramme CopyStrategyProgramme()
+        {
+            var copyStrategy = (StrategyProgramme)ConfigManager.CurrentStrategyProgramme.CreateDeepCopy();
+            ConfigManager.Programmes.Add(copyStrategy);
+            return copyStrategy;
+        }
+
+        public static StrategyProgramme CreateNewStrategyProgramme(string name)
+        {
+            var programme = new StrategyProgramme
+            {
+                name = name,
+                settings = (BackendSettings)CurrentStrategyProgramme.settings.CreateDeepCopy(),
+            };
+            ConfigManager.Programmes.Add(programme);
+
+            return programme;
         }
     }
 }

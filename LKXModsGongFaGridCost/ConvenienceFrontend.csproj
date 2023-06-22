@@ -43,6 +43,7 @@
     <Compile Include="CombatStrategy\config\data\ChangeTrickAction.cs" />
     <Compile Include="CombatStrategy\config\data\Condition.cs" />
     <Compile Include="CombatStrategy\config\ConfigManager.cs" />
+    <Compile Include="CombatStrategy\config\data\GlobalSettings.cs" />
     <Compile Include="CombatStrategy\config\data\JudgeItem.cs" />
     <Compile Include="CombatStrategy\config\data\Judgement.cs" />
     <Compile Include="CombatStrategy\CombatStrategyMod.cs" />

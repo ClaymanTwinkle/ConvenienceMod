@@ -10,6 +10,7 @@ namespace ConvenienceFrontend.CombatStrategy.config.data
     public class StrategyProgramme
     {
         public string name = "";
+        public BackendSettings settings = null;
         public List<Strategy> strategies = new List<Strategy>();
     }
 }

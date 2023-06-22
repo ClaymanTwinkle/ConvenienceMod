@@ -181,13 +181,11 @@ namespace ConvenienceFrontend.CombatStrategy
             dropdown.onValueChanged.RemoveAllListeners();
             dropdown.ClearOptions();
             dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-            dropdown.value = ConfigManager.Settings.SelectStrategyIndex;
+            dropdown.value = ConfigManager.GlobalSettings.SelectStrategyIndex;
             dropdown.onValueChanged.AddListener(delegate (int val)
             {
-                ConfigManager.Settings.SelectStrategyIndex = val;
-
+                ConfigManager.ChangeStrategyProgramme(val);
                 RefreshCurrentStrategyUI();
-                // LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             });
             base.AddMono(dropdown, "StrategyProgrammeOptions");
 
@@ -203,11 +201,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             if (val != null && val != string.Empty)
                             {
-                                var programme = new StrategyProgramme
-                                {
-                                    name = val
-                                };
-                                ConfigManager.Programmes.Add(programme);
+                                var programme = ConfigManager.CreateNewStrategyProgramme(val);
 
                                 dropdown.ClearOptions();
                                 dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
@@ -222,7 +216,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             if (val != null && val != string.Empty)
                             {
-                                ConfigManager.Programmes[ConfigManager.Settings.SelectStrategyIndex].name = val;
+                                ConfigManager.CurrentStrategyProgramme.name = val;
                                 dropdown.options[dropdown.value].text = val;
                                 dropdown.RefreshShownValue();
                             }
@@ -230,10 +224,8 @@ namespace ConvenienceFrontend.CombatStrategy
                     }), tipContent: "给方案改个好名字"),
                     new UI_PopupMenu.BtnData("复制方案", true, new Action(() =>
                     {
-                        var currentStrategy = ConfigManager.Programmes[ConfigManager.Settings.SelectStrategyIndex];
-                        var copyStrategy = (StrategyProgramme)currentStrategy.CreateDeepCopy();
+                        var copyStrategy = ConfigManager.CopyStrategyProgramme();
                         copyStrategy.name += "（复制版）" + ConfigManager.Programmes.Count;
-                        ConfigManager.Programmes.Add(copyStrategy);
                         // 刷新UI
                         dropdown.ClearOptions();
                         dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
@@ -242,11 +234,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }), tipContent: "复制当前方案"),
                     new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", IsInGame(), new Action(() =>
                     {
-                        var programme = new StrategyProgramme
-                        {
-                            name = "自动生成策略" + ConfigManager.Programmes.Count
-                        };
-                        ConfigManager.Programmes.Add(programme);
+                        var programme = ConfigManager.CreateNewStrategyProgramme("自动生成策略" + ConfigManager.Programmes.Count);
 
                         dropdown.ClearOptions();
                         dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
@@ -334,9 +322,9 @@ namespace ConvenienceFrontend.CombatStrategy
 
         private void RefreshCurrentStrategyUI()
         {
+            InitAllSettings();
             ClearAllStrategy();
             InitStrategy();
-
             Invoke("RefreshStrategyUI", 0.2f);
         }
 
@@ -383,18 +371,18 @@ namespace ConvenienceFrontend.CombatStrategy
             this._distanceChangeSpeedTogGroup.InitPreOnToggle();
             this._distanceChangeSpeedTogGroup.OnActiveToggleChange = delegate (CToggle togNew, CToggle _)
             {
-                CombatStrategyMod.Settings.DistanceChangeSpeed = togNew.Key;
+                CombatStrategyMod.ProgrammeSettingsSettings.DistanceChangeSpeed = togNew.Key;
             };
             this._needRemoveTrickTogGroup.InitPreOnToggle();
             this._needRemoveTrickTogGroup.OnActiveToggleChange = delegate (CToggle togNew, CToggle togOld)
             {
                 if (togNew == null)
                 {
-                    CombatStrategyMod.Settings.RemoveTrick[togOld.Key] = togOld.isOn;
+                    CombatStrategyMod.ProgrammeSettingsSettings.RemoveTrick[togOld.Key] = togOld.isOn;
                 }
                 else
                 {
-                    CombatStrategyMod.Settings.RemoveTrick[togNew.Key] = togNew.isOn;
+                    CombatStrategyMod.ProgrammeSettingsSettings.RemoveTrick[togNew.Key] = togNew.isOn;
                 }
             };
 
@@ -471,7 +459,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 if (settingsChanged)
                 {
-                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+                    CombatStrategyMod.SendSettings();
                 }
                 if (strategiesChanged)
                 {
@@ -486,10 +474,10 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000062 RID: 98 RVA: 0x00006914 File Offset: 0x00004B14
         private void InitAllSettings()
         {
-            this._distanceChangeSpeedTogGroup.SetWithoutNotify(CombatStrategyMod.Settings.DistanceChangeSpeed, true);
-            for (int i = 0; i < CombatStrategyMod.Settings.RemoveTrick.Length; i++)
+            this._distanceChangeSpeedTogGroup.SetWithoutNotify(CombatStrategyMod.ProgrammeSettingsSettings.DistanceChangeSpeed, true);
+            for (int i = 0; i < CombatStrategyMod.ProgrammeSettingsSettings.RemoveTrick.Length; i++)
             {
-                this._needRemoveTrickTogGroup.SetWithoutNotify(i, CombatStrategyMod.Settings.RemoveTrick[i]);
+                this._needRemoveTrickTogGroup.SetWithoutNotify(i, CombatStrategyMod.ProgrammeSettingsSettings.RemoveTrick[i]);
             }
             foreach (string name in SettingsConst.ToggleParams)
             {
@@ -510,10 +498,10 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             CToggle ctoggle = base.CGet<CToggle>(name);
             ctoggle.onValueChanged.RemoveAllListeners();
-            ctoggle.isOn = CombatStrategyMod.Settings.GetBool(name);
+            ctoggle.isOn = CombatStrategyMod.ProgrammeSettingsSettings.GetBool(name);
             ctoggle.onValueChanged.AddListener(delegate (bool isOn)
             {
-                CombatStrategyMod.Settings.SetValue(name, isOn);
+                CombatStrategyMod.ProgrammeSettingsSettings.SetValue(name, isOn);
             });
         }
 
@@ -522,10 +510,10 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             TSlider tslider = base.CGet<TSlider>(name);
             tslider.onValueChanged.RemoveAllListeners();
-            tslider.value = (float)(CombatStrategyMod.Settings.GetInt(name) / multiplyer);
+            tslider.value = (float)(CombatStrategyMod.ProgrammeSettingsSettings.GetInt(name) / multiplyer);
             tslider.onValueChanged.AddListener(delegate (float val)
             {
-                CombatStrategyMod.Settings.SetValue(name, (int)val * multiplyer);
+                CombatStrategyMod.ProgrammeSettingsSettings.SetValue(name, (int)val * multiplyer);
             });
         }
 
@@ -1088,7 +1076,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 {
                     keyCode = 0;
                 }
-                CombatStrategyMod.Settings.SetKey(this._handlingKey, keyCode);
+                CombatStrategyMod.GlobalSettings.SetKey(this._handlingKey, keyCode);
                 this.StopHotKeySetting();
             }
         }
@@ -1098,7 +1086,7 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             GameObject gameObject = base.CGet<GameObject>(name);
             Refers refer = gameObject.GetComponent<Refers>();
-            KeyCode key = CombatStrategyMod.Settings.GetKey(name);
+            KeyCode key = CombatStrategyMod.GlobalSettings.GetKey(name);
             refer.CGet<TextMeshProUGUI>("Key").gameObject.SetActive(key > 0);
             refer.CGet<TextMeshProUGUI>("Key").text = key.ToString();
             CToggle ctoggle = refer.CGet<CToggle>("Toggle");

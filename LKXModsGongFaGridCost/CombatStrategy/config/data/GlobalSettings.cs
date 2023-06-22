@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace ConvenienceFrontend.CombatStrategy
+namespace ConvenienceFrontend.CombatStrategy.config.data
 {
     [Serializable]
-    public class Settings : BackendSettings
+    public class GlobalSettings
     {
         public KeyCode GetKey(string key)
         {
@@ -90,5 +90,7 @@ namespace ConvenienceFrontend.CombatStrategy
         /// 当前选中的策略序号
         /// </summary>
         public int SelectStrategyIndex = 0;
+
+        public bool isEnable = true;
     }
 }

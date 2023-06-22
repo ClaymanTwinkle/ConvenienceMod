@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ConvenienceFrontend.CombatStrategy.config;
 using GameData.Domains.Item.Display;
 using GameData.Domains.Mod;
+using GameData.GameDataBridge;
 using HarmonyLib;
 using Newtonsoft.Json;
 using TaiwuModdingLib.Core.Plugin;
@@ -77,8 +78,15 @@ namespace ConvenienceFrontend.CombatStrategy
             });
         }
 
+        public static void SendSettings()
+        {
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+        }
+
         // Token: 0x04000005 RID: 5
-        public static Settings Settings => ConfigManager.Settings;
+        public static BackendSettings ProgrammeSettingsSettings => ConfigManager.ProgrammeSettings;
+
+        public static Settings GlobalSettings => ConfigManager.GlobalSettings;
 
         // Token: 0x04000006 RID: 6
         public static List<Strategy> Strategies => ConfigManager.Strategies;

@@ -44,32 +44,32 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (!CombatStrategyMod.ReplaceAI) return;
 
-            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoMoveKey))
+            if (Input.GetKeyDown(CombatStrategyMod.GlobalSettings.SwitchAutoMoveKey))
             {
                 UI_CombatPatch.SwitchAutoMove();
             }
 
-            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoAttackKey))
+            if (Input.GetKeyDown(CombatStrategyMod.GlobalSettings.SwitchAutoAttackKey))
             {
                 UI_CombatPatch.SwitchAutoAttack();
             }
 
-            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchTargetDistanceKey))
+            if (Input.GetKeyDown(CombatStrategyMod.GlobalSettings.SwitchTargetDistanceKey))
             {
                 UI_CombatPatch.SwitchTargetDistance();
             }
 
-            if (CombatStrategyMod.Settings.TargetDistance < 120)
+            if (CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance < 120)
             {
-                UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.IncreaseDistanceKey, 1, ref UI_CombatPatch.pressKeyCounterInc);
+                UI_CombatPatch.CheckKey(CombatStrategyMod.GlobalSettings.IncreaseDistanceKey, 1, ref UI_CombatPatch.pressKeyCounterInc);
             }
 
-            if (CombatStrategyMod.Settings.TargetDistance > 20)
+            if (CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance > 20)
             {
-                UI_CombatPatch.CheckKey(CombatStrategyMod.Settings.DecreaseDistanceKey, -1, ref UI_CombatPatch.pressKeyCounterDec);
+                UI_CombatPatch.CheckKey(CombatStrategyMod.GlobalSettings.DecreaseDistanceKey, -1, ref UI_CombatPatch.pressKeyCounterDec);
             }
 
-            if (Input.GetKeyDown(CombatStrategyMod.Settings.SwitchAutoCastSkillKey))
+            if (Input.GetKeyDown(CombatStrategyMod.GlobalSettings.SwitchAutoCastSkillKey))
             {
                 SwitchAutoCastSkill();
             }
@@ -85,7 +85,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 {
                     int num = keyCounter;
                     keyCounter = num + 1;
-                    flag = (num == CombatStrategyMod.Settings.DistanceChangeSpeed);
+                    flag = (num == CombatStrategyMod.ProgrammeSettingsSettings.DistanceChangeSpeed);
                 }
                 else
                 {
@@ -140,11 +140,11 @@ namespace ConvenienceFrontend.CombatStrategy
             if (!CombatStrategyMod.ReplaceAI) return;
 
             _autoCombat = false;
-            ConfigManager.Settings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
+            ConfigManager.GlobalSettings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
 
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+            CombatStrategyMod.SendSettings();
             GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
-            if (CombatStrategyMod.Settings.ShowAutoAttackTips)
+            if (CombatStrategyMod.ProgrammeSettingsSettings.ShowAutoAttackTips)
             {
                 Debug.Log("CombatStrategyMod.Settings.ShowAutoAttackTips && UI_CombatPatch.autoAttackTips == null");
                 if (UI_CombatPatch.autoAttackTips == null)
@@ -239,7 +239,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     component5.sizeDelta = new Vector2(24f, -23f);
                     UI_CombatPatch.distanceSlider.onValueChanged.AddListener(delegate (float val)
                     {
-                        if (val != CombatStrategyMod.Settings.TargetDistance)
+                        if (val != CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance)
                         {
                             UI_CombatPatch.UpdateTargetDistance((int)val);
                         }
@@ -247,8 +247,8 @@ namespace ConvenienceFrontend.CombatStrategy
                         UI_CombatPatch.imageRight.fillAmount = (val - 20f) / 100f;
                     });
                 }
-                UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.Settings.TargetDistance);
-                UI_CombatPatch.UpdateTargetDistance2Text(CombatStrategyMod.Settings.TargetDistance2);
+                UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance);
+                UI_CombatPatch.UpdateTargetDistance2Text(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance2);
                 UI_CombatPatch.UpdateAutoMoveText();
             }
         }
@@ -265,9 +265,9 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             _autoCombat = !_autoCombat;
             SingletonObject.getInstance<GlobalSettings>().SetAutoCombat(_autoCombat);
-            ConfigManager.Settings.isEnable = _autoCombat;
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
-            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.Settings.isEnable, false);
+            ConfigManager.GlobalSettings.isEnable = _autoCombat;
+            CombatStrategyMod.SendSettings();
+            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.GlobalSettings.isEnable, false);
 
             UpdateAutoAttackTips();
             UpdateAutoMoveText();
@@ -312,8 +312,8 @@ namespace ConvenienceFrontend.CombatStrategy
                 });
                 particleCamera.enabled = true;
                 ReflectionExtensions.ModifyField<UI_Combat>(instance, "_selectingUseItem", false);
-                UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.Settings.TargetDistance);
-                UI_CombatPatch.UpdateTargetDistance2Text(CombatStrategyMod.Settings.TargetDistance2);
+                UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance);
+                UI_CombatPatch.UpdateTargetDistance2Text(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance2);
                 UI_CombatPatch.UpdateAutoMoveText();
                 UI_CombatPatch.UpdateAutoAttackTips();
                 if (needResume)
@@ -350,7 +350,7 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x0600004B RID: 75 RVA: 0x00005A38 File Offset: 0x00003C38
         private static void UpdateAutoMoveText()
         {
-            bool flag = CombatStrategyMod.Settings.isEnable && CombatStrategyMod.Settings.AutoMove;
+            bool flag = CombatStrategyMod.GlobalSettings.isEnable && CombatStrategyMod.ProgrammeSettingsSettings.AutoMove;
             if (UI_CombatPatch.targetDistanceText != null)
             {
                 UI_CombatPatch.targetDistanceText.color = (flag ? new Color(0.973f, 0.902f, 0.757f) : Color.grey);
@@ -362,13 +362,13 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (UI_CombatPatch.autoAttackTips == null) return;
 
-            if (!CombatStrategyMod.Settings.ShowAutoAttackTips)
+            if (!CombatStrategyMod.ProgrammeSettingsSettings.ShowAutoAttackTips)
             {
                 UI_CombatPatch.autoAttackTips.SetActive(false);
             }
             else
             {
-                bool flag = CombatStrategyMod.Settings.isEnable && CombatStrategyMod.Settings.AutoAttack;
+                bool flag = CombatStrategyMod.GlobalSettings.isEnable && CombatStrategyMod.ProgrammeSettingsSettings.AutoAttack;
                 UI_CombatPatch.autoAttackTips.SetActive(flag);
             }
         }
@@ -376,9 +376,9 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x0600004D RID: 77 RVA: 0x00005ACC File Offset: 0x00003CCC
         private static void UpdateTargetDistance(int val)
         {
-            if (CombatStrategyMod.Settings.TargetDistance != val)
+            if (CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance != val)
             {
-                CombatStrategyMod.Settings.TargetDistance = val;
+                CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance = val;
             }
             GameDataBridge.AddMethodCall<ushort, int>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateTargetDistance, val);
             UI_CombatPatch.distanceSlider.value = (float)val;
@@ -388,44 +388,44 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x0600004E RID: 78 RVA: 0x00005B1E File Offset: 0x00003D1E
         private static void UpdateTargetDistance2(int val)
         {
-            CombatStrategyMod.Settings.TargetDistance2 = val;
+            CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance2 = val;
             UI_CombatPatch.UpdateTargetDistance2Text(val);
         }
 
         // Token: 0x0600004F RID: 79 RVA: 0x00005B34 File Offset: 0x00003D34
         private static void SwitchAutoMove()
         {
-            CombatStrategyMod.Settings.AutoMove = !CombatStrategyMod.Settings.AutoMove;
-            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoMove, CombatStrategyMod.Settings.AutoMove);
+            CombatStrategyMod.ProgrammeSettingsSettings.AutoMove = !CombatStrategyMod.ProgrammeSettingsSettings.AutoMove;
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoMove, CombatStrategyMod.ProgrammeSettingsSettings.AutoMove);
             UI_CombatPatch.UpdateAutoMoveText();
         }
 
         // Token: 0x06000050 RID: 80 RVA: 0x00005B84 File Offset: 0x00003D84
         private static void SwitchAutoAttack()
         {
-            CombatStrategyMod.Settings.AutoAttack = !CombatStrategyMod.Settings.AutoAttack;
-            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoAttack, CombatStrategyMod.Settings.AutoAttack);
+            CombatStrategyMod.ProgrammeSettingsSettings.AutoAttack = !CombatStrategyMod.ProgrammeSettingsSettings.AutoAttack;
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoAttack, CombatStrategyMod.ProgrammeSettingsSettings.AutoAttack);
             UI_CombatPatch.UpdateAutoAttackTips();
         }
 
         private static void SwitchAutoCastSkill()
         {
-            CombatStrategyMod.Settings.AutoCastSkill = !CombatStrategyMod.Settings.AutoCastSkill;
-            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoCastSkill, CombatStrategyMod.Settings.AutoCastSkill);
+            CombatStrategyMod.ProgrammeSettingsSettings.AutoCastSkill = !CombatStrategyMod.ProgrammeSettingsSettings.AutoCastSkill;
+            GameDataBridge.AddMethodCall<ushort, bool>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_SwitchAutoCastSkill, CombatStrategyMod.ProgrammeSettingsSettings.AutoCastSkill);
             // UI_CombatPatch.UpdateAutoAttackTips(CombatStrategyMod.Settings.AutoAttack);
         }
 
         // Token: 0x06000051 RID: 81 RVA: 0x00005BD1 File Offset: 0x00003DD1
         private static void ModifyTargetDistance(int addFactor)
         {
-            UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.Settings.TargetDistance + addFactor);
+            UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance + addFactor);
         }
 
         // Token: 0x06000052 RID: 82 RVA: 0x00005BE8 File Offset: 0x00003DE8
         private static void SwitchTargetDistance()
         {
-            int targetDistance = CombatStrategyMod.Settings.TargetDistance;
-            UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.Settings.TargetDistance2);
+            int targetDistance = CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance;
+            UI_CombatPatch.UpdateTargetDistance(CombatStrategyMod.ProgrammeSettingsSettings.TargetDistance2);
             UI_CombatPatch.UpdateTargetDistance2(targetDistance);
         }
 
