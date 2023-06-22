@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using BehTree;
 using Config;
 using ConvenienceBackend.CombatStrategy.Data;
@@ -436,7 +437,13 @@ namespace ConvenienceBackend.CombatStrategy
                             }
                             // 同一个身法没必要重复施展
                             if (selfChar.GetAffectingMoveSkillId() == strategy.skillId) break;
+                            // 同一个护体没必要重复施展
+                            if (selfChar.GetAffectingDefendSkillId() == strategy.skillId) break;
+                            // 同一个技能不重复施展了
+                            if (selfChar.NeedUseSkillId == strategy.skillId) break;
 
+                            AdaptableLog.Info("准备施展 "+ Config.CombatSkill.Instance[strategy.skillId].Name);
+                            // 需要施展准备的功法
                             instance.StartPrepareSkill(context, strategy.skillId, true);
                             execedStrategyList.Add(strategy);
                             break;
