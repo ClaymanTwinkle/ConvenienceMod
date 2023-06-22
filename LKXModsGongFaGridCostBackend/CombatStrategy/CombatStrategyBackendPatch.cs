@@ -476,8 +476,8 @@ namespace ConvenienceBackend.CombatStrategy
                             if (selfChar.GetAffectingMoveSkillId() == strategy.skillId) break;
                             // 已有护体，没必要重复施展护体，也不能施展身法
                             if (selfChar.GetAffectingDefendSkillId()>=0 && (skillItem.EquipType == CombatSkillEquipType.Agile || skillItem.EquipType == CombatSkillEquipType.Defense)) break;
-                            // 同一个技能不重复施展了
-                            if (selfChar.NeedUseSkillId == strategy.skillId) break;
+                            // 已有准备施展的技能，跳过
+                            if (selfChar.NeedUseSkillId >= 0) break;
                             // 正在施展的技能不重复施展了
                             if (selfChar.GetPreparingSkillId() == strategy.skillId) break;
 
@@ -487,7 +487,7 @@ namespace ConvenienceBackend.CombatStrategy
                             // 正在放技能，忽略
                             if (charStateType == CombatCharacterStateType.CastSkill) break;
 
-                            AdaptableLog.Info("准备施展 " + skillItem.Name + " " + selfChar.StateMachine.GetCurrentState().GetType());
+                            AdaptableLog.Info("准备施展 " + skillItem.Name);
 
                             // 需要施展准备的功法
                             instance.StartPrepareSkill(context, strategy.skillId, true);
