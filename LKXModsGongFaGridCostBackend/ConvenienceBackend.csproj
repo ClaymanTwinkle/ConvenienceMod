@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <BaseIntermediateOutputPath>D:\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\Mod\2880901224\Plugins</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath></BaseIntermediateOutputPath>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
@@ -41,5 +41,9 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy $(ProjectDir)$(OutDir)ConvenienceBackend.dll &quot;D:\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\Mod\2880901224\Plugins&quot; /y/e" />
+  </Target>
 
 </Project>

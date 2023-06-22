@@ -17,11 +17,14 @@ using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
+using TaiwuModdingLib.Core.Utils;
 
 namespace ConvenienceBackend.CombatStrategy
 {
     internal class CombatStrategyBackendPatch: BaseBackendPatch
     {
+        private static bool _startCombatCalled = false;
+
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "ReplaceAI", ref _replaceAi);
@@ -39,6 +42,14 @@ namespace ConvenienceBackend.CombatStrategy
             AdaptableLog.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatCharacterStatePrepareSkill), "OnEnter")]
+        public static void CombatCharacterStatePrepareSkill_OnEnter_Postfix()
+        {
+            AdaptableLog.Info("CombatCharacterStatePrepareSkill::OnEnter " + Thread.CurrentThread.ManagedThreadId);
+        }
+
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
         public static void CombatDomain_SetPlayerAutoCombat_Prefix(DataContext context, ref bool autoCombat)
@@ -50,6 +61,25 @@ namespace ConvenienceBackend.CombatStrategy
             }
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "StartCombat")]
+        public static void CombatDomain_StartCombat_Postfix()
+        {
+            AdaptableLog.Info("开始战斗");
+            _startCombatCalled = true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "SetCombatStatus")]
+        public static void CombatDomain_SetCombatStatus_Postfix(CombatDomain __instance)
+        {
+            if (CombatStatusType.NotInCombat == __instance.GetCombatStatus())
+            {
+                AdaptableLog.Info("重置战斗");
+                _startCombatCalled = false;
+            }
+        }
+
         // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
@@ -57,6 +87,9 @@ namespace ConvenienceBackend.CombatStrategy
         {
             // 没有开启战斗策略
             if (!IsEnable()) return;
+
+            // 还没开始，不能执行
+            // if (__instance.GetTimeScale() <= 0f || !__instance.IsInCombat() || !_startCombatCalled) return;
 
             // 没有配置
             if (_settings == null) return;
@@ -425,7 +458,10 @@ namespace ConvenienceBackend.CombatStrategy
                             if (!strategy.skillData.GetCanUse()) break;
                             // 检查功法施展范围
                             bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
-                            if (beyondRange && strategy.skillData != null && Config.CombatSkill.Instance[strategy.skillId].EquipType == 1)
+
+                            var skillItem = Config.CombatSkill.Instance[strategy.skillId];
+
+                            if (beyondRange && strategy.skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
                             {
                                 // 检查催破功法是否在施法范围中
                                 OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, strategy.skillId);
@@ -437,12 +473,15 @@ namespace ConvenienceBackend.CombatStrategy
                             }
                             // 同一个身法没必要重复施展
                             if (selfChar.GetAffectingMoveSkillId() == strategy.skillId) break;
-                            // 同一个护体没必要重复施展
-                            if (selfChar.GetAffectingDefendSkillId() == strategy.skillId) break;
+                            // 已有护体，没必要重复施展护体，也不能施展身法
+                            if (selfChar.GetAffectingDefendSkillId()>=0 && (skillItem.EquipType == CombatSkillEquipType.Agile || skillItem.EquipType == CombatSkillEquipType.Defense)) break;
                             // 同一个技能不重复施展了
                             if (selfChar.NeedUseSkillId == strategy.skillId) break;
+                            // 正在施展的技能不重复施展了
+                            if (selfChar.GetPreparingSkillId() == strategy.skillId) break;
 
                             AdaptableLog.Info("准备施展 "+ Config.CombatSkill.Instance[strategy.skillId].Name);
+
                             // 需要施展准备的功法
                             instance.StartPrepareSkill(context, strategy.skillId, true);
                             execedStrategyList.Add(strategy);

@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\Program Files %28x86%29\Steam\steamapps\common\The Scroll Of Taiwu\Mod\2880901224\Plugins\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -165,4 +165,7 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy $(ProjectDir)$(OutDir)ConvenienceFrontend.dll "D:\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\Mod\2880901224\Plugins" /y/e</PostBuildEvent>
+  </PropertyGroup>
 </Project>
