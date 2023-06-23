@@ -168,6 +168,11 @@ namespace ConvenienceFrontend.CombatStrategy.config
             return json;
         }
 
+        public static string GetCurrentStrategyProgrammeJson()
+        { 
+            return JsonConvert.SerializeObject(CurrentStrategyProgramme);
+        }
+
         public static void ChangeStrategyProgramme(int index)
         { 
             GlobalSettings.SelectStrategyIndex = index;
@@ -190,6 +195,27 @@ namespace ConvenienceFrontend.CombatStrategy.config
             ConfigManager.Programmes.Add(programme);
 
             return programme;
+        }
+
+        public static StrategyProgramme CreateNewStrategyProgrammeFromClipboard()
+        {
+            try
+            {
+                var programme = JsonConvert.DeserializeObject<StrategyProgramme>(GUIUtility.systemCopyBuffer);
+                if (programme != null)
+                {
+                    programme.name += "(导入)";
+                    ConfigManager.Programmes.Add(programme);
+                }
+                return programme;
+            }
+            catch 
+            { 
+            
+            }
+
+            return null;
+
         }
     }
 }

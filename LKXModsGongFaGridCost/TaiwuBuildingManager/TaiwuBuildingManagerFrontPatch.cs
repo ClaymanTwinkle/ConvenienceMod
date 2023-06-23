@@ -48,6 +48,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             UI_BuildingBlockList.print("");
             // Events.RaiseAdvanceMonthBegin
             MouseTipMapBlock.print("");
+            
             UI_Reading.print("");
             // GameDataBridge.AddMethodCall(Element.GameDataListenerId, 1, 10);
             //GameDataBridge.AddMethodCall(Element.GameDataListenerId, 1, 9, leftDays);

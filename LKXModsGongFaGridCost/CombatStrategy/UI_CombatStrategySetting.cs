@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows;
 using Config;
 using ConvenienceFrontend.CombatStrategy.config;
 using ConvenienceFrontend.CombatStrategy.config.data;
@@ -203,16 +204,13 @@ namespace ConvenienceFrontend.CombatStrategy
                             {
                                 var programme = ConfigManager.CreateNewStrategyProgramme(val);
 
-                                dropdown.ClearOptions();
-                                dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-                                dropdown.value = dropdown.options.Count - 1;
-                                dropdown.onValueChanged.Invoke(dropdown.value);
+                                RefreshStrategyProgrammeOptions();
                             }
                         });
                     }), tipContent: "不同功法BD有不同的战斗策略方案！"),
                     new UI_PopupMenu.BtnData("方案改名", true, new Action(() =>
                     {
-                        ShowInputTextPanel(parent2, "重新输入方案名称", dropdown.options[dropdown.value].text, delegate (string val)
+                        ShowInputTextPanel(parent2, "输入方案名称", dropdown.options[dropdown.value].text, delegate (string val)
                         {
                             if (val != null && val != string.Empty)
                             {
@@ -227,19 +225,32 @@ namespace ConvenienceFrontend.CombatStrategy
                         var copyStrategy = ConfigManager.CopyStrategyProgramme();
                         copyStrategy.name += "（复制版）" + ConfigManager.Programmes.Count;
                         // 刷新UI
-                        dropdown.ClearOptions();
-                        dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-                        dropdown.value = dropdown.options.Count - 1;
-                        dropdown.onValueChanged.Invoke(dropdown.value);
+                        RefreshStrategyProgrammeOptions();
                     }), tipContent: "复制当前方案"),
+                    new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
+                    {
+                        UIUtils.showTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用");
+                        GUIUtility.systemCopyBuffer = ConfigManager.GetCurrentStrategyProgrammeJson();
+                    }), tipContent: "导出当前方案内容到剪切板"),
+                    new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
+                    {
+                        var Programme = ConfigManager.CreateNewStrategyProgrammeFromClipboard();
+                        if (Programme != null)
+                        {
+                            RefreshStrategyProgrammeOptions();
+                            UIUtils.showTips("提示", "已从剪切板导入方案【"+ Programme.name +"】");
+                        }
+                        else
+                        {
+                            UIUtils.showTips("提示", "剪切板无方案内容");
+                        }
+                    }), tipContent: "从剪切板中读取方案内容并导入"),
+
                     new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", IsInGame(), new Action(() =>
                     {
                         var programme = ConfigManager.CreateNewStrategyProgramme("自动生成策略" + ConfigManager.Programmes.Count);
 
-                        dropdown.ClearOptions();
-                        dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-                        dropdown.value = dropdown.options.Count - 1;
-                        dropdown.onValueChanged.Invoke(dropdown.value);
+                        RefreshStrategyProgrammeOptions();
 
                         GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetStrategiesJson(), new Action<string>(json=>{
                             if (json != null)
@@ -318,6 +329,16 @@ namespace ConvenienceFrontend.CombatStrategy
             this._switchWeaponPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
             this._teammateCommandPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
             this._moveActionSelectPanel = MoveActionSelectPanel.Create(this._focus.transform);
+        }
+
+        private void RefreshStrategyProgrammeOptions()
+        {
+            var dropdown = CGet<CDropdown>("StrategyProgrammeOptions");
+
+            dropdown.ClearOptions();
+            dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+            dropdown.value = dropdown.options.Count - 1;
+            dropdown.onValueChanged.Invoke(dropdown.value);
         }
 
         private void RefreshCurrentStrategyUI()
