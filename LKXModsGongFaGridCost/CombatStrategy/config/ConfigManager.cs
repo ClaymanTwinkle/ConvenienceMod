@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using ConvenienceFrontend.CombatStrategy.config.data;
 using FrameWork.ModSystem;
 using static Spine.Unity.MeshGenerator;
+using UnityEngine;
 
 namespace ConvenienceFrontend.CombatStrategy.config
 {
@@ -28,8 +29,6 @@ namespace ConvenienceFrontend.CombatStrategy.config
 
         // Token: 0x0400000E RID: 14
         private static string _settingsJson;
-
-        private static JsonSerializerSettings _backendJsonSerializerSettings;
 
         public static Settings GlobalSettings;
 
@@ -163,15 +162,10 @@ namespace ConvenienceFrontend.CombatStrategy.config
 
         public static string GetBackendSettingsJson()
         {
-            if (_backendJsonSerializerSettings == null)
-            {
-                _backendJsonSerializerSettings = new JsonSerializerSettings
-                {
-                    ContractResolver = BaseTypeContractResolver.Instance
-                };
-            }
             ProgrammeSettings.isEnable = GlobalSettings.isEnable;
-            return JsonConvert.SerializeObject(ProgrammeSettings, _backendJsonSerializerSettings);
+            
+            var json = JsonConvert.SerializeObject(ProgrammeSettings);
+            return json;
         }
 
         public static void ChangeStrategyProgramme(int index)

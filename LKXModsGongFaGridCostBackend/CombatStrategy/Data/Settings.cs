@@ -42,8 +42,6 @@ namespace ConvenienceBackend.CombatStrategy.Data
 
         public bool IgnoreRange { get; set; }
 
-        public bool[] RemoveTeammateCommand { get; set; }
-
         public bool[] RemoveTrick { get; set; }
 
         public bool AutoCastSkill { get; set; }

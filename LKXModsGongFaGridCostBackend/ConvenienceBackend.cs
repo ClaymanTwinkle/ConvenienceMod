@@ -21,6 +21,7 @@ using GameData.Domains.Character.Creation;
 using GameData.Domains.Global;
 using GameData.Domains.Global.Inscription;
 using GameData.Domains.Map;
+using GameData.Domains.Mod;
 using GameData.Domains.Organization;
 using GameData.Domains.SpecialEffect;
 using GameData.Domains.Taiwu;
@@ -30,6 +31,7 @@ using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
+using NLog;
 using TaiwuModdingLib.Core.Plugin;
 
 namespace ConvenienceBackend
@@ -62,9 +64,13 @@ namespace ConvenienceBackend
             // new BetterArmorBackendPatch(),
         };
 
+        public static ModId ModIdInfo;
+
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
         public override void OnModSettingUpdate()
-        {            
+        {
+            ModIdInfo = ModDomain.GetLoadedModIds().Find(x => ModIdStr.Equals(x.FileId.ToString()));
+
             DomainManager.Mod.GetSetting(ModIdStr, "Toggle_Total", ref bool_Toggle_Total);
 
             allPatch.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
@@ -118,6 +124,15 @@ namespace ConvenienceBackend
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 本地mod
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsLocalTest()
+        {
+            return ModIdInfo.Source != 1;
         }
 
         // Token: 0x04000001 RID: 1

@@ -193,6 +193,7 @@ namespace ConvenienceBackend.CombatStrategy
                                 catch (Exception ex)
                                 {
                                     AdaptableLog.Warning("CombatStrategy Backend: Deserialize settings Json Failed:" + ex.Message, false);
+                                    if (ConvenienceBackend.IsLocalTest()) throw;
                                 }
                                 break;
                             }
