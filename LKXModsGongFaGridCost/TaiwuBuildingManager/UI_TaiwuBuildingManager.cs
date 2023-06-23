@@ -84,6 +84,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             this.BuildBuildingSettings(content);
             this.BuildCollectResourceSettings(content);
             this.BuildHarvestSettings(content);
+            this.BuildResourceBuildSettings(content);
             this.BuildOtherSettings(content);
         }
 
@@ -172,6 +173,14 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoHarvest", "自动全部收获建筑资源", "过月后，自动收获太吾村所有可收获的资源、物品、人才，收获的物品会放入到仓库中（不包括需要花费资源的贤士馆、当铺）"), "Toggle_EnableAutoHarvest");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoBuy", "银钱自动购买物品", "开启后，过月自动购买建筑产出的银钱物品，如当铺售卖的物品等，银钱不足时不会购买"), "Toggle_EnableAutoBuy");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoRecruit", "威望自动招揽人才", "开启后，过月自动购买建筑产出的威望人才，如贤士馆的人才等，威望不足时不会招揽"), "Toggle_EnableAutoRecruit");
+        }
+
+        private void BuildResourceBuildSettings(Transform parent)
+        {
+            Transform transform = UIUtils.CreateSettingPanel(parent, "CollectResourceSettings", "资源设置").transform;
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildResource", "自然资源可建造", "开启后，将可以建造自然资源，且瞬间完成建造"), "Toggle_EnableBuildResource");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableMoveResource", "自然资源可移动", "规划建造可以移动自然资源"), "Toggle_EnableMoveResource");
+            AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableMoveBuildNoDurability", "移动建筑不掉耐久", "移动资源和建筑不掉耐久（甚至恢复最大耐久）"), "Toggle_EnableMoveBuildNoDurability");
         }
 
         private void BuildOtherSettings(Transform parent)

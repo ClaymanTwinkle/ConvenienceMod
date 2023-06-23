@@ -42,6 +42,11 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         // 自动刮胡子
         private static bool _enableAutoShave = false;
 
+        // 资源可建造
+        private static bool _enableBuildResource = false;
+        // 移动建造不消耗耐久
+        private static bool _enableMoveBuildNoDurability = false;
+
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "Toggle_EnableBuildManager", ref _enableMod);
@@ -103,6 +108,10 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             _enableAutoShave = (bool)config.GetValueOrDefault("Toggle_EnableAutoShave", false);
 
+            // 可以建造自然资源
+            _enableBuildResource = (bool)config.GetValueOrDefault("Toggle_EnableBuildResource", false);
+            // 移动建造不消耗耐久
+            _enableMoveBuildNoDurability = (bool)config.GetValueOrDefault("Toggle_EnableMoveBuildNoDurability", false);
         }
 
         [HarmonyPrefix]
@@ -151,6 +160,103 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             if (!_enableMod) return;
             if (!_enableBuildingAutoWork) return;
             DomainManager.Building.SetBuildingAutoWork(DomainManager.TaiwuEvent.MainThreadDataContext, arg0.BuildingBlockIndex, true);
+        }
+
+        /// <summary>
+        /// 判断建筑能否建造
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="blockKey"></param>
+        /// <param name="buildingTemplateId"></param>
+        /// <param name="__result"></param>
+        /// <returns></returns>
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildingDomain), "CanBuild")]
+        public static bool BuildingDomain_CanBuild_Patch(BuildingDomain __instance, ref BuildingBlockKey blockKey, ref short buildingTemplateId, ref bool __result)
+        {
+            if (!_enableBuildResource) return true;
+
+            BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingTemplateId];
+
+            if (!(buildingBlockItem.Type == EBuildingBlockType.NormalResource || buildingBlockItem.Type == EBuildingBlockType.SpecialResource || buildingBlockItem.Type == EBuildingBlockType.UselessResource)) return true;
+
+            Location location = new Location(blockKey.AreaId, blockKey.BlockId);
+            if (!__instance.GetTaiwuBuildingAreas().Contains(location)) return true;
+
+            BuildingBlockData element_BuildingBlocks = __instance.GetElement_BuildingBlocks(blockKey);
+            if (element_BuildingBlocks.TemplateId != 0) return true;
+
+            BuildingAreaData element_BuildingAreas = __instance.GetElement_BuildingAreas(location);
+            sbyte width = BuildingBlock.Instance[buildingTemplateId].Width;
+            __instance.IsBuildingBlocksEmpty(blockKey.AreaId, blockKey.BlockId, blockKey.BuildingBlockIndex, element_BuildingAreas.Width, width);
+            List<short> item = ObjectPool<List<short>>.Instance.Get();
+            bool canBuild = true;
+            if (canBuild && buildingTemplateId >= 0)
+            {
+                canBuild = ((!buildingBlockItem.isUnique || !BuildingDomain.HasBuilt(location, element_BuildingAreas, buildingTemplateId, true)) && __instance.AllDependBuildingAvailable(blockKey, buildingTemplateId, out sbyte b));
+                if (canBuild)
+                {
+                    ushort[] baseBuildCost = buildingBlockItem.BaseBuildCost;
+                    GameData.Domains.Character.Character taiwu = DomainManager.Taiwu.GetTaiwu();
+                    for (sbyte b2 = 0; b2 < 8; b2 += 1)
+                    {
+                        if (taiwu.GetResource(b2) < (int)baseBuildCost[(int)b2])
+                        {
+                            canBuild = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            ObjectPool<List<short>>.Instance.Return(item);
+            __result = canBuild;
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildingDomain), "ExchangeBlockData")]
+        public static bool BuildingDomain_ExchangeBlockData_Patch(BuildingDomain __instance, ref DataContext context, ref BuildingBlockKey originalBlockKey, ref BuildingBlockKey nowBlockKey)
+        {
+            if (!_enableMoveBuildNoDurability) return true;
+
+            MapBlockItem mapBlockItem = MapBlock.Instance[DomainManager.Map.GetBlock(originalBlockKey.AreaId, originalBlockKey.BlockId).TemplateId];
+            sbyte buildingAreaWidth = mapBlockItem.BuildingAreaWidth;
+            BuildingBlockData buildingBlockData = __instance.GetElement_BuildingBlocks(originalBlockKey).Clone();
+            BuildingBlockItem item = BuildingBlock.Instance.GetItem(buildingBlockData.TemplateId);
+            buildingBlockData.Durability = item.MaxDurability;
+            for (int i = 0; i < (int)item.Width; i++)
+            {
+                for (int j = 0; j < (int)item.Width; j++)
+                {
+                    short num = (short)((int)originalBlockKey.BuildingBlockIndex + i * (int)buildingAreaWidth + j);
+                    BuildingBlockKey buildingBlockKey = new BuildingBlockKey(originalBlockKey.AreaId, originalBlockKey.BlockId, num);
+                    BuildingBlockData buildingBlockData2 = new BuildingBlockData(num, 0, -1, -1);
+                    Traverse.Create(__instance).Method("SetElement_BuildingBlocks", new object[]
+                    {
+                            buildingBlockKey,
+                            buildingBlockData2,
+                            context
+                    }).GetValue();
+                }
+            }
+            for (int k = 0; k < (int)item.Width; k++)
+            {
+                for (int l = 0; l < (int)item.Width; l++)
+                {
+                    short num2 = (short)((int)nowBlockKey.BuildingBlockIndex + k * (int)buildingAreaWidth + l);
+                    BuildingBlockKey buildingBlockKey2 = new BuildingBlockKey(nowBlockKey.AreaId, nowBlockKey.BlockId, num2);
+                    BuildingBlockData buildingBlockData3 = (num2 == nowBlockKey.BuildingBlockIndex) ? buildingBlockData : new BuildingBlockData(num2, 0, -1, nowBlockKey.BuildingBlockIndex);
+                    buildingBlockData3.BlockIndex = num2;
+                    Traverse.Create(__instance).Method("SetElement_BuildingBlocks", new object[]
+                    {
+                            buildingBlockKey2,
+                            buildingBlockData3,
+                            context
+                    }).GetValue();
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

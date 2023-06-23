@@ -55,10 +55,12 @@ namespace ConvenienceBackend.CombatStrategy
 
         private static Strategy CreateStrategy(short skillId)
         {
-            Strategy strategy = new Strategy();
-            strategy.type = (short)StrategyType.ReleaseSkill;
-            strategy.skillId = skillId;
-            strategy.conditions = new List<Data.Condition>();
+            Strategy strategy = new Strategy
+            {
+                type = (short)StrategyType.ReleaseSkill,
+                skillId = skillId,
+                conditions = new List<Data.Condition>()
+            };
 
             return strategy;
         }
