@@ -229,7 +229,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }), tipContent: "复制当前方案"),
                     new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
                     {
-                        UIUtils.showTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用");
+                        UIUtils.showTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
                         GUIUtility.systemCopyBuffer = ConfigManager.GetCurrentStrategyProgrammeJson();
                     }), tipContent: "导出当前方案内容到剪切板"),
                     new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
@@ -242,12 +242,17 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                         else
                         {
-                            UIUtils.showTips("提示", "剪切板无方案内容");
+                            UIUtils.showTips("提示", "剪切板无方案内容，请复制方案内容后再点击导入！");
                         }
                     }), tipContent: "从剪切板中读取方案内容并导入"),
 
-                    new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", IsInGame(), new Action(() =>
+                    new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", true, new Action(() =>
                     {
+                        if (!ConvenienceFrontend.IsInGame())
+                        {
+                            UIUtils.showTips("提示", "请进入游戏中使用");
+                            return;
+                        }
                         var programme = ConfigManager.CreateNewStrategyProgramme("自动生成策略" + ConfigManager.Programmes.Count);
 
                         RefreshStrategyProgrammeOptions();
@@ -331,61 +336,6 @@ namespace ConvenienceFrontend.CombatStrategy
             this._moveActionSelectPanel = MoveActionSelectPanel.Create(this._focus.transform);
         }
 
-        private void RefreshStrategyProgrammeOptions()
-        {
-            var dropdown = CGet<CDropdown>("StrategyProgrammeOptions");
-
-            dropdown.ClearOptions();
-            dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-            dropdown.value = dropdown.options.Count - 1;
-            dropdown.onValueChanged.Invoke(dropdown.value);
-        }
-
-        private void RefreshCurrentStrategyUI()
-        {
-            InitAllSettings();
-            ClearAllStrategy();
-            InitStrategy();
-            Invoke("RefreshStrategyUI", 0.2f);
-        }
-
-        private void RefreshStrategyUI()
-        {
-            // this._scroll.ScrollTo(this._otherSettings);
-            ScrollToTop();
-            LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
-            LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
-        }
-
-        private void ScrollToTop()
-        {
-            this._scroll.Content.anchoredPosition = new Vector2(0, -this._scroll.Content.sizeDelta.y / 2);
-            this._scroll.ScrollTo(this._scroll.Content.anchoredPosition);
-        }
-
-
-        private void ShowSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
-        {
-            if (IsInGame())
-            {
-                var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) => {
-                    onSelectedSkill.Invoke(type, skillId);
-                });
-
-                _selectSkillArgBox.Set("CharId", SingletonObject.getInstance<BasicGameData>().TaiwuCharId);
-                _selectSkillArgBox.SetObject("Callback", _onSelected);
-                _selectSkillArgBox.Set("PrevCombatSkillId", selectedSkillId);
-                _selectSkillArgBox.SetObject("CombatSkillIdList", skillIdList);
-                UIElement.SelectSkill.SetOnInitArgs(_selectSkillArgBox);
-                UIManager.Instance.ShowUI(UIElement.SelectSkill);
-            }
-            else
-            {
-                UIUtils.showTips("警告", "载入存档后才能进行选择");
-            }
-        }
-
-        // Token: 0x0600005C RID: 92 RVA: 0x000066AC File Offset: 0x000048AC
         private void Awake()
         {
             Debug.Log("UI_CombatStrategySetting::Awake");
@@ -642,15 +592,18 @@ namespace ConvenienceFrontend.CombatStrategy
             skillRefers.CGet<TextMeshProUGUI>("Label").text = "执行";
 
             this.RenderStrategySkillText(strategy, skillRefers);
-            var btnList = new List<UI_PopupMenu.BtnData>();
-            if (!IsInGame())
+            var btnList = new List<UI_PopupMenu.BtnData>
             {
-                btnList.Add(new UI_PopupMenu.BtnData("选择功法", false, null, null, null, "进入游戏后才能选择功法", -1, null, null, null));
-            }
-            else
-            {
-                btnList.Add(new UI_PopupMenu.BtnData("选择功法", true, new Action(() => {
-                    var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) => {
+                new UI_PopupMenu.BtnData("选择功法", true, new Action(() =>
+                {
+                    if (!ConvenienceFrontend.IsInGame())
+                    {
+                        UIUtils.showTips("提示", "请进入游戏中使用");
+                        return;
+                    }
+
+                    var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) =>
+                    {
                         if (type == 1)
                         {
                             Debug.Log("选中功法" + skillId);
@@ -663,48 +616,54 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                     });
                     ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.ConvertAll(x => x.TemplateId), _onSelected);
-                }), null, null, "自动施展功法", -1, null, null, null));
-            }
-            btnList.Add(new UI_PopupMenu.BtnData("变招", true, new Action(()=> {
-                this.ShowChangeTacticsPanel(skillRefers, strategy);
-            }), tipContent: "自动变招"));
-            btnList.Add(new UI_PopupMenu.BtnData("切换武器", true, new Action(() => {
-                this.ShowSwitchWeaponPanel(skillRefers, strategy);
-            }), tipContent: "自动切换武器"));
-            btnList.Add(new UI_PopupMenu.BtnData("队友协助", true, new Action(() => {
-                this.ShowTeammateCommandPanel(skillRefers, strategy);
-            }), tipContent: "可自动执行队友指令"));
-            btnList.Add(new UI_PopupMenu.BtnData("自动移动", true, new Action(() => {
-                this._moveActionSelectPanel.Show(skillRefers, strategy, new Action(() => {
-                    this.RenderStrategySkillText(strategy, skillRefers);
-                }));
-            }), tipContent: "移动方式改为由策略触发，让移动变得更灵活；注意：该策略若执行了，默认的自动移动将不会执行"));
-            btnList.Add(new UI_PopupMenu.BtnData("普通攻击", true, new Action(() => {
-                strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
-                strategy.SetAction(new NormalAttackAction());
-                this.RenderStrategySkillText(strategy, skillRefers);
-            }), tipContent: "触发普通攻击"));
-            btnList.Add(new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
-            {
-                Condition condition = new Condition();
-                strategy.conditions.Add(condition);
-                Transform transform3 = UIUtils.CreateDropDown(content).transform;
-                castSkill.SetAsLastSibling();
-                this.RenderCondition(transform3, strategy, condition);
-                content.GetComponent<GridLayoutGroup>().CalculateLayoutInputVertical();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-                LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
-            }, null, null, "策略触发的前提条件，可添加多个条件", -1, null, null, null));
-            btnList.Add(new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
-            {
-                CombatStrategyMod.Strategies.Remove(strategy);
-                for (int k = transform.GetSiblingIndex() + 1; k < _strategySettings.childCount; k++)
+                }), null, null, "自动施展功法", -1, null, null, null),
+                new UI_PopupMenu.BtnData("变招", true, new Action(() =>
                 {
-                    _strategySettings.GetChild(k).gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Priority").text = k.ToString();
-                }
-                Object.Destroy(transform.gameObject);
-                LayoutRebuilder.MarkLayoutForRebuild(_strategySettings);
-            }, null, null, null, -1, null, null, null));
+                    this.ShowChangeTacticsPanel(skillRefers, strategy);
+                }), tipContent: "自动变招"),
+                new UI_PopupMenu.BtnData("切换武器", true, new Action(() =>
+                {
+                    this.ShowSwitchWeaponPanel(skillRefers, strategy);
+                }), tipContent: "自动切换武器"),
+                new UI_PopupMenu.BtnData("队友协助", true, new Action(() =>
+                {
+                    this.ShowTeammateCommandPanel(skillRefers, strategy);
+                }), tipContent: "可自动执行队友指令"),
+                new UI_PopupMenu.BtnData("自动移动", true, new Action(() =>
+                {
+                    this._moveActionSelectPanel.Show(skillRefers, strategy, new Action(() =>
+                    {
+                        this.RenderStrategySkillText(strategy, skillRefers);
+                    }));
+                }), tipContent: "移动方式改为由策略触发，让移动变得更灵活；注意：该策略若执行了，默认的自动移动将不会执行"),
+                new UI_PopupMenu.BtnData("普通攻击", true, new Action(() =>
+                {
+                    strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
+                    strategy.SetAction(new NormalAttackAction());
+                    this.RenderStrategySkillText(strategy, skillRefers);
+                }), tipContent: "触发普通攻击"),
+                new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
+                {
+                    Condition condition = new Condition();
+                    strategy.conditions.Add(condition);
+                    Transform transform3 = UIUtils.CreateDropDown(content).transform;
+                    castSkill.SetAsLastSibling();
+                    this.RenderCondition(transform3, strategy, condition);
+                    content.GetComponent<GridLayoutGroup>().CalculateLayoutInputVertical();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                    LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
+                }, null, null, "策略触发的前提条件，可添加多个条件", -1, null, null, null),
+                new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
+                {
+                    CombatStrategyMod.Strategies.Remove(strategy);
+                    for (int k = transform.GetSiblingIndex() + 1; k < _strategySettings.childCount; k++)
+                    {
+                        _strategySettings.GetChild(k).gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Priority").text = k.ToString();
+                    }
+                    Object.Destroy(transform.gameObject);
+                    LayoutRebuilder.MarkLayoutForRebuild(_strategySettings);
+                }, null, null, null, -1, null, null, null)
+            };
             skillRefers.CGet<CButton>("Button").ClearAndAddListener(delegate ()
             {
                 this.ShowMenu(btnList, castSkill.position);
@@ -1146,9 +1105,76 @@ namespace ConvenienceFrontend.CombatStrategy
             // Debug.Log("OnScrollEvent " + this._scroll.Content.sizeDelta);
         }
 
-        private bool IsInGame()
+        /// <summary>
+        /// 刷新方案选项UI
+        /// </summary>
+        private void RefreshStrategyProgrammeOptions()
         {
-            return Game.Instance.GetCurrentGameStateName() == EGameState.InGame;
+            var dropdown = CGet<CDropdown>("StrategyProgrammeOptions");
+
+            dropdown.ClearOptions();
+            dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+            dropdown.value = dropdown.options.Count - 1;
+            dropdown.onValueChanged.Invoke(dropdown.value);
+        }
+
+
+        /// <summary>
+        /// 刷新当前策略UI
+        /// </summary>
+        private void RefreshCurrentStrategyUI()
+        {
+            InitAllSettings();
+            ClearAllStrategy();
+            InitStrategy();
+            Invoke("RefreshStrategyUI", 0.2f);
+        }
+
+        /// <summary>
+        /// 延迟刷新策略UI，并滚动到最上
+        /// </summary>
+        private void RefreshStrategyUI()
+        {
+            // this._scroll.ScrollTo(this._otherSettings);
+            ScrollToTop();
+            LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
+            LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
+        }
+
+        /// <summary>
+        /// 滚动到顶部
+        /// </summary>
+        private void ScrollToTop()
+        {
+            this._scroll.Content.anchoredPosition = new Vector2(0, -this._scroll.Content.sizeDelta.y / 2);
+            this._scroll.ScrollTo(this._scroll.Content.anchoredPosition);
+        }
+
+        /// <summary>
+        /// 显示技能选择面板
+        /// </summary>
+        /// <param name="selectedSkillId"></param>
+        /// <param name="skillIdList"></param>
+        /// <param name="onSelectedSkill"></param>
+        private void ShowSkillSelectUI(short selectedSkillId, List<short> skillIdList, Action<sbyte, short> onSelectedSkill)
+        {
+            if (ConvenienceFrontend.IsInGame())
+            {
+                var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) => {
+                    onSelectedSkill.Invoke(type, skillId);
+                });
+
+                _selectSkillArgBox.Set("CharId", SingletonObject.getInstance<BasicGameData>().TaiwuCharId);
+                _selectSkillArgBox.SetObject("Callback", _onSelected);
+                _selectSkillArgBox.Set("PrevCombatSkillId", selectedSkillId);
+                _selectSkillArgBox.SetObject("CombatSkillIdList", skillIdList);
+                UIElement.SelectSkill.SetOnInitArgs(_selectSkillArgBox);
+                UIManager.Instance.ShowUI(UIElement.SelectSkill);
+            }
+            else
+            {
+                UIUtils.showTips("警告", "载入存档后才能进行选择");
+            }
         }
 
         // Token: 0x04000070 RID: 112

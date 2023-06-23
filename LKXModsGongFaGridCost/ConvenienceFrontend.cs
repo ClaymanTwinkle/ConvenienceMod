@@ -162,9 +162,18 @@ namespace ConvenienceFrontend
         /// 判断当前是否是测试版本
         /// </summary>
         /// <returns></returns>
-        public static bool IsTestGame()
+        public static bool IsTestVersion()
         {
             return Game.Instance.GameVersion.Contains("test");
+        }
+
+        /// <summary>
+        /// 判断当前是否进入了游戏中
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsInGame()
+        {
+            return Game.Instance.GetCurrentGameStateName() == EGameState.InGame;
         }
     }
 }
