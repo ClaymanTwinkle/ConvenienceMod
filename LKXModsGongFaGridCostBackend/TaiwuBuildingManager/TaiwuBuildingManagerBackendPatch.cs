@@ -163,6 +163,26 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         }
 
         /// <summary>
+        /// 建造建筑
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="context"></param>
+        /// <param name="blockKey"></param>
+        /// <param name="buildingTemplateId"></param>
+        /// <param name="workers"></param>
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BuildingDomain), "Build")]
+        public static void BuildingDomain_Build_Patch(BuildingDomain __instance, ref DataContext context, ref BuildingBlockKey blockKey, ref short buildingTemplateId, ref int[] workers)
+        {
+            BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingTemplateId];
+            if (buildingBlockItem.Type == EBuildingBlockType.NormalResource || buildingBlockItem.Type == EBuildingBlockType.SpecialResource)
+            {
+                BuildingBlockData element_BuildingBlocks = DomainManager.Building.GetElement_BuildingBlocks(blockKey);
+                DomainManager.Building.GmCmd_BuildImmediately(context, buildingTemplateId, blockKey, element_BuildingBlocks.Level);
+            }
+        }
+
+        /// <summary>
         /// 判断建筑能否建造
         /// </summary>
         /// <param name="__instance"></param>
@@ -178,7 +198,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingTemplateId];
 
-            if (!(buildingBlockItem.Type == EBuildingBlockType.NormalResource || buildingBlockItem.Type == EBuildingBlockType.SpecialResource || buildingBlockItem.Type == EBuildingBlockType.UselessResource)) return true;
+            if (!(buildingBlockItem.Type == EBuildingBlockType.NormalResource || buildingBlockItem.Type == EBuildingBlockType.SpecialResource)) return true;
 
             Location location = new Location(blockKey.AreaId, blockKey.BlockId);
             if (!__instance.GetTaiwuBuildingAreas().Contains(location)) return true;

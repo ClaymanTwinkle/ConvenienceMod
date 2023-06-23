@@ -5,13 +5,16 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Assets.Scripts.Game.Model;
 using Config;
 using Config.Common;
 using ConvenienceFrontend.CustomWeapon;
 using FrameWork;
 using FrameWork.ModSystem;
 using GameData.Domains.Building;
+using GameData.Domains.Character.Display;
 using GameData.GameDataBridge;
+using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
 using TaiwuModdingLib.Core.Utils;
@@ -155,6 +158,41 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
         /// </summary>
         /// <param name="__instance"></param>
         [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_BuildingOverview), "OnClick")]
+        public static void BuildingBlockData_IsResource_Patch(UI_BuildingOverview __instance, CButton btn)
+        {
+            if (btn.name == "AutoArrangeBtn")
+            {
+                var traverse = Traverse.Create(__instance);
+                var _configData = (BuildingBlockItem)traverse.Field("_configData").GetValue();
+                if (_configData == null) return;
+                if (!(_configData.Type == EBuildingBlockType.NormalResource || _configData.Type == EBuildingBlockType.SpecialResource)) return;
+                List<int> _availableWorkers = (List<int>)traverse.Field("_availableWorkers").GetValue();
+                int[] _operatorList = (int[])traverse.Field("_operatorList").GetValue();
+
+                if (Array.Exists(_operatorList, x => x > -1)) return;
+
+                Dictionary<int, short> _propertyValueDict = (Dictionary<int, short>)traverse.Field("_propertyValueDict").GetValue();
+                Dictionary<int, CharacterDisplayData> _charDisplayDataDict = (Dictionary<int, CharacterDisplayData>)traverse.Field("_charDisplayDataDict").GetValue();
+
+                BuildingModel buildingModel = SingletonObject.getInstance<BuildingModel>();
+                List<int> list = _availableWorkers.Where((int id) => !_operatorList.Contains(id) && !_charDisplayDataDict[id].CompletelyInfected && !buildingModel.VillagerWork.ContainsKey(id)).ToList();
+                if (list.Count - 1 > 0)
+                {
+                    _operatorList[0] = list[0];
+                }
+
+                __instance.CallMethod("UpdateOperatorInfo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                __instance.CallMethod("UpdateConfirmButton", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            }
+        }
+
+        /// <summary>
+        /// 设置可以建造的资源
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_BuildingOverview), "InitData")]
         public static void BuildingBlockData_IsResource_Patch(UI_BuildingOverview __instance)
         {
@@ -163,8 +201,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             Dictionary<EBuildingBlockClass, List<BuildingBlockItem>> _buildingMap = (Dictionary<EBuildingBlockClass, List<BuildingBlockItem>>)Traverse.Create(__instance).Field("_buildingMap").GetValue();
             BuildingBlock.Instance.Iterate(delegate (BuildingBlockItem item)
             {
-                bool flag2 = item.Class == EBuildingBlockClass.BornResource;
-                if (flag2)
+                if (item.Class == EBuildingBlockClass.BornResource && item.Type != EBuildingBlockType.UselessResource)
                 {
                     _buildingMap[EBuildingBlockClass.Resource].Add(item);
                 }
