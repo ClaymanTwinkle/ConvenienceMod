@@ -153,7 +153,8 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 array[i] = TrickType.Instance[i].Name;
             }
-            this._needRemoveTrickTogGroup = UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "RemoveTrick", "空A招式", array, array.Length, true, true);
+            this._needRemoveTrickTogGroup = UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "RemoveTrick", "空挥招式", array, array.Length, true, true, "空挥武器，不会产生式，不会打到敌人");
+
         }
 
         // Token: 0x0600005A RID: 90 RVA: 0x00006460 File Offset: 0x00004660
@@ -229,7 +230,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }), tipContent: "复制当前方案"),
                     new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
                     {
-                        UIUtils.showTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
+                        UIUtils.ShowTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
                         GUIUtility.systemCopyBuffer = ConfigManager.GetCurrentStrategyProgrammeJson();
                     }), tipContent: "导出当前方案内容到剪切板"),
                     new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
@@ -238,11 +239,11 @@ namespace ConvenienceFrontend.CombatStrategy
                         if (Programme != null)
                         {
                             RefreshStrategyProgrammeOptions();
-                            UIUtils.showTips("提示", "已从剪切板导入方案【"+ Programme.name +"】");
+                            UIUtils.ShowTips("提示", "已从剪切板导入方案【"+ Programme.name +"】");
                         }
                         else
                         {
-                            UIUtils.showTips("提示", "剪切板无方案内容，请复制方案内容后再点击导入！");
+                            UIUtils.ShowTips("提示", "剪切板无方案内容，请复制方案内容后再点击导入！");
                         }
                     }), tipContent: "从剪切板中读取方案内容并导入"),
 
@@ -250,14 +251,14 @@ namespace ConvenienceFrontend.CombatStrategy
                     {
                         if (!ConvenienceFrontend.IsInGame())
                         {
-                            UIUtils.showTips("提示", "请进入游戏中使用");
+                            UIUtils.ShowTips("提示", "请进入游戏中使用");
                             return;
                         }
                         var programme = ConfigManager.CreateNewStrategyProgramme("自动生成策略" + ConfigManager.Programmes.Count);
 
                         RefreshStrategyProgrammeOptions();
 
-                        GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetStrategiesJson(), new Action<string>(json=>{
+                        GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetEnableStrategiesJson(), new Action<string>(json=>{
                             if (json != null)
                             {
                                 programme.strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
@@ -292,13 +293,35 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                         else
                         {
-                            UIUtils.showTips("警告", "请至少保留一个方案!");
+                            UIUtils.ShowTips("警告", "请至少保留一个方案!");
                         }
                     }), tipContent: "删除当前选中的方案")
                 };
 
                 ShowMenu(btnList, manageStrategyProgrammeButton.transform.position);
             });
+
+            CButton autoFillStrategyButton = GameObjectCreationUtils.UGUICreateCButton(parent2, 10f, "<color=yellow>快速填充功法</color>", width: 150, height: 40);
+            autoFillStrategyButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 18f;
+            autoFillStrategyButton.ClearAndAddListener(delegate () {
+                if (!ConvenienceFrontend.IsInGame())
+                {
+                    UIUtils.ShowTips("提示", "请进入游戏中使用");
+                    return;
+                }
+                GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetAllStrategiesJson(), new Action<string>(json => {
+                    if (json != null)
+                    {
+                        var programme = ConfigManager.CurrentStrategyProgramme;
+                        programme.strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
+                        programme.strategies.ForEach(x => x.enabled = true);
+                        RefreshCurrentStrategyUI();
+                    }
+                }));
+            });
+            UIUtils.ShowMouseTipDisplayer(autoFillStrategyButton.gameObject, "根据当前玩家的功法Build，快速填充功法到当前策略里");
+            autoFillStrategyButton.gameObject.SetActive(false);
+            base.AddMono(autoFillStrategyButton, "AutoFillStrategyButton");
 
             this._inputTextPanel = UIUtils.CreateInputTextPanel(this._focus.transform).GetComponent<RectTransform>();
         }
@@ -312,6 +335,7 @@ namespace ConvenienceFrontend.CombatStrategy
             Extentions.SetAnchor(component, Vector2.up, Vector2.up);
             component.anchoredPosition = new Vector2(170f, -21f);
             base.AddMono(gameObject.GetComponent<CToggle>(), "AutoCastSkill");
+
             GameObject buttonMoreGameObject = GameObjectCreationUtils.InstantiateUIElement(this._strategySettings.parent, "ButtonMore");
             RectTransform component2 = buttonMoreGameObject.GetComponent<RectTransform>();
             Extentions.SetAnchor(component2, Vector2.up, Vector2.up);
@@ -329,6 +353,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 this.RenderStrategy(transform.transform, strategy);
                 LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
             });
+            UIUtils.ShowMouseTipDisplayer(buttonMoreGameObject.gameObject, "添加策略项");
             this._conditionSetter = ConditionSetterPanel.Create(this._focus.transform);
             this._changeTacticsPanel = UIUtils.CreateChangeTactics(this._focus.transform).GetComponent<RectTransform>();
             this._switchWeaponPanel = UIUtils.CreateOneValueOptionsPanel(this._focus.transform).GetComponent<RectTransform>();
@@ -390,7 +415,7 @@ namespace ConvenienceFrontend.CombatStrategy
             this.InitAllSettings();
             this.InitHotKeySettings();
             this.InitStrategy();
-
+            this.RefreshAutoFillStrategyButton();
             Invoke("ScrollToTop", 0.2f);
         }
 
@@ -434,7 +459,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 }
                 if (strategiesChanged)
                 {
-                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
+                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetEnableStrategiesJson());
                 }
             }
             yield return new WaitForEndOfFrame();
@@ -598,7 +623,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 {
                     if (!ConvenienceFrontend.IsInGame())
                     {
-                        UIUtils.showTips("提示", "请进入游戏中使用");
+                        UIUtils.ShowTips("提示", "请进入游戏中使用");
                         return;
                     }
 
@@ -1105,6 +1130,12 @@ namespace ConvenienceFrontend.CombatStrategy
             // Debug.Log("OnScrollEvent " + this._scroll.Content.sizeDelta);
         }
 
+        private void RefreshAutoFillStrategyButton()
+        {
+            var autoFillStrategyButton = CGet<CButton>("AutoFillStrategyButton");
+            autoFillStrategyButton.gameObject.SetActive(ConfigManager.CurrentStrategyProgramme.strategies.Count == 0);
+        }
+
         /// <summary>
         /// 刷新方案选项UI
         /// </summary>
@@ -1127,6 +1158,7 @@ namespace ConvenienceFrontend.CombatStrategy
             InitAllSettings();
             ClearAllStrategy();
             InitStrategy();
+            RefreshAutoFillStrategyButton();
             Invoke("RefreshStrategyUI", 0.2f);
         }
 
@@ -1173,7 +1205,7 @@ namespace ConvenienceFrontend.CombatStrategy
             }
             else
             {
-                UIUtils.showTips("警告", "载入存档后才能进行选择");
+                UIUtils.ShowTips("警告", "载入存档后才能进行选择");
             }
         }
 

@@ -8,17 +8,29 @@ namespace ConvenienceBackend.CombatStrategy.Data
 {
     public enum JudgeItem
     {
-        // Token: 0x04000006 RID: 6
+        /// <summary>
+        /// 距离
+        /// </summary>
         Distance,
-        // Token: 0x04000007 RID: 7
+        /// <summary>
+        /// 脚力
+        /// </summary>
         Mobility,
-        // Token: 0x04000008 RID: 8
+        /// <summary>
+        /// 装备
+        /// </summary>
         WeaponType,
-        // Token: 0x04000009 RID: 9
+        /// <summary>
+        /// 正在施展
+        /// </summary>
         PreparingAction,
-        // Token: 0x0400000A RID: 10
+        /// <summary>
+        /// 身法值
+        /// </summary>
         SkillMobility,
-        // Token: 0x0400000B RID: 11
+        /// <summary>
+        /// 式的数量
+        /// </summary>
         HasTrick,
 
         /// <summary>

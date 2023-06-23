@@ -143,7 +143,7 @@ namespace ConvenienceFrontend.CombatStrategy
             ConfigManager.GlobalSettings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
 
             CombatStrategyMod.SendSettings();
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetStrategiesJson());
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetEnableStrategiesJson());
             if (CombatStrategyMod.ProgrammeSettingsSettings.ShowAutoAttackTips)
             {
                 Debug.Log("CombatStrategyMod.Settings.ShowAutoAttackTips && UI_CombatPatch.autoAttackTips == null");

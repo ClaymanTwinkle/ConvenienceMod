@@ -8,6 +8,7 @@ using GameData.Domains;
 using GameData.Domains.Character.Display;
 using GameData.Domains.CombatSkill;
 using GameData.Utilities;
+using Newtonsoft.Json.Linq;
 
 namespace ConvenienceBackend.CombatStrategy
 {
@@ -26,13 +27,19 @@ namespace ConvenienceBackend.CombatStrategy
                     Strategy strategy = null;
                     switch (combatSkillItem.EquipType)
                     {
-                        case CombatSkillEquipType.Attack:
+                        case CombatSkillEquipType.Attack: // 催破
                             strategy = CreateStrategy(skillId);
                             break;
-                        case CombatSkillEquipType.Defense:
+                        case CombatSkillEquipType.Agile: // 身法
                             strategy = CreateStrategy(skillId);
+                            strategy.conditions.Add(new Data.Condition { 
+                                isAlly= true,
+                                item = JudgeItem.SkillMobility,
+                                judge = Judgement.Equals,
+                                value = 0
+                            });
                             break;
-                        case CombatSkillEquipType.Agile:
+                        case CombatSkillEquipType.Defense: // 护体
                             strategy = CreateStrategy(skillId);
                             break;
                     }

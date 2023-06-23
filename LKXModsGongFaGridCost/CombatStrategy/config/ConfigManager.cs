@@ -154,10 +154,15 @@ namespace ConvenienceFrontend.CombatStrategy.config
             return new ValueTuple<bool, bool>(settingsChanged, strategiesChanged);
         }
 
-        public static string GetStrategiesJson()
+        public static string GetEnableStrategiesJson()
         {
             List<Strategy> list = Strategies.FindAll((Strategy strategy) => strategy.enabled && strategy.IsComplete());
             return JsonConvert.SerializeObject(list);
+        }
+
+        public static string GetAllStrategiesJson()
+        {
+            return JsonConvert.SerializeObject(Strategies);
         }
 
         public static string GetBackendSettingsJson()

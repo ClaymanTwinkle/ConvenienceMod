@@ -117,7 +117,7 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         // Token: 0x06000026 RID: 38 RVA: 0x00003758 File Offset: 0x00001958
-        private static GameObject GetFreeLabel(Transform parent, string label)
+        private static GameObject GetFreeLabel(Transform parent, string label, string desc = null)
         {
             bool flag = UIUtils.freeLabel == null;
             if (flag)
@@ -127,11 +127,19 @@ namespace ConvenienceFrontend.CombatStrategy
                 RectTransform component = UIUtils.freeLabel.transform.GetChild(0).GetComponent<RectTransform>();
                 Extentions.SetPivot(component, UIUtils.LeftCenter);
                 component.anchoredPosition = Vector2.zero;
-                UIUtils.freeLabel.GetComponentInChildren<MouseTipDisplayer>().enabled = false;
+
+                var mouseTipDisplayer = UIUtils.freeLabel.GetComponentInChildren<MouseTipDisplayer>();
+                mouseTipDisplayer.enabled = false;
             }
             GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.freeLabel, parent);
             gameObject.SetActive(true);
             gameObject.GetComponentInChildren<TextMeshProUGUI>().text = label;
+
+            if (desc != null)
+            {
+                ShowMouseTipDisplayer(gameObject, desc);
+            }
+
             return gameObject;
         }
 
@@ -413,9 +421,9 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         // Token: 0x06000034 RID: 52 RVA: 0x00004164 File Offset: 0x00002364
-        public static CToggleGroup CreateToggleGroup(Transform parent, string name, string label, string[] options, int allowOnNum = 1, bool allowUncheck = false, bool allowSwitchOff = false)
+        public static CToggleGroup CreateToggleGroup(Transform parent, string name, string label, string[] options, int allowOnNum = 1, bool allowUncheck = false, bool allowSwitchOff = false, string desc = null)
         {
-            UIUtils.GetFreeLabel(parent, label);
+            UIUtils.GetFreeLabel(parent, label, desc);
             bool flag = UIUtils.emptyContainer == null;
             if (flag)
             {
@@ -664,7 +672,7 @@ namespace ConvenienceFrontend.CombatStrategy
             return sliceDownSheet;
         }
 
-        public static void showTips(string title, string content)
+        public static void ShowTips(string title, string content)
         {
             DialogCmd dialogCmd = new DialogCmd
             {
@@ -674,6 +682,26 @@ namespace ConvenienceFrontend.CombatStrategy
             };
             UIElement.Dialog.SetOnInitArgs(EasyPool.Get<ArgumentBox>().SetObject("Cmd", dialogCmd));
             UIManager.Instance.ShowUI(UIElement.Dialog);
+        }
+
+        public static void ShowMouseTipDisplayer(GameObject gameObject, string tips)
+        {
+            MouseTipDisplayer component = gameObject.GetComponent<MouseTipDisplayer>();
+            if (component == null)
+            {
+                component = gameObject.GetComponentInChildren<MouseTipDisplayer>();
+            }
+
+            if (component == null)
+            {
+                component = gameObject.AddComponent<MouseTipDisplayer>();
+            }
+            if (component != null)
+            {
+                component.enabled = true;
+                component.PresetParam = new string[] { tips } ;
+                component.Refresh();
+            }
         }
 
         // Token: 0x0400004B RID: 75
