@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Config;
 using ConvenienceBackend.CombatStrategy.Data;
 using GameData.Domains;
 using GameData.Domains.Character.Display;
@@ -18,36 +19,69 @@ namespace ConvenienceBackend.CombatStrategy
         {
             List<Strategy> strategies = new List<Strategy>();
 
-            var equippedCombatSkills = DomainManager.Taiwu.GetTaiwu().GetEquippedCombatSkills();
-            foreach (var skillId in equippedCombatSkills)
-            {
-                var combatSkillItem = Config.CombatSkill.Instance[skillId];
-                if (combatSkillItem != null)
+            var equippedCombatSkills = DomainManager.Taiwu.GetTaiwu().GetEquippedCombatSkills().ToList().FindAll(x=>x>-1).ConvertAll(x=> Config.CombatSkill.Instance[x]);
+            equippedCombatSkills.Sort((CombatSkillItem a, CombatSkillItem b) => {
+                if (a.EquipType != b.EquipType)
                 {
-                    Strategy strategy = null;
-                    switch (combatSkillItem.EquipType)
+                    // 优先催破
+                    return a.EquipType - b.EquipType;
+                }
+
+                if (a.Grade != b.Grade)
+                {
+                    if (a.EquipType == CombatSkillEquipType.Agile)
                     {
-                        case CombatSkillEquipType.Attack: // 催破
-                            strategy = CreateStrategy(skillId);
-                            break;
-                        case CombatSkillEquipType.Agile: // 身法
-                            strategy = CreateStrategy(skillId);
-                            strategy.conditions.Add(new Data.Condition { 
-                                isAlly= true,
-                                item = JudgeItem.SkillMobility,
+                        // 身法优先品级低的
+                        return a.Grade - b.Grade;
+                    }
+                    return b.Grade - a.Grade;
+                }
+
+                if (a.EquipType == CombatSkillEquipType.Agile)
+                { 
+                    // 身法优先无门无派
+                    return a.SectId - b.SectId;
+                }
+
+                return 0; 
+            });
+            foreach (var combatSkillItem in equippedCombatSkills)
+            {
+                var skillId = combatSkillItem.TemplateId;
+                Strategy strategy = null;
+                switch (combatSkillItem.EquipType)
+                {
+                    case CombatSkillEquipType.Attack: // 催破
+                        strategy = CreateStrategy(skillId);
+                        break;
+                    case CombatSkillEquipType.Agile: // 身法
+                        strategy = CreateStrategy(skillId);
+                        strategy.conditions.Add(new Data.Condition
+                        {
+                            isAlly = true,
+                            item = JudgeItem.SkillMobility,
+                            judge = Judgement.Equals,
+                            value = 0
+                        });
+                        break;
+                    case CombatSkillEquipType.Defense: // 护体
+                        strategy = CreateStrategy(skillId);
+                        if (combatSkillItem.FightBackDamage == 0)
+                        {
+                            strategy.conditions.Add(new Data.Condition
+                            {
+                                isAlly = false,
+                                item = JudgeItem.PreparingAction,
                                 judge = Judgement.Equals,
                                 value = 0
                             });
-                            break;
-                        case CombatSkillEquipType.Defense: // 护体
-                            strategy = CreateStrategy(skillId);
-                            break;
-                    }
+                        }
+                        break;
+                }
 
-                    if (strategy != null)
-                    {
-                        strategies.Add(strategy);
-                    }
+                if (strategy != null)
+                {
+                    strategies.Add(strategy);
                 }
             }
             return strategies;

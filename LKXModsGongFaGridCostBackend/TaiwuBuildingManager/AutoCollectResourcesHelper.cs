@@ -8,6 +8,7 @@ using GameData.Domains.Map;
 using GameData.Domains;
 using GameData.Utilities;
 using Newtonsoft.Json.Linq;
+using GameData.Domains.TaiwuEvent;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {

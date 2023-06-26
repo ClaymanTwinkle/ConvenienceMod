@@ -153,15 +153,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             return true;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(TaiwuEventDomain), "OnEvent_ConstructComplete")]
-        public static void TaiwuEventDomain_OnEvent_ConstructComplete_Postfix(BuildingBlockKey arg0, short arg1, sbyte arg2)
-        {
-            if (!_enableMod) return;
-            if (!_enableBuildingAutoWork) return;
-            DomainManager.Building.SetBuildingAutoWork(DomainManager.TaiwuEvent.MainThreadDataContext, arg0.BuildingBlockIndex, true);
-        }
-
         /// <summary>
         /// 建造建筑
         /// </summary>
@@ -233,6 +224,14 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             return false;
         }
 
+        /// <summary>
+        /// 移动建造消耗经验
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="context"></param>
+        /// <param name="originalBlockKey"></param>
+        /// <param name="nowBlockKey"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(BuildingDomain), "ExchangeBlockData")]
         public static bool BuildingDomain_ExchangeBlockData_Patch(BuildingDomain __instance, ref DataContext context, ref BuildingBlockKey originalBlockKey, ref BuildingBlockKey nowBlockKey)
@@ -316,7 +315,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         /// 结束过月
         /// </summary>
         /// <param name="context"></param>
-
         private unsafe void OnAdvanceMonthFinish(DataContext context)
         {
             if (!_enableMod) return;

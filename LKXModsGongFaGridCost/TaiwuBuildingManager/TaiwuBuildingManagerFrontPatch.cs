@@ -47,6 +47,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             UI_BuildingArea.print("");
             UI_MapBlockCharList.print("");
             UI_Worldmap.print("");
+            
             UI_BuildingManage.print("");
             UI_Reading.print("");
             UI_BuildingBlockList.print("");

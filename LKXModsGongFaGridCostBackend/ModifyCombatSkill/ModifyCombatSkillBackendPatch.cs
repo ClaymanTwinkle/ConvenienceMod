@@ -5,16 +5,22 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using Config.ConfigCells.Character;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
+using GameData.Domains.CombatSkill;
 using GameData.Domains.SpecialEffect.CombatSkill.Common.Attack;
 using GameData.Domains.SpecialEffect.CombatSkill.Yuanshanpai.Blade;
 using GameData.Domains.SpecialEffect.CombatSkill.Yuanshanpai.Sword;
+using GameData.Domains.Taiwu;
+using GameData.GameDataBridge;
+using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
 using TaiwuModdingLib.Core.Utils;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ConvenienceBackend.ModifyCombatSkill
 {
@@ -27,6 +33,75 @@ namespace ConvenienceBackend.ModifyCombatSkill
             DomainManager.Mod.GetSetting(modIdStr, "enable_BladeAndSwordDoubleJue", ref enableBladeAndSwordDoubleJue);
 
             UpdateSkillEffectDesc();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "CallMethod")]
+        public static bool TaiwuDomain_CallMethod_Prefix(TaiwuDomain __instance, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, DataContext context)
+        {
+            if (operation.MethodId != 2000) return true;
+
+            int num = operation.ArgsOffset;
+            ushort flag = 0;
+            num += Serializer.Deserialize(argDataPool, num, ref flag);
+            if (operation.ArgsCount == 2)
+            {
+                switch (flag)
+                {
+                    case 0:
+                        {
+                            CombatSkillItem item = null;
+                            Serializer.DeserializeDefault(argDataPool, num, ref item);
+
+                            var traverse = new Traverse(Config.CombatSkill.Instance);
+                            traverse.Field<Dictionary<int, CombatSkillItem>>("_extraDataMap").Value.Add(item.TemplateId, item);
+                            traverse.Field<Dictionary<string, int>>("_refNameMap").Value.Add(item.Name, item.TemplateId);
+                            // 学习功法
+                            __instance.TaiwuLearnCombatSkill(context, item.TemplateId, 32767);
+                            if (ConvenienceBackend.IsLocalTest())
+                            {
+                                DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(__instance.GetTaiwuCharId(), item.TemplateId)).SetPracticeLevel(100, context);
+                            }
+                            // 装备功法时会红字
+                            if (CombatSkillDomain.EquipAddPropertyDict.Length <= item.TemplateId)
+                            {
+                                var orignal = CombatSkillDomain.EquipAddPropertyDict;
+                                CombatSkillDomain.EquipAddPropertyDict = new short[item.TemplateId + 1][];
+                                for (var i = 0; i < orignal.Length; i++)
+                                {
+                                    CombatSkillDomain.EquipAddPropertyDict[i] = orignal[i];
+                                }
+                            }
+                            List<PropertyAndValue> addPropertyList = item.PropertyAddList;
+                            if (addPropertyList != null && addPropertyList.Count > 0)
+                            {
+                                short[] addValueList = new short[104];
+                                Array.Clear(addValueList, 0, addValueList.Length);
+                                foreach (PropertyAndValue addProperty in addPropertyList)
+                                {
+                                    addValueList[(int)addProperty.PropertyId] = addProperty.Value;
+                                }
+
+                                CombatSkillDomain.EquipAddPropertyDict[item.TemplateId] = addValueList;
+                            }
+                            
+                        }
+                        break;
+                    case 1:
+                        {
+                            SkillBreakGridListItem item = null;
+                            Serializer.DeserializeDefault(argDataPool, num, ref item);
+
+                            // 突破功法会红字
+                            var traverse = new Traverse(Config.SkillBreakGridList.Instance);
+                            traverse.Field<Dictionary<int, SkillBreakGridListItem>>("_extraDataMap").Value.Add(item.TemplateId, item);
+                            traverse.Field<Dictionary<string, int>>("_refNameMap").Value.Add(item.TemplateId.ToString(), item.TemplateId);
+                        }
+                        break;
+                }
+            }
+
+            return false;
         }
 
         private static void UpdateSkillEffectDesc()

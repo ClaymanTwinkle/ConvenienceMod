@@ -35,8 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BaseFrontPatch.cs" />
-    <Compile Include="BetterArmor\BetterArmor.cs" />
-    <Compile Include="BetterArmor\BetterArmorFrontPatch.cs" />
     <Compile Include="CombatStrategy\BackendSettings.cs" />
     <Compile Include="CombatStrategy\BaseTypeContractResolver.cs" />
     <Compile Include="CombatStrategy\config\data\AutoMoveAction.cs" />
@@ -69,7 +67,10 @@
     <Compile Include="IgnoreReadFinishBook\IgnoreReadFinishBookFrontPatch.cs" />
     <Compile Include="ManualArchive\ManualArchiveFrontendPatch.cs" />
     <Compile Include="ManualArchive\ModMono.cs" />
+    <Compile Include="ModifyCombatSkill\Data\CombatSkillExtraUtils.cs" />
+    <Compile Include="ModifyCombatSkill\Data\CombatSkillItemWrapper.cs" />
     <Compile Include="ModifyCombatSkill\ModifyCombatSkillFrontPatch.cs" />
+    <Compile Include="ModifyCombatSkill\UI_FusionCombatSkill.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConvenienceFrontend.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataController.cs" />

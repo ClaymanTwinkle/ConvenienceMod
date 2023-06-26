@@ -4,7 +4,6 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using ConvenienceBackend.BetterArmor;
 using ConvenienceBackend.CombatStrategy;
 using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CustomSteal;

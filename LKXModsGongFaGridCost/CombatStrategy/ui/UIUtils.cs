@@ -162,9 +162,9 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         // Token: 0x06000028 RID: 40 RVA: 0x000038B4 File Offset: 0x00001AB4
-        public static GameObject CreateMainUI(string name)
+        public static GameObject CreateMainUI(string name, string title)
         {
-            GameObject gameObject = GameObjectCreationUtils.CreatePopupWindow(null, Vector2.zero, new Vector2(1300f, 1000f), "自动战斗设置", null, null, true);
+            GameObject gameObject = GameObjectCreationUtils.CreatePopupWindow(null, Vector2.zero, new Vector2(1300f, 1000f), title, null, null, true);
             gameObject.name = "popUpWindowBase";
             PopupWindow component = gameObject.GetComponent<PopupWindow>();
             component.ConfirmButton.gameObject.SetActive(false);

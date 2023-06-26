@@ -33,34 +33,32 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000055 RID: 85 RVA: 0x00005C78 File Offset: 0x00003E78
         public static UIElement GetUI()
         {
-            bool flag = UI_CombatStrategySetting.element != null && UI_CombatStrategySetting.element.UiBase != null;
             UIElement result;
-            if (flag)
+            if (element != null && element.UiBase != null)
             {
-                result = UI_CombatStrategySetting.element;
+                result = element;
             }
             else
             {
-                UI_CombatStrategySetting.element = new UIElement
+                element = new UIElement
                 {
                     Id = -1
                 };
-                Traverse.Create(UI_CombatStrategySetting.element).Field("_path").SetValue("UI_CombatStrategySetting");
-                GameObject gameObject = UIUtils.CreateMainUI("UI_CombatStrategySetting");
-                UI_CombatStrategySetting ui_CombatStrategySetting = gameObject.AddComponent<UI_CombatStrategySetting>();
-                ui_CombatStrategySetting.UiType = UILayer.LayerPopUp; //3;
-                ui_CombatStrategySetting.Element = UI_CombatStrategySetting.element;
-                ui_CombatStrategySetting.RelativeAtlases = new SpriteAtlas[0];
-                ui_CombatStrategySetting.Init(gameObject);
-                UI_CombatStrategySetting.element.UiBase = ui_CombatStrategySetting;
-                UI_CombatStrategySetting.element.UiBase.name = UI_CombatStrategySetting.element.Name;
-                UIManager.Instance.PlaceUI(UI_CombatStrategySetting.element.UiBase);
-                result = UI_CombatStrategySetting.element;
+                Traverse.Create(element).Field("_path").SetValue("UI_CombatStrategySetting");
+                GameObject gameObject = UIUtils.CreateMainUI("UI_CombatStrategySetting", "自动战斗设置");
+                var uiComponent = gameObject.AddComponent<UI_CombatStrategySetting>();
+                uiComponent.UiType = UILayer.LayerPopUp; //3;
+                uiComponent.Element = element;
+                uiComponent.RelativeAtlases = new SpriteAtlas[0];
+                uiComponent.Init(gameObject);
+                element.UiBase = uiComponent;
+                element.UiBase.name = element.Name;
+                UIManager.Instance.PlaceUI(element.UiBase);
+                result = element;
             }
             return result;
         }
 
-        // Token: 0x06000056 RID: 86 RVA: 0x00005D5C File Offset: 0x00003F5C
         private void Init(GameObject obj)
         {
             this.AnimIn = obj.transform.Find("FadeIn").GetComponent<DOTweenAnimation>();
@@ -92,6 +90,7 @@ namespace ConvenienceFrontend.CombatStrategy
             RectTransform content = this._scroll.Content;
             Extentions.SetWidth(content, component.rect.size.x * 0.96f);
             UIUtils.CreateVerticalAutoSizeLayoutGroup(gameObject2).spacing = 15f;
+
             this.BuildStrategyProgramme(content);
             this.BuildSkillStrategy(content);
             this.BuildMoveSettings(content);
