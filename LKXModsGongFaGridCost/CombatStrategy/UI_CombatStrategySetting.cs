@@ -76,7 +76,8 @@ namespace ConvenienceFrontend.CombatStrategy
             popupWindow.CloseButton.onClick.RemoveAllListeners();
             popupWindow.CloseButton.onClick.AddListener(delegate ()
             {
-                this.OnClick(popupWindow.CloseButton);
+                SaveConfigAndSend();
+                this.QuickHide();
             });
             popupWindow.TitleLabel.transform.parent.position = new Vector3(popupWindow.TitleLabel.transform.parent.position.x, popupWindow.TitleLabel.transform.parent.position.y + 50, popupWindow.TitleLabel.transform.parent.position.z);
             GameObject gameObject = GameObjectCreationUtils.InstantiateUIElement(popupWindow.transform, "VerticalScrollView");
@@ -270,7 +271,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     {
                         if (dropdown.options.Count > 1)
                         {
-                            Action action = delegate ()
+                            void action ()
                             {
                                 ConfigManager.Programmes.RemoveAt(dropdown.value);
 
@@ -278,7 +279,7 @@ namespace ConvenienceFrontend.CombatStrategy
                                 dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
                                 dropdown.value = 0;
                                 dropdown.onValueChanged.Invoke(dropdown.value);
-                            };
+                            }
 
                             DialogCmd dialogCmd = new DialogCmd
                             {
@@ -427,30 +428,15 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x06000060 RID: 96 RVA: 0x000068CC File Offset: 0x00004ACC
-        protected override void OnClick(CButton btn)
-        {
-            bool flag = btn.name == "Close";
-            if (flag)
-            {
-                base.StartCoroutine(this.CoroutineConfirmChanges());
-                this.QuickHide();
-            }
-        }
-
         // Token: 0x06000061 RID: 97 RVA: 0x00006904 File Offset: 0x00004B04
-        private IEnumerator CoroutineConfirmChanges()
+        private void SaveConfigAndSend()
         {
-            ArgumentBox box = EasyPool.Get<ArgumentBox>();
-            box.Set("ShowBlackMask", true);
-            box.Set("ShowWaitAnimation", true);
-            UIElement.FullScreenMask.SetOnInitArgs(box);
-            UIElement.FullScreenMask.Show();
+            Debug.Log("SaveConfigAndSend");
+
             ValueTuple<bool, bool> valueTuple = ConfigManager.SaveJsons();
             bool settingsChanged = valueTuple.Item1;
             bool strategiesChanged = valueTuple.Item2;
-            bool inCombat = this._inCombat;
-            if (inCombat)
+            if (this._inCombat)
             {
                 if (settingsChanged)
                 {
@@ -461,9 +447,6 @@ namespace ConvenienceFrontend.CombatStrategy
                     GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetEnableStrategiesJson());
                 }
             }
-            yield return new WaitForEndOfFrame();
-            UIElement.FullScreenMask.Hide(false);
-            yield break;
         }
 
         // Token: 0x06000062 RID: 98 RVA: 0x00006914 File Offset: 0x00004B14

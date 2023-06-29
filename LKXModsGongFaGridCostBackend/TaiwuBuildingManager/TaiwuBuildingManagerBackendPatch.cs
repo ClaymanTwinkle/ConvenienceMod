@@ -11,6 +11,7 @@ using GameData.DomainEvents;
 using GameData.Domains;
 using GameData.Domains.Building;
 using GameData.Domains.Character;
+using GameData.Domains.Character.AvatarSystem;
 using GameData.Domains.Combat;
 using GameData.Domains.Map;
 using GameData.Domains.Taiwu;
@@ -323,36 +324,34 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             AutoCollectResourcesHelper.DemobilizePeopleToCollectResources(context);
 
             // 禁用过月刮胡子
-            // ClearBeard(context);
+            ClearBeard(context);
         }
 
         private unsafe void ClearBeard(DataContext context)
         {
-            if (_enableAutoShave)
+            if (_enableAutoShave && ConvenienceBackend.IsLocalTest())
             {
-                var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
                 var avatar = DomainManager.Taiwu.GetTaiwu().GetAvatar();
 
                 var hadBeard = false;
+                var newAvatar = new AvatarData(avatar);
 
-                if (avatar.Beard1Id != 0)
+                if (newAvatar.Beard1Id != 0)
                 {
                     hadBeard = true;
-                    avatar.Beard1Id = 0;
-                    DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 1);
+                    newAvatar.Beard1Id = 0;
                 }
 
 
-                if (avatar.Beard2Id != 0)
+                if (newAvatar.Beard2Id != 0)
                 {
                     hadBeard = true;
-                    avatar.Beard2Id = 0;
-                    DomainManager.Character.InitializeAvatarElementGrowthProgress(context, taiwuId, 2);
+                    newAvatar.Beard2Id = 0;
                 }
 
                 if (hadBeard)
                 {
-                    DomainManager.Taiwu.GetTaiwu().SetAvatar(avatar, context);
+                    DomainManager.Taiwu.GetTaiwu().SetAvatar(newAvatar, context);
                     AdaptableLog.Info("刮胡子啦");
                 }
             }

@@ -185,9 +185,11 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
 
         private void BuildOtherSettings(Transform parent)
         {
-            // Transform transform = UIUtils.CreateSettingPanel(parent, "OtherSettings", "其他设置").transform;
-            // AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoShave", "自动刮胡子", "过月后，自动刮掉胡子"), "Toggle_EnableAutoShave");
-
+            if (ConvenienceFrontend.IsLocalTest())
+            {
+                Transform transform = UIUtils.CreateSettingPanel(parent, "OtherSettings", "其他设置").transform;
+                AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableAutoShave", "自动刮胡子", "过月后，自动刮掉胡子"), "Toggle_EnableAutoShave");
+            }
         }
 
         private void AddComponent(CToggle component, string name)
