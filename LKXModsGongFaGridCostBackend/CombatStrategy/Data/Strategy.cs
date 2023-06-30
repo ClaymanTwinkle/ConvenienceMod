@@ -43,8 +43,5 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// </summary>
         public short type { get; set; }
 
-        // 角色当前可用的技能
-        [JsonIgnore]
-        public CombatSkillData skillData;
     }
 }

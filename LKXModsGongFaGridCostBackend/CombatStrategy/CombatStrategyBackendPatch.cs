@@ -72,6 +72,7 @@ namespace ConvenienceBackend.CombatStrategy
             }
         }
 
+
         // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
@@ -445,16 +446,47 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     case (short)StrategyType.ReleaseSkill:
                         {
-                            // 无装备该功法
-                            if (strategy.skillData == null) break;
-                            // 功法目前不可使用
-                            if (!strategy.skillData.GetCanUse()) break;
-                            // 检查功法施展范围
-                            bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
-
                             var skillItem = Config.CombatSkill.Instance[strategy.skillId];
 
-                            if (beyondRange && strategy.skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
+                            if (skillItem.EquipType == CombatSkillEquipType.Neigong)
+                            {
+                                // 没有装备内功
+                                if (!selfChar.GetEquippedCombatSkills().Contains(skillItem.TemplateId)) break;
+
+                                // 施展内功，单独处理
+                                // 目前内功只用在了处理施展中的功法上
+                                var preparingSkillId = selfChar.GetPreparingSkillId();
+                                if (preparingSkillId < 0)
+                                {
+                                    break;
+                                }
+                                var effectDataList = DomainManager.SpecialEffect.GetAllCostNeiliEffectData(selfChar.GetId(), preparingSkillId);
+                                if (effectDataList.Count != 0)
+                                {
+                                    effectDataList.ForEach(x => {
+                                        if (x.EffectId == skillItem.DirectEffectID || x.EffectId == skillItem.ReverseEffectID)
+                                        {
+                                            DomainManager.SpecialEffect.CostNeiliEffect(context, selfChar.GetId(), preparingSkillId, (short)x.EffectId);
+                                        }
+                                    });
+                                    execedStrategyList.Add(strategy);
+                                }
+
+                                break;
+                            }
+
+                            CombatSkillKey combatSkillKey = new(selfChar.GetId(), strategy.skillId);
+                            instance.TryGetElement_SelfSkillDataDict(combatSkillKey, out CombatSkillData skillData);
+
+                            // 无装备该功法
+                            if (skillData == null) break;
+
+                            // 功法目前不可使用
+                            if (!skillData.GetCanUse()) break;
+
+                            // 检查功法施展范围
+                            bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
+                            if (beyondRange && skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
                             {
                                 // 检查催破功法是否在施法范围中
                                 OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, strategy.skillId);
@@ -832,10 +864,6 @@ namespace ConvenienceBackend.CombatStrategy
                         switch (strategy.type)
                         {
                             case (short)StrategyType.ReleaseSkill:
-                                CombatSkillKey combatSkillKey = new CombatSkillKey(instance.GetSelfTeam()[0], strategy.skillId);
-                                CombatSkillData skillData = null;
-                                instance.TryGetElement_SelfSkillDataDict(combatSkillKey, out skillData);
-                                strategy.skillData = skillData;
                                 break;
                             case (short)StrategyType.ChangeTrick:
                                 break;

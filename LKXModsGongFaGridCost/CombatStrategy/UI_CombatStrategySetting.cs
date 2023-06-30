@@ -386,7 +386,7 @@ namespace ConvenienceFrontend.CombatStrategy
             _allActiveSkillItemList.Clear();
             foreach (CombatSkillItem combatSkillItem in CombatSkill.Instance)
             {
-                if (combatSkillItem.EquipType != CombatSkillEquipType.Neigong && combatSkillItem.EquipType != CombatSkillEquipType.Assist)
+                if (combatSkillItem.EquipType != CombatSkillEquipType.Assist)
                 {
                     _allActiveSkillItemList.Add(combatSkillItem);
                 }

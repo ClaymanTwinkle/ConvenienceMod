@@ -118,6 +118,9 @@ namespace ConvenienceFrontend.CombatStrategy
             if (____showMercyOption >= 0) return true;
 
             string btnName = btn.name;
+
+            Debug.Log("OnClick " + btnName);
+
             if (btnName == "AiOptionBtn")
             {
                 // 点击了ai配置
