@@ -603,7 +603,7 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="selfChar"></param>
         /// <param name="conditions"></param>
         /// <returns>true可用执行，false不能执行</returns>
-        private static bool CheckCondition(CombatDomain instance, CombatCharacter selfChar, List<Data.Condition> conditions) 
+        private static unsafe bool CheckCondition(CombatDomain instance, CombatCharacter selfChar, List<Data.Condition> conditions) 
         {
             bool canExecute = true;
             for (int i = 0; i < conditions.Count; i++)
@@ -688,12 +688,12 @@ namespace ConvenienceBackend.CombatStrategy
                         var weaponTricks = combatCharacter.GetWeaponTricks();
                         var currentTrickIndex = combatCharacter.GetWeaponTrickIndex();
                         var trick = weaponTricks[currentTrickIndex];
-                        var trickName = Config.TrickType.Instance[trick].Name;
-                        if (trickName == condition.valueStr && condition.judge == Judgement.Equals)
+                        AdaptableLog.Info("weaponTricks = "+trick + ", condition.value = " + condition.value);
+                        if (trick == condition.value && condition.judge == Judgement.Equals)
                         {
                             meetTheConditions = true;
                         }
-                        else if (trickName != condition.valueStr && condition.judge != Judgement.Equals)
+                        else if (trick != condition.value && condition.judge != Judgement.Equals)
                         {
                             meetTheConditions = true;
                         }
@@ -811,6 +811,33 @@ namespace ConvenienceBackend.CombatStrategy
                         }
                     case JudgeItem.WugCount:
                         meetTheConditions = CheckCondition(combatCharacter.GetWugCount(), condition);
+                        break;
+                    case JudgeItem.CharacterAttribute:
+                        {
+                            var subType = condition.subType;
+                            if (subType == 0)
+                            {
+                                // 精纯
+                                meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetConsummateLevel(), condition);
+                            }
+                            else if (subType < 5)
+                            {
+                                // 催破1 轻灵2 护体3 奇窍4
+                                var neiliAllocation = combatCharacter.GetNeiliAllocation();
+                                meetTheConditions = CheckCondition(neiliAllocation.Items[subType - 1], condition);
+                            }
+                            else if (subType < 11)
+                            {
+                                // 烈毒5 郁毒6 赤毒7 寒毒8 腐毒9 幻毒10
+                                var poison = combatCharacter.GetPoison();
+                                meetTheConditions = CheckCondition(poison.Items[subType - 5], condition);
+                            }
+                            else if (subType == 11)
+                            {
+                                // 内息
+                                meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetDisorderOfQi()/10, condition);
+                            }
+                        }
                         break;
                     default:
                         meetTheConditions = false;

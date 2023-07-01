@@ -146,7 +146,6 @@ namespace ConvenienceFrontend.CombatStrategy
         private void BuildTeammateCommandSettings(Transform parent)
         {
             var gameobject = UIUtils.CreateSettingPanel(parent, "TeammateCommandSettings", "其他设置");
-            this._otherSettings = gameobject.GetComponent<RectTransform>();
             Transform transform = gameobject.transform;
             string[] array = new string[Config.TrickType.Instance.Count];
             for (int i = 0; i < Config.TrickType.Instance.Count; i++)
@@ -157,7 +156,10 @@ namespace ConvenienceFrontend.CombatStrategy
 
         }
 
-        // Token: 0x0600005A RID: 90 RVA: 0x00006460 File Offset: 0x00004660
+        /// <summary>
+        /// 添加快捷键
+        /// </summary>
+        /// <param name="parent"></param>
         private void BuildHotKeySettings(Transform parent)
         {
             Transform transform = UIUtils.CreateSettingPanel(parent, "HotKeySettings", "热键设置").transform;
@@ -169,10 +171,13 @@ namespace ConvenienceFrontend.CombatStrategy
             base.AddMono(UIUtils.CreateHotKey(transform, "SwitchAutoCastSkillKey", "执行策略"), "SwitchAutoCastSkillKey");
         }
 
+        /// <summary>
+        /// 构建策略方案
+        /// </summary>
+        /// <param name="parent"></param>
         private void BuildStrategyProgramme(Transform parent)
         {
             var gameobject = UIUtils.CreateSettingPanel(parent, "StrategyProgramme", "策略方案");
-            this._strategyProgramme = gameobject.GetComponent<RectTransform>();
 
             Transform transform = gameobject.transform;
             Transform parent2 = UIUtils.CreateRow(transform);
@@ -428,7 +433,9 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x06000061 RID: 97 RVA: 0x00006904 File Offset: 0x00004B04
+        /// <summary>
+        /// 保存并发送
+        /// </summary>
         private void SaveConfigAndSend()
         {
             Debug.Log("SaveConfigAndSend");
@@ -449,7 +456,9 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x06000062 RID: 98 RVA: 0x00006914 File Offset: 0x00004B14
+        /// <summary>
+        /// 初始化所有Settings
+        /// </summary>
         private void InitAllSettings()
         {
             this._distanceChangeSpeedTogGroup.SetWithoutNotify(CombatStrategyMod.ProgrammeSettingsSettings.DistanceChangeSpeed, true);
@@ -495,7 +504,9 @@ namespace ConvenienceFrontend.CombatStrategy
             });
         }
 
-        // Token: 0x06000065 RID: 101 RVA: 0x00006AF0 File Offset: 0x00004CF0
+        /// <summary>
+        /// 初始化所有快捷键
+        /// </summary>
         private void InitHotKeySettings()
         {
             this._handlingKey = null;
@@ -507,7 +518,9 @@ namespace ConvenienceFrontend.CombatStrategy
             this.RenderHotKeyPrefab("SwitchAutoCastSkillKey", true);
         }
 
-        // Token: 0x06000066 RID: 102 RVA: 0x00006B48 File Offset: 0x00004D48
+        /// <summary>
+        /// 初始化所有策略
+        /// </summary>
         private void InitStrategy()
         {
             for (int i = 0; i < CombatStrategyMod.Strategies.Count; i++)
@@ -525,6 +538,9 @@ namespace ConvenienceFrontend.CombatStrategy
             return transform;
         }
 
+        /// <summary>
+        /// 清理所有策略
+        /// </summary>
         private void ClearAllStrategy()
         {
             for (var i = this._strategySettings.childCount - 1; i >= 0; i--)
@@ -536,7 +552,11 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x06000067 RID: 103 RVA: 0x00006BB8 File Offset: 0x00004DB8
+        /// <summary>
+        /// 渲染策略
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="strategy"></param>
         private void RenderStrategy(Transform transform, Strategy strategy)
         {
             var oRefers = transform.GetComponent<Refers>();
@@ -681,7 +701,12 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x06000068 RID: 104 RVA: 0x00006EBC File Offset: 0x000050BC
+        /// <summary>
+        /// 渲染条件UI
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <param name="strategy"></param>
+        /// <param name="condition"></param>
         private void RenderCondition(Transform transform, Strategy strategy, Condition condition)
         {
             Refers component = transform.GetComponent<Refers>();
@@ -712,28 +737,18 @@ namespace ConvenienceFrontend.CombatStrategy
             });
         }
 
-        // Token: 0x06000069 RID: 105 RVA: 0x00006FA4 File Offset: 0x000051A4
+        /// <summary>
+        /// 显示菜单
+        /// </summary>
+        /// <param name="btnList"></param>
+        /// <param name="position"></param>
         private void ShowMenu(List<UI_PopupMenu.BtnData> btnList, Vector3 position)
         {
-            ArgumentBox argumentBox = EasyPool.Get<ArgumentBox>();
-            argumentBox.SetObject("BtnInfo", btnList);
-            argumentBox.SetObject("ScreenPos", UIManager.Instance.UiCamera.WorldToScreenPoint(position));
-            argumentBox.SetObject("ItemSize", new Vector2(60f, 20f));
-            argumentBox.SetObject("OnCancel", new Action(delegate ()
-            {
-            }));
-            UIElement popupMenu = UIElement.PopupMenu;
-            popupMenu.OnShowed = (Action)Delegate.Combine(popupMenu.OnShowed, new Action(delegate ()
-            {
+            UIUtils.ShowMenu(btnList, position, delegate() {
                 this._scroll.SetScrollEnable(false);
-            }));
-            UIElement popupMenu2 = UIElement.PopupMenu;
-            popupMenu2.OnHide = (Action)Delegate.Combine(popupMenu2.OnHide, new Action(delegate ()
-            {
+            }, delegate() {
                 this._scroll.SetScrollEnable(true);
-            }));
-            UIElement.PopupMenu.SetOnInitArgs(argumentBox);
-            UIManager.Instance.ShowUI(UIElement.PopupMenu);
+            });
         }
 
         // Token: 0x0600006A RID: 106 RVA: 0x0000709C File Offset: 0x0000529C
@@ -773,7 +788,11 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
-        // Token: 0x0600006B RID: 107 RVA: 0x00007110 File Offset: 0x00005310
+        /// <summary>
+        /// 渲染条件UI
+        /// </summary>
+        /// <param name="refers"></param>
+        /// <param name="condition"></param>
         private void RenderConditionText(Refers refers, Condition condition)
         {
             if (condition.IsComplete())
@@ -924,6 +943,13 @@ namespace ConvenienceFrontend.CombatStrategy
             });
         }
 
+        /// <summary>
+        /// 显示输入面板
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="tips"></param>
+        /// <param name="input"></param>
+        /// <param name="inputAction"></param>
         private void ShowInputTextPanel(Transform parent, string tips, string input, Action<String> inputAction)
         {
             Vector3 vector = UIManager.Instance.UiCamera.WorldToScreenPoint(parent.position);
@@ -1094,8 +1120,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }
                     else
                     {
-                        bool flag = this._handlingKey == name;
-                        if (flag)
+                        if (this._handlingKey == name)
                         {
                             this._handlingKey = null;
                             this.TargetLostFocus(refer.CGet<RectTransform>("FocusRoot"));
@@ -1149,7 +1174,6 @@ namespace ConvenienceFrontend.CombatStrategy
         /// </summary>
         private void RefreshStrategyUI()
         {
-            // this._scroll.ScrollTo(this._otherSettings);
             ScrollToTop();
             LayoutRebuilder.MarkLayoutForRebuild(this._scroll.Content);
             LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
@@ -1211,10 +1235,6 @@ namespace ConvenienceFrontend.CombatStrategy
 
         // Token: 0x04000077 RID: 119
         private bool _inCombat;
-
-        private RectTransform _otherSettings;
-
-        private RectTransform _strategyProgramme;
 
         // Token: 0x04000078 RID: 120
         private RectTransform _strategySettings;

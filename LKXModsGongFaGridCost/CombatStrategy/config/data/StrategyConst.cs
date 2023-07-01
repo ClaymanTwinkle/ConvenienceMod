@@ -61,22 +61,23 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x04000032 RID: 50
         public static readonly StrategyConst.Item[] ItemOptions = new StrategyConst.Item[]
         {
-            new StrategyConst.Item("距离", true, 10f, -1),
-            new StrategyConst.Item("脚力", true, 10f, -1),
-            new StrategyConst.Item("装备", 0),
-            new StrategyConst.Item("正在施展", 1),
-            new StrategyConst.Item("身法值", true, 10f, -1),
-            new StrategyConst.Item("式的数量", true, 1f, 2),
-            new StrategyConst.Item("功法效果层数", true, 1f, -1, true),
-            new StrategyConst.Item("架势", true, 1f, -1),
-            new StrategyConst.Item("提气", true, 1f, -1),
-            new StrategyConst.Item("当前式", false, 1f, 3),
-            new StrategyConst.Item("战败标记", true, 1f, 4),
-            new StrategyConst.Item("施展条件", false, 1f, 6, true),
-            new StrategyConst.Item("运功中", false, 1f, 5, true),
-            new StrategyConst.Item("增益效果", true, 1f, 7, false),
-            new StrategyConst.Item("减益效果", true, 1f, 7, false),
-            new StrategyConst.Item("蛊引数", true, 1f, -1, false)
+            new StrategyConst.Item("距离", true, 10f, -1),              // 0
+            new StrategyConst.Item("脚力", true, 10f, -1),              // 1  
+            new StrategyConst.Item("装备", 0),                          // 2
+            new StrategyConst.Item("正在施展", 1),                      // 3
+            new StrategyConst.Item("身法值", true, 10f, -1),             // 4
+            new StrategyConst.Item("式的数量", true, 1f, 2),             // 5
+            new StrategyConst.Item("功法效果层数", true, 1f, -1, true),  // 6
+            new StrategyConst.Item("架势", true, 1f, -1),               // 7
+            new StrategyConst.Item("提气", true, 1f, -1),                 // 8
+            new StrategyConst.Item("当前式", false, 1f, 3),              // 9
+            new StrategyConst.Item("战败标记", true, 1f, 4),             // 10
+            new StrategyConst.Item("施展条件", false, 1f, 6, true),      // 11
+            new StrategyConst.Item("运功中", false, 1f, 5, true),        // 12
+            new StrategyConst.Item("增益效果", true, 1f, 7, false),      // 13
+            new StrategyConst.Item("减益效果", true, 1f, 7, false),       // 14
+            new StrategyConst.Item("蛊引数", true, 1f, -1, false),       // 15
+            new StrategyConst.Item("属性", true, 1f, 8, false)            // 16
         };
 
         // Token: 0x04000033 RID: 51
@@ -201,7 +202,8 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <summary>
         /// 武器
         /// </summary>
-        public static readonly string[] WeaponIndexOptions = new string[] {
+        public static readonly string[] WeaponIndexOptions = new string[] 
+        {
             "武器1",
             "武器2",
             "武器3",
@@ -211,7 +213,8 @@ namespace ConvenienceFrontend.CombatStrategy
             "喉声"
         };
 
-        public static readonly string[] MoveActionOptions = new string[] {
+        public static readonly string[] MoveActionOptions = new string[] 
+        {
             "不移动",
             "向前移动",
             "向后移动",
@@ -229,6 +232,22 @@ namespace ConvenienceFrontend.CombatStrategy
             "不满足"
         };
 
+        public static readonly string[] CharacterAttribute = new string[]
+        {
+            "精纯",
+            "催迫",
+            "轻灵",
+            "护体",
+            "奇窍",
+            "烈毒",
+            "郁毒",
+            "赤毒",
+            "寒毒",
+            "腐毒",
+            "幻毒",
+            "内息"
+        };
+
         // Token: 0x04000036 RID: 54
         public static readonly List<string[]> OptionsList = new List<string[]>
         {
@@ -240,6 +259,7 @@ namespace ConvenienceFrontend.CombatStrategy
             YesOrNo,                         // 5
             SatisfiedorDissatisfied,         // 6
             GetSpecialEffectNameList().ToArray(),  // 7
+            CharacterAttribute
         };
 
 
@@ -253,17 +273,17 @@ namespace ConvenienceFrontend.CombatStrategy
                 this.OptionIndex = optionIndex;
                 this.ShowNumSetter = false;
                 this.Multiplyer = 0f;
-                this.ShowSelectBtn = false;
+                this.ShowSelectSkillBtn = false;
             }
 
             // Token: 0x0600007F RID: 127 RVA: 0x00007AD9 File Offset: 0x00005CD9
-            public Item(string name, bool showNumSetter, float multiplyer, int optionIndex, bool showSelectBtn = false)
+            public Item(string name, bool showNumSetter, float multiplyer, int optionIndex, bool showSelectSkillBtn = false)
             {
                 this.Name = name;
                 this.ShowNumSetter = showNumSetter;
                 this.Multiplyer = multiplyer;
                 this.OptionIndex = optionIndex;
-                this.ShowSelectBtn = showSelectBtn;
+                this.ShowSelectSkillBtn = showSelectSkillBtn;
             }
 
             public string Name;
@@ -274,7 +294,7 @@ namespace ConvenienceFrontend.CombatStrategy
 
             public int OptionIndex;
 
-            public bool ShowSelectBtn;
+            public bool ShowSelectSkillBtn;
         }
     }
 }

@@ -81,6 +81,11 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// <summary>
         /// 蛊引
         /// </summary>
-        WugCount
+        WugCount,
+
+        /// <summary>
+        /// 人物属性
+        /// </summary>
+        CharacterAttribute
     }
 }

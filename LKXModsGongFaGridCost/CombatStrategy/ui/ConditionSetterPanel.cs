@@ -80,26 +80,23 @@ namespace ConvenienceFrontend.CombatStrategy.ui
             itemOptions.onValueChanged.AddListener(delegate (int val)
             {
                 StrategyConst.Item item2 = StrategyConst.ItemOptions[val];
+                // 数值输入框
                 if (item2.ShowNumSetter)
                 {
                     judgementOption.SetActive(true);
                     inputField.SetActive(true);
-                    if (((JudgeItem)val) == JudgeItem.CurrentTrick)
-                    {
-                        confirm.interactable = true;
-                        input.text = "";
-                    }
-                    else
-                    {
-                        confirm.interactable = float.TryParse(input.text, out float num);
-                        input.text = "";
-                    }
+                    TextMeshProUGUI placeholder = (TextMeshProUGUI)input.placeholder;
+                    placeholder.text = item2.Multiplyer == 1f ? "0" : "0.0";
+                    confirm.interactable = float.TryParse(input.text, out float num);
+                    input.text = "";
                 }
                 else
                 {
                     judgementOption.SetActive(false);
                     inputField.SetActive(false);
                 }
+
+                // 子选项
                 if (item2.OptionIndex >= 0)
                 {
                     valueDropDown.ClearOptions();
@@ -113,19 +110,10 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                     valueOption.SetActive(false);
                 }
 
-                if (item2.ShowSelectBtn)
-                {
-                    selectButtonGameObject.SetActive(true);
-                    if (((JudgeItem)val) == JudgeItem.HasSkillEffect || ((JudgeItem)val) == JudgeItem.CanUseSkill || ((JudgeItem)val) == JudgeItem.AffectingSkill)
-                    {
-                        selectButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
-                        selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
-                    }
-                }
-                else
-                {
-                    selectButtonGameObject.SetActive(false);
-                }
+                // 选择技能按钮
+                selectButtonGameObject.SetActive(item2.ShowSelectSkillBtn);
+                selectButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
+                selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
             });
             sliceDownSheet.SetActive(false);
             return sliceDownSheet;
@@ -162,15 +150,8 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 bool showNumSetter = item.ShowNumSetter;
                 if (showNumSetter)
                 {
-                    if (condition.item == JudgeItem.CurrentTrick)
-                    {
-                        inputField.text = condition.valueStr;
-                    }
-                    else
-                    {
-                        string format = (condition.item == JudgeItem.Distance) ? "f1" : "f0";
-                        inputField.text = ((float)condition.value / item.Multiplyer).ToString(format);
-                    }
+                    string format = (condition.item == JudgeItem.Distance) ? "f1" : "f0";
+                    inputField.text = ((float)condition.value / item.Multiplyer).ToString(format);
                 }
                 if (item.OptionIndex >= 0)
                 {
@@ -187,25 +168,22 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                         var index = StrategyConst.GetSpecialEffectNameList().IndexOf(StrategyConst.GetSpecialEffectNameById(condition.subType));
                         valueOptions.value = Math.Max(index, 0);
                     }
-                    else
+                    else 
                     {
-                        valueOptions.value = condition.value;
-                    }
-                }
-                if (item.ShowSelectBtn)
-                {
-                    if (condition.item == JudgeItem.HasSkillEffect || condition.item == JudgeItem.CanUseSkill || condition.item == JudgeItem.AffectingSkill)
-                    {
-                        CombatSkillItem combatSkillItem = CombatSkill.Instance[condition.subType];
-                        if (combatSkillItem != null)
+                        if (!showNumSetter)
                         {
-                            selectButton.GetComponentInChildren<TextMeshProUGUI>().text = combatSkillItem.Name;
+                            valueOptions.value = condition.value;
                         }
                         else
                         {
-                            selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
+                            valueOptions.value = condition.subType;
                         }
                     }
+                }
+                if (item.ShowSelectSkillBtn)
+                {
+                    CombatSkillItem combatSkillItem = CombatSkill.Instance[condition.subType];
+                    selectButton.GetComponentInChildren<TextMeshProUGUI>().text = combatSkillItem != null ? combatSkillItem.Name : "选择技能";
                 }
             }
             else
@@ -223,37 +201,27 @@ namespace ConvenienceFrontend.CombatStrategy.ui
             {
                 int value = itemOptions.value;
 
-                if ((JudgeItem)value == JudgeItem.CurrentTrick)
-                {
-                    confirmButton.interactable = true;
-                }
-                else
-                {
-                    confirmButton.interactable = float.TryParse(val, out var num);
-                }
+                confirmButton.interactable = float.TryParse(val, out var num);
             });
 
             selectButton.ClearAndAddListener(delegate ()
             {
                 int value = itemOptions.value;
 
-                if ((JudgeItem)value == JudgeItem.HasSkillEffect || (JudgeItem)value == JudgeItem.CanUseSkill || (JudgeItem)value == JudgeItem.AffectingSkill)
+                var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) =>
                 {
-                    var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) =>
+                    if (type == 1)
                     {
-                        if (type == 1)
-                        {
-                            Debug.Log("选中功法" + skillId);
-                            CombatSkillItem selectSkillItem = CombatSkill.Instance[skillId];
-                            if (selectSkillItem != null) selectButton.GetComponentInChildren<TextMeshProUGUI>().text = selectSkillItem.Name;
-                        }
-                        else
-                        {
-                            // cancel
-                        }
-                    });
-                    showSkillSelectUI(value, _onSelected);
-                }
+                        Debug.Log("选中功法" + skillId);
+                        CombatSkillItem selectSkillItem = CombatSkill.Instance[skillId];
+                        if (selectSkillItem != null) selectButton.GetComponentInChildren<TextMeshProUGUI>().text = selectSkillItem.Name;
+                    }
+                    else
+                    {
+                        // cancel
+                    }
+                });
+                showSkillSelectUI(value, _onSelected);
             });
 
             confirmButton.ClearAndAddListener(delegate ()
@@ -296,6 +264,10 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
                 {
                     condition.subType = StrategyConst.GetSpecialEffectIdByName(valueOptions.options[valueOptions.value].text);
+                }
+                else
+                {
+                    condition.subType = valueOptions.value;
                 }
                 renderConditionText();
                 this._conditionSetter.gameObject.SetActive(false);

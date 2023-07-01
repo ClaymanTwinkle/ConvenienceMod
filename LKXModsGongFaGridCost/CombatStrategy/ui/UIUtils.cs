@@ -704,6 +704,34 @@ namespace ConvenienceFrontend.CombatStrategy
             }
         }
 
+        /// <summary>
+        /// 显示菜单
+        /// </summary>
+        /// <param name="btnList"></param>
+        /// <param name="position"></param>
+        public static void ShowMenu(List<UI_PopupMenu.BtnData> btnList, Vector3 position, Action onShow, Action onHide)
+        {
+            ArgumentBox argumentBox = EasyPool.Get<ArgumentBox>();
+            argumentBox.SetObject("BtnInfo", btnList);
+            argumentBox.SetObject("ScreenPos", UIManager.Instance.UiCamera.WorldToScreenPoint(position));
+            argumentBox.SetObject("ItemSize", new Vector2(60f, 20f));
+            argumentBox.SetObject("OnCancel", new Action(delegate ()
+            {
+            }));
+            UIElement popupMenu = UIElement.PopupMenu;
+            popupMenu.OnShowed = (Action)Delegate.Combine(popupMenu.OnShowed, new Action(delegate ()
+            {
+                onShow.Invoke();
+            }));
+            UIElement popupMenu2 = UIElement.PopupMenu;
+            popupMenu2.OnHide = (Action)Delegate.Combine(popupMenu2.OnHide, new Action(delegate ()
+            {
+                onHide.Invoke();
+            }));
+            UIElement.PopupMenu.SetOnInitArgs(argumentBox);
+            UIManager.Instance.ShowUI(UIElement.PopupMenu);
+        }
+
         // Token: 0x0400004B RID: 75
         private static readonly Vector2 LeftCenter = new Vector2(0f, 0.5f);
 

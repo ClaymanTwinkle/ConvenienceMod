@@ -34,6 +34,7 @@ namespace ConvenienceFrontend.CombatStrategy
         public string GetShowDesc()
         {
             JudgeItem judgeItem = item;
+            StrategyConst.Item uiItem = judgeItem != JudgeItem.None ? StrategyConst.ItemOptions[(int)judgeItem] : default;
 
             StringBuilder stringBuilder = new StringBuilder();
             if (judgeItem > JudgeItem.Distance)
@@ -60,9 +61,16 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 stringBuilder.Append(StrategyConst.GetSpecialEffectNameById(subType)).Append(' ');
             }
-
-            stringBuilder.Append(StrategyConst.ItemOptions[(int)judgeItem].Name).Append(' ');
-
+            else if (judgeItem == JudgeItem.CharacterAttribute)
+            {
+                if (uiItem.OptionIndex > -1)
+                {
+                    stringBuilder.Append(StrategyConst.OptionsList[uiItem.OptionIndex][subType]);
+                }
+            }
+            stringBuilder.Append(uiItem.Name).Append(' ');
+            
+            // value
             if (judgeItem == JudgeItem.WeaponType)
             {
                 stringBuilder.Append(StrategyConst.WeaponTypeOptions[value]);
@@ -84,12 +92,12 @@ namespace ConvenienceFrontend.CombatStrategy
                 stringBuilder.Append(StrategyConst.JudgementOptions[(int)judge]).Append(' ');
                 if (judgeItem == JudgeItem.CurrentTrick)
                 {
-                    stringBuilder.Append(valueStr);
+                    stringBuilder.Append(TrickType.Instance[value].Name);
                 }
                 else
                 {
                     string format = (judgeItem == JudgeItem.Distance) ? "f1" : "f0";
-                    float multiplyer = StrategyConst.ItemOptions[(int)judgeItem].Multiplyer;
+                    float multiplyer = uiItem.Multiplyer;
                     stringBuilder.Append(((float)value / multiplyer).ToString(format));
                 }
             }
