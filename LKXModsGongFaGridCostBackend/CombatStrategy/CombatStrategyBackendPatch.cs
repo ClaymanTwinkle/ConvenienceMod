@@ -7,6 +7,8 @@ using System.Threading;
 using BehTree;
 using Config;
 using ConvenienceBackend.CombatStrategy.Data;
+using ConvenienceBackend.CombatStrategy.Opt;
+using ConvenienceBackend.CombatStrategy.Utils;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
@@ -59,6 +61,7 @@ namespace ConvenienceBackend.CombatStrategy
         {
             AdaptableLog.Info("开始战斗");
             _startCombatCalled = true;
+            AICombatManager.StartCombat();
         }
 
         [HarmonyPostfix]
@@ -69,6 +72,7 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 AdaptableLog.Info("重置战斗");
                 _startCombatCalled = false;
+                AICombatManager.ResetCombat();
             }
         }
 
@@ -97,9 +101,16 @@ namespace ConvenienceBackend.CombatStrategy
             CombatCharacter combatCharacter = __instance.GetCombatCharacter(true, false);
             if (!__instance.IsMainCharacter(combatCharacter)) return;
 
+
+            if (_settings.UseAICombat) 
+            {
+                AICombatManager.HandleCombatUpdate(__instance, context, combatCharacter);
+                return;
+            }
+
             List<Strategy> execStrategy = new List<Strategy>();
 
-            // 自动施法
+            // 自动执行策略
             if (_settings.AutoCastSkill)
             {
                 execStrategy = AutoCastSkill(__instance, context, combatCharacter);
@@ -446,50 +457,28 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     case (short)StrategyType.ReleaseSkill:
                         {
-                            var skillItem = Config.CombatSkill.Instance[strategy.skillId];
+                            var skillId = strategy.skillId;
+                            var skillItem = Config.CombatSkill.Instance[skillId];
 
                             if (skillItem.EquipType == CombatSkillEquipType.Neigong)
                             {
-                                // 没有装备内功
-                                if (!selfChar.GetEquippedCombatSkills().Contains(skillItem.TemplateId)) break;
+                                if (!OptCharacterHelper.CastCombatSkill(instance, context, selfChar, skillId)) break;
 
-                                // 施展内功，单独处理
-                                // 目前内功只用在了处理施展中的功法上
-                                var preparingSkillId = selfChar.GetPreparingSkillId();
-                                if (preparingSkillId < 0)
-                                {
-                                    break;
-                                }
-                                var effectDataList = DomainManager.SpecialEffect.GetAllCostNeiliEffectData(selfChar.GetId(), preparingSkillId);
-                                if (effectDataList.Count != 0)
-                                {
-                                    effectDataList.ForEach(x => {
-                                        if (x.EffectId == skillItem.DirectEffectID || x.EffectId == skillItem.ReverseEffectID)
-                                        {
-                                            DomainManager.SpecialEffect.CostNeiliEffect(context, selfChar.GetId(), preparingSkillId, (short)x.EffectId);
-                                        }
-                                    });
-                                    execedStrategyList.Add(strategy);
-                                }
-
+                                execedStrategyList.Add(strategy);
                                 break;
                             }
 
-                            CombatSkillKey combatSkillKey = new(selfChar.GetId(), strategy.skillId);
-                            instance.TryGetElement_SelfSkillDataDict(combatSkillKey, out CombatSkillData skillData);
+                            CombatSkillData skillData = SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), skillId);
 
                             // 无装备该功法
                             if (skillData == null) break;
-
-                            // 功法目前不可使用
-                            if (!skillData.GetCanUse()) break;
 
                             // 检查功法施展范围
                             bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
                             if (beyondRange && skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
                             {
                                 // 检查催破功法是否在施法范围中
-                                OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, strategy.skillId);
+                                OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, skillId);
                                 if ((int)instance.GetCurrentDistance() < skillAttackRange.Outer || (int)instance.GetCurrentDistance() > skillAttackRange.Inner)
                                 {
                                     // 不在施法范围中，跳过
@@ -497,25 +486,7 @@ namespace ConvenienceBackend.CombatStrategy
                                 }
                             }
 
-                            // 同一个身法没必要重复施展
-                            if (selfChar.GetAffectingMoveSkillId() == strategy.skillId) break;
-                            // 已有护体，没必要重复施展护体，也不能施展身法
-                            if (selfChar.GetAffectingDefendSkillId()>=0 && (skillItem.EquipType == CombatSkillEquipType.Agile || skillItem.EquipType == CombatSkillEquipType.Defense)) break;
-                            // 已有准备施展的技能，跳过
-                            if (selfChar.NeedUseSkillId >= 0) break;
-                            // 正在施展的技能不重复施展了
-                            if (selfChar.GetPreparingSkillId() == strategy.skillId) break;
-
-                            var charStateType = selfChar.StateMachine.GetCurrentState().StateType;
-                            // 正在准备技能，忽略
-                            if (charStateType == CombatCharacterStateType.PrepareSkill && !selfChar.CanCastDuringPrepareSkills.Contains(strategy.skillId)) break;
-                            // 正在放技能，忽略
-                            if (charStateType == CombatCharacterStateType.CastSkill) break;
-
-                            AdaptableLog.Info("准备施展 " + skillItem.Name);
-
-                            // 需要施展准备的功法
-                            instance.StartPrepareSkill(context, strategy.skillId, true);
+                            if (!OptCharacterHelper.CastCombatSkill(instance, context, selfChar, skillId)) break;
                             execedStrategyList.Add(strategy);
                             break;
                         }

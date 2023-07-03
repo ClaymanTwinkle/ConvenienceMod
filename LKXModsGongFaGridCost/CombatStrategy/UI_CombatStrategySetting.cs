@@ -92,6 +92,7 @@ namespace ConvenienceFrontend.CombatStrategy
             Extentions.SetWidth(content, component.rect.size.x * 0.96f);
             UIUtils.CreateVerticalAutoSizeLayoutGroup(gameObject2).spacing = 15f;
 
+            this.BuildAICombat(content);
             this.BuildStrategyProgramme(content);
             this.BuildSkillStrategy(content);
             this.BuildMoveSettings(content);
@@ -100,7 +101,13 @@ namespace ConvenienceFrontend.CombatStrategy
             this.BuildHotKeySettings(content);
         }
 
-        // Token: 0x06000057 RID: 87 RVA: 0x00005F78 File Offset: 0x00004178
+        private void BuildAICombat(Transform parent)
+        {
+            if (!ConvenienceFrontend.IsLocalTest()) return;
+            Transform transform = UIUtils.CreateSettingPanel(parent, "AICombat", "AI设置").transform;
+            base.AddMono(UIUtils.CreateToggle(transform, "UseAICombat", "AI代打", "注意：优先会使用AI代打，战斗策略将不会生效"), "UseAICombat");
+        }
+
         private void BuildMoveSettings(Transform parent)
         {
             Transform transform = UIUtils.CreateSettingPanel(parent, "MoveSettings", "移动设置").transform;
