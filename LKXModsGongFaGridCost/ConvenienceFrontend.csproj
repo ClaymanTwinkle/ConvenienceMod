@@ -35,6 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BaseFrontPatch.cs" />
+    <Compile Include="CombatSimulator\CombatSimulatorFrontPatch.cs" />
     <Compile Include="CombatStrategy\BackendSettings.cs" />
     <Compile Include="CombatStrategy\BaseTypeContractResolver.cs" />
     <Compile Include="CombatStrategy\config\data\AutoMoveAction.cs" />

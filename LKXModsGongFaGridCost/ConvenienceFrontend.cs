@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using ConvenienceFrontend.CombatSimulator;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
@@ -35,9 +36,9 @@ namespace ConvenienceFrontend
 
         public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
 
-        public static ModId ModIdInfo;
+        private static ModId ModIdInfo;
 
-        private List<BaseFrontPatch> allPatch = new List<BaseFrontPatch>()
+        private readonly List<BaseFrontPatch> allPatchList = new List<BaseFrontPatch>()
         {
             // 较艺必胜
             new ComparativeArtFrontPatch(),
@@ -61,13 +62,29 @@ namespace ConvenienceFrontend
             // new BetterArmorFrontPatch(),
         };
 
+        private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
+        {
+            // 模拟对战
+            new CombatSimulatorFrontPatch(),
+        };
+
+        public ConvenienceFrontend()
+        {
+            //ModIdInfo = ModManager.EnabledMods.Find(x=> base.ModIdStr == x.FileId.ToString());
+
+            //if (IsLocalTest())
+            //{
+            //    allPatchList.AddRange(extraPatchList);
+            //}
+        }
+
         public override void OnModSettingUpdate()
         {
             ModIdInfo = ModManager.GetModInfo(base.ModIdStr).ModId;
 
             ModManager.GetSetting(base.ModIdStr, "Toggle_Total", ref ConvenienceFrontend.bool_Toggle_Total);
 
-            allPatch.ForEach((BaseFrontPatch patch) => patch.OnModSettingUpdate(base.ModIdStr));
+            allPatchList.ForEach((BaseFrontPatch patch) => patch.OnModSettingUpdate(base.ModIdStr));
         }
 
         // Token: 0x06000002 RID: 2 RVA: 0x00002069 File Offset: 0x00000269
@@ -79,8 +96,8 @@ namespace ConvenienceFrontend
 
             this.harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceFrontend), null);
 
-            allPatch.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
-            allPatch.ForEach((BaseFrontPatch patch) => patch.Initialize(harmony, base.ModIdStr));
+            allPatchList.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
+            allPatchList.ForEach((BaseFrontPatch patch) => patch.Initialize(harmony, base.ModIdStr));
 
             SendLoadSettings();
         }
@@ -88,7 +105,7 @@ namespace ConvenienceFrontend
         // Token: 0x06000003 RID: 3 RVA: 0x00002088 File Offset: 0x00000288
         public override void Dispose()
         {
-            allPatch.ForEach((BaseFrontPatch patch) => patch.Dispose());
+            allPatchList.ForEach((BaseFrontPatch patch) => patch.Dispose());
 
             if (this.harmony != null)
             {
@@ -101,13 +118,13 @@ namespace ConvenienceFrontend
         public override void OnEnterNewWorld()
         {
             base.OnEnterNewWorld();
-            allPatch.ForEach((BaseFrontPatch patch) => patch.OnEnterNewWorld());
+            allPatchList.ForEach((BaseFrontPatch patch) => patch.OnEnterNewWorld());
         }
 
         // Token: 0x06000004 RID: 4 RVA: 0x000020F0 File Offset: 0x000002F0
         public override void OnLoadedArchiveData()
         {
-            allPatch.ForEach((BaseFrontPatch patch) => patch.OnLoadedArchiveData());
+            allPatchList.ForEach((BaseFrontPatch patch) => patch.OnLoadedArchiveData());
         }
 
         [HarmonyPostfix]

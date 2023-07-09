@@ -4,6 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using ConvenienceBackend.CombatSimulator;
 using ConvenienceBackend.CombatStrategy;
 using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CustomSteal;
@@ -39,7 +40,7 @@ namespace ConvenienceBackend
     [PluginConfig("ConvenienceBackend", "kesar", "1.0.0")]
     public class ConvenienceBackend : TaiwuRemakePlugin
     {
-        private static List<BaseBackendPatch> allPatch = new List<BaseBackendPatch>()
+        private static readonly List<BaseBackendPatch> allPatchList = new()
         {
             // 较艺必胜
             new ComparativeArtBackendPatch(),
@@ -57,36 +58,47 @@ namespace ConvenienceBackend
             new ModifyCombatSkillBackendPatch(),
             // 太吾村管家
             new TaiwuBuildingManagerBackendPatch(),
-            // 
+            // 开局Roll属性
             new QuicklyCreateCharacterBackend(),
             // 平衡装备
             // new BetterArmorBackendPatch(),
         };
 
-        public static ModId ModIdInfo;
+        private static readonly List<BaseBackendPatch> extraPatchList = new()
+        {
+            // 模拟对战
+            new CombatSimulatorBackendPatch(),
+        };
+
+        private static ModId ModIdInfo;
 
         // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
         public override void OnModSettingUpdate()
         {
-            ModIdInfo = ModDomain.GetLoadedModIds().Find(x => ModIdStr.Equals(x.FileId.ToString()));
+            AdaptableLog.Info("OnModSettingUpdate");
+
+            ModIdInfo = ModDomain.GetLoadedModIds().Find(x => ModIdStr.Equals(x.ToString()));
 
             DomainManager.Mod.GetSetting(ModIdStr, "Toggle_Total", ref bool_Toggle_Total);
 
-            allPatch.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
-
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
         }
 
         public override void Initialize()
         {
+            AdaptableLog.Info("Initialize");
+
             harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceBackend), null);
 
-            allPatch.ForEach((BaseBackendPatch patch) => this.harmony.PatchAll(patch.GetType()));
-            allPatch.ForEach((BaseBackendPatch patch) => patch.Initialize(harmony, ModIdStr));
+            allPatchList.ForEach((BaseBackendPatch patch) => this.harmony.PatchAll(patch.GetType()));
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.Initialize(harmony, ModIdStr));
         }
 
         public override void Dispose()
         {
-            allPatch.ForEach((BaseBackendPatch patch) => patch.Dispose());
+            AdaptableLog.Info("Dispose");
+
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.Dispose());
             if (harmony != null)
             {
                 harmony.UnpatchSelf();
@@ -97,13 +109,17 @@ namespace ConvenienceBackend
         // Token: 0x06000002 RID: 2 RVA: 0x000021B9 File Offset: 0x000003B9
         public override void OnEnterNewWorld()
         {
-            allPatch.ForEach((BaseBackendPatch patch) => patch.OnEnterNewWorld());
+            AdaptableLog.Info("OnEnterNewWorld");
+
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.OnEnterNewWorld());
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x000021C8 File Offset: 0x000003C8
         public override void OnLoadedArchiveData()
         {
-            allPatch.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
+            AdaptableLog.Info("OnLoadedArchiveData");
+
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
         }
 
         [HarmonyPrefix]
@@ -117,7 +133,7 @@ namespace ConvenienceBackend
                 int num = operation.ArgsOffset;
                 num += Serializer.Deserialize(argDataPool, num, ref json);
                 Config = JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json);
-                allPatch.ForEach((BaseBackendPatch patch) => patch.OnConfigUpdate(Config));
+                allPatchList.ForEach((BaseBackendPatch patch) => patch.OnConfigUpdate(Config));
                 __result = -1;
                 return false;
             }

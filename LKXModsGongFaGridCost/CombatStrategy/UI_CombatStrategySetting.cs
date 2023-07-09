@@ -641,6 +641,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         if (type == 1)
                         {
                             Debug.Log("选中功法" + skillId);
+                            strategy.type = (short)StrategyConst.StrategyType.ReleaseSkill;
                             strategy.SetAction(skillId);
                             this.RenderStrategySkillText(strategy, skillRefers);
                         }
