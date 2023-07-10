@@ -14,6 +14,7 @@ using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
 using GameData.GameDataBridge;
+using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
 using TaiwuModdingLib.Core.Plugin;
@@ -36,7 +37,7 @@ namespace ConvenienceFrontend
 
         public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
 
-        private static ModId ModIdInfo;
+        private static string _modIdStr = "1_";
 
         private readonly List<BaseFrontPatch> allPatchList = new List<BaseFrontPatch>()
         {
@@ -68,19 +69,9 @@ namespace ConvenienceFrontend
             new CombatSimulatorFrontPatch(),
         };
 
-        public ConvenienceFrontend()
-        {
-            //ModIdInfo = ModManager.EnabledMods.Find(x=> base.ModIdStr == x.FileId.ToString());
-
-            //if (IsLocalTest())
-            //{
-            //    allPatchList.AddRange(extraPatchList);
-            //}
-        }
-
         public override void OnModSettingUpdate()
         {
-            ModIdInfo = ModManager.GetModInfo(base.ModIdStr).ModId;
+            Debug.Log("OnModSettingUpdate " + _modIdStr);
 
             ModManager.GetSetting(base.ModIdStr, "Toggle_Total", ref ConvenienceFrontend.bool_Toggle_Total);
 
@@ -90,7 +81,8 @@ namespace ConvenienceFrontend
         // Token: 0x06000002 RID: 2 RVA: 0x00002069 File Offset: 0x00000269
         public override void Initialize()
         {
-            ModIdInfo = ModManager.GetModInfo(base.ModIdStr).ModId;
+            _modIdStr = ModIdStr;
+            AdaptableLog.Info("Initialize " + _modIdStr);
 
             InitConfig();
 
@@ -171,7 +163,7 @@ namespace ConvenienceFrontend
         /// <returns></returns>
         public static bool IsLocalTest()
         {
-            return ModIdInfo.Source != 1;
+            return _modIdStr.StartsWith("0_");
         }
 
         /// <summary>

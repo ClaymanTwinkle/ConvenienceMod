@@ -64,34 +64,32 @@ namespace ConvenienceBackend
             // new BetterArmorBackendPatch(),
         };
 
+        private static string _modIdStr = "1_";
+
         private static readonly List<BaseBackendPatch> extraPatchList = new()
         {
             // 模拟对战
             new CombatSimulatorBackendPatch(),
         };
 
-        private static ModId ModIdInfo;
-
-        // Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
-        public override void OnModSettingUpdate()
-        {
-            AdaptableLog.Info("OnModSettingUpdate");
-
-            ModIdInfo = ModDomain.GetLoadedModIds().Find(x => ModIdStr.Equals(x.ToString()));
-
-            DomainManager.Mod.GetSetting(ModIdStr, "Toggle_Total", ref bool_Toggle_Total);
-
-            allPatchList.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
-        }
-
         public override void Initialize()
         {
-            AdaptableLog.Info("Initialize");
+            _modIdStr = ModIdStr;
+            AdaptableLog.Info("Initialize " + _modIdStr);
 
             harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceBackend), null);
 
             allPatchList.ForEach((BaseBackendPatch patch) => this.harmony.PatchAll(patch.GetType()));
             allPatchList.ForEach((BaseBackendPatch patch) => patch.Initialize(harmony, ModIdStr));
+        }
+
+        public override void OnModSettingUpdate()
+        {
+            AdaptableLog.Info("OnModSettingUpdate " + ModIdStr);
+
+            DomainManager.Mod.GetSetting(ModIdStr, "Toggle_Total", ref bool_Toggle_Total);
+
+            allPatchList.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
         }
 
         public override void Dispose()
@@ -147,7 +145,7 @@ namespace ConvenienceBackend
         /// <returns></returns>
         public static bool IsLocalTest()
         {
-            return ModIdInfo.Source != 1;
+            return _modIdStr.StartsWith("0_");
         }
 
         // Token: 0x04000001 RID: 1
