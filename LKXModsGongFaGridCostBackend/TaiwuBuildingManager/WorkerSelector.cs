@@ -16,7 +16,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
     /// </summary>
     internal class WorkerSelector
     {
-        public static int[] SelectWorkersByLifeSkillAttainment(int templateId, BuildingBlockKey buildingBlockKey)
+        public static int[] SelectWorkersByLifeSkillAttainment(int templateId, BuildingBlockKey buildingBlockKey, bool useEfficiency = true)
         {
             var _availableWorker = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true);
 
@@ -43,15 +43,19 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             {
                 int produceValue = 0;
                 var _selectingShopManagerIndex = 0;
-                while (_selectingShopManagerIndex < wokers.Length && num9 >= 0 && (_configData.TemplateId == 105 || produceValue < _configData.MaxProduceValue))
+                while (_selectingShopManagerIndex < wokers.Length && num9 >= 0 && (_configData.TemplateId == BuildingBlock.DefKey.BookCollectionRoom || produceValue < maxProduceValue || !useEfficiency))
                 {
                     int num12 = -1;
-                    for (int num13 = 0; num13 < _availableWorker.Count; num13++)
+
+                    if (useEfficiency)
                     {
-                        if (DomainManager.Character.GetAllLifeSkillAttainment(_availableWorker[num13])[lifeSkillType] + 100 + produceValue >= maxProduceValue)
+                        for (int num13 = 0; num13 < _availableWorker.Count; num13++)
                         {
-                            num12 = num13;
-                            break;
+                            if (DomainManager.Character.GetAllLifeSkillAttainment(_availableWorker[num13])[lifeSkillType] + 100 + produceValue >= maxProduceValue)
+                            {
+                                num12 = num13;
+                                break;
+                            }
                         }
                     }
 
@@ -59,7 +63,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                     {
                         wokers[_selectingShopManagerIndex] = _availableWorker[num9];
                         produceValue += 100 + DomainManager.Character.GetAllLifeSkillAttainment(_availableWorker[num9])[lifeSkillType];
-                        if (produceValue >= maxProduceValue)
+                        if (useEfficiency && produceValue >= maxProduceValue)
                         {
                             break;
                         }

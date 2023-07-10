@@ -10,13 +10,17 @@ using GameData.Domains.Map;
 using GameData.Domains;
 using GameData.Utilities;
 using BehTree;
+using Newtonsoft.Json.Linq;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {
     internal class AutoWorkHelper
     {
+        private static bool[] _ToggleWorkMode = new bool[2] { false, false };
+
         public static void UpdateConfig(Dictionary<string, System.Object> config)
         {
+            _ToggleWorkMode = ((JArray)config.GetValueOrDefault("Toggle_WorkMode", new JArray(false, false))).ToList().ConvertAll(x => (bool)x).ToArray();
         }
 
         /// <summary>
@@ -50,7 +54,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // 重新选择
             BuildingBlockData element_BuildingBlocks = DomainManager.Building.GetElement_BuildingBlocks(buildingBlockKey);
-            var workers = WorkerSelector.SelectWorkersByLifeSkillAttainment(element_BuildingBlocks.TemplateId, buildingBlockKey);
+            var workers = WorkerSelector.SelectWorkersByLifeSkillAttainment(element_BuildingBlocks.TemplateId, buildingBlockKey, !_ToggleWorkMode[1]);
             if (workers.All(x => x < 0))
             {
                 return;

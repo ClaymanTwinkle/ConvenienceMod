@@ -126,26 +126,33 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableRemoveUselessResource", "自动拆除无用资源", "过月前自动分配人员拆，不用再手动一个个拆了，已限制不会导致仓库超重"), "Toggle_EnableRemoveUselessResource");
 
-            string[] options = new string[]
+            AddComponent(UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "Toggle_IntUselessResourceType", "要拆除的无用资源类型", new string[]
             {
                 "杂草",
                 "乱石",
                 "废墟"
-            };
-            AddComponent(UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "Toggle_IntUselessResourceType", "要拆除的无用资源类型", options, 3, true, true), "Toggle_IntUselessResourceType");
+            }, 3, true, true), "Toggle_IntUselessResourceType");
 
             UIUtils.CreateSubTitle(transform, "人员分配");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoWork", "建筑自动分配人员工作", "过月前自动分配，再也不用手动给村民分配工作了"), "Toggle_EnableBuildingAutoWork");
+            AddComponent(UIUtils.CreateToggleGroup(UIUtils.CreateRow(transform), "Toggle_WorkMode", "工作优先模式", new string[]
+            {
+                "效率",
+                "结果"
+            }, 1, false, false), "Toggle_WorkMode");
+
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableBuildingAutoUpdate", "建筑自动分配人员升级", "过月前自动分配，再也不用手动给建筑升级了"), "Toggle_EnableBuildingAutoUpdate");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableResidenceAutoLive", "居所自动入住", "过月前自动安排村民入住居所"), "Toggle_EnableResidenceAutoLive");
             AddComponent(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "Toggle_EnableWingRoomAutoLive", "厢房自动入住", "过月前自动安排村民入住厢房"), "Toggle_EnableWingRoomAutoLive");
 
             UIUtils.CreateSubTitle(transform, "强迫症患者按钮");
             GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键分配工作").ClearAndAddListener(delegate () {
+                ConvenienceFrontend.SaveConfig();
                 GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Assign_Jobs, "");
             });
 
             GameObjectCreationUtils.UGUICreateCButton(UIUtils.CreateRow(transform), new Vector2(0, 0), new Vector2(210, 60), 14, "一键升级建筑").ClearAndAddListener(delegate () {
+                ConvenienceFrontend.SaveConfig();
                 GameDataBridge.AddMethodCall<ushort, string>(-1, 5, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_Upgrade_buildings, "");
             });
         }

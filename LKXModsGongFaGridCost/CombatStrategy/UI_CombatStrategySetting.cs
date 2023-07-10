@@ -490,7 +490,9 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000063 RID: 99 RVA: 0x00006A18 File Offset: 0x00004C18
         private void InitToggleSetting(string name)
         {
+            if (!base.Names.Contains(name)) return;
             CToggle ctoggle = base.CGet<CToggle>(name);
+            if (ctoggle == null) return;
             ctoggle.onValueChanged.RemoveAllListeners();
             ctoggle.isOn = CombatStrategyMod.ProgrammeSettingsSettings.GetBool(name);
             ctoggle.onValueChanged.AddListener(delegate (bool isOn)
