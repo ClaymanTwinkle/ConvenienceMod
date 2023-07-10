@@ -102,11 +102,11 @@ namespace ConvenienceBackend.CombatStrategy
             if (!__instance.IsMainCharacter(combatCharacter)) return;
 
 
-            if (_settings.UseAICombat) 
-            {
-                AICombatManager.HandleCombatUpdate(__instance, context, combatCharacter);
-                return;
-            }
+            //if (_settings.UseAICombat) 
+            //{
+            //    AICombatManager.HandleCombatUpdate(__instance, context, combatCharacter);
+            //    return;
+            //}
 
             List<Strategy> execStrategy = new List<Strategy>();
 

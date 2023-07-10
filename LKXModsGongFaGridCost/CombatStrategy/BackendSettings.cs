@@ -7,7 +7,7 @@ namespace ConvenienceFrontend.CombatStrategy
     {
         public bool isEnable = true;
 
-        public bool UseAICombat = true;
+        public bool UseAICombat = false;
 
         // 自动移动
         public bool AutoMove = true;
