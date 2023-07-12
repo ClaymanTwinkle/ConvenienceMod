@@ -21,7 +21,6 @@ using Newtonsoft.Json.Linq;
 using NLog;
 using Redzen.Random;
 using TaiwuModdingLib.Core.Utils;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ConvenienceBackend.CustomSteal
 {
@@ -44,6 +43,13 @@ namespace ConvenienceBackend.CustomSteal
         /// </summary>
         private static int _plotHarmValue;
         private static TryMode _plotHarmMode = TryMode.SimulationMode;
+
+        /// <summary>
+        /// 抢夺
+        /// </summary>
+        private static int _robValue;
+        private static TryMode _robMode = TryMode.SimulationMode;
+        private static int _retryCount = 0;
 
         private static TryMode[] _modeList = new TryMode[]
         {
@@ -76,13 +82,21 @@ namespace ConvenienceBackend.CustomSteal
             DomainManager.Mod.GetSetting(modIdStr, "steal_mode", ref num);
             DomainManager.Mod.GetSetting(modIdStr, "steal_value", ref _stealValue);
             _stealMode = _modeList[num];
+
+            num = 0;
             DomainManager.Mod.GetSetting(modIdStr, "scam_mode", ref num);
             DomainManager.Mod.GetSetting(modIdStr, "scam_value", ref _scamValue);
             _scamMode = _modeList[num];
 
+            num = 0;
             DomainManager.Mod.GetSetting(modIdStr, "plot_harm_mode", ref num);
             DomainManager.Mod.GetSetting(modIdStr, "plot_harm_value", ref _plotHarmValue);
             _plotHarmMode = _modeList[num];
+
+            num = 0;
+            DomainManager.Mod.GetSetting(modIdStr, "rob_mode", ref num);
+            DomainManager.Mod.GetSetting(modIdStr, "rob_value", ref _robValue);
+            _robMode = _modeList[num];
 
             DomainManager.Mod.GetSetting(modIdStr, "guaranteed_excavation", ref _guaranteedExcavation);
             DomainManager.Mod.GetSetting(modIdStr, "excavation_lucky", ref _enableExcavationLucky);
@@ -160,6 +174,68 @@ namespace ConvenienceBackend.CustomSteal
                 }
             }
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase")]
+        public static bool GetRobActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
+        {
+            if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId())
+            {
+                switch (_robMode)
+                {
+                    case TryMode.SuccessRateMode:
+                        processSuccessRateMode(_robValue, ref __result);
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase")]
+        public static void GetRobActionPhasePostfix(int selfCharId, int targetCharId, ref sbyte __result)
+        {
+            if (selfCharId != DomainManager.Taiwu.GetTaiwuCharId() || _robMode != TryMode.SimulationMode) 
+            {
+                stealLogger.Info("selfCharId != DomainManager.Taiwu.GetTaiwuCharId() || _robMode != TryMode.SimulationMode第" + (_retryCount + 1) + "次抢夺结果为：" + __result);
+                _retryCount = 0;
+                return;
+            }
+
+            if (__result >= 5)
+            {
+                stealLogger.Info("第" + (_retryCount + 1) + "次抢夺结果为：" + __result);
+                _retryCount = 0;
+                return;
+            }
+
+            if (_retryCount > _robValue)
+            {
+                _retryCount = 0;
+                return;
+            }
+
+            if (_retryCount == 0)
+            {
+                stealLogger.Info("======================");
+                stealLogger.Info(string.Concat(new string[]
+                {
+                "准备开始抢夺",
+                "，模拟抢夺次数为：",
+                _robValue.ToString(),
+                    "次"
+                }));
+            }
+
+            _retryCount++;
+            stealLogger.Info("第" + _retryCount + "次抢夺结果为：" + __result);
+
+            sbyte newResult = EventHelper.GetRobActionPhase(selfCharId, targetCharId);
+            if (newResult > __result)
+            {
+                __result = newResult;
+            }
         }
 
         /// <summary>
@@ -488,7 +564,7 @@ namespace ConvenienceBackend.CustomSteal
         }
 
         // Token: 0x04000001 RID: 1
-        private static Logger stealLogger = LogManager.GetLogger("偷窃MOD");
+        private static Logger stealLogger = LogManager.GetLogger("便利性模组合集");
 
         // Token: 0x04000002 RID: 2
         private static string[] stealResultDesc = new string[]
