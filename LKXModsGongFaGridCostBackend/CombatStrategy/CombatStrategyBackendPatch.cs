@@ -82,9 +82,9 @@ namespace ConvenienceBackend.CombatStrategy
 
 
         // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
-        public static void CombatDomain_OnUpdate_Postfix(CombatDomain __instance, DataContext context)
+        public static void CombatDomain_OnUpdate_Prefix(CombatDomain __instance, DataContext context)
         {
             // 没有开启战斗策略
             if (!IsEnable()) return;
@@ -441,6 +441,8 @@ namespace ConvenienceBackend.CombatStrategy
             }
         }
 
+        private static int _switchWeaponsCD = 0;
+
         /// <summary>
         /// 自动施展
         /// </summary>
@@ -523,7 +525,12 @@ namespace ConvenienceBackend.CombatStrategy
                             if (!instance.GetWeaponData(true, weaponItemKey).GetCanChangeTo()) break;
                             if (execedStrategyList.Find(x => x.type == strategy.type) != null) break;
                             if (selfChar.StateMachine.GetCurrentState().StateType != CombatCharacterStateType.Idle) break;
-
+                            if (_switchWeaponsCD > 0)
+                            {
+                                _switchWeaponsCD = Math.Max(0, _switchWeaponsCD - 1);
+                                break;
+                            }
+                            _switchWeaponsCD = 4;
                             instance.ChangeWeapon(context, weaponIndex, true);
                             _logger.Info("切换武器[" + (weaponIndex + 1) + "]");
                             execedStrategyList.Add(strategy);
