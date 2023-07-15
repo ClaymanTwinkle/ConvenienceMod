@@ -66,7 +66,7 @@ namespace ConvenienceBackend
 
         private static string _modIdStr = "1_";
 
-        private static readonly List<BaseBackendPatch> extraPatchList = new()
+        private static readonly List<BaseBackendPatch> localTestPatchList = new()
         {
             // 模拟对战
             new CombatSimulatorBackendPatch(),
@@ -76,6 +76,12 @@ namespace ConvenienceBackend
         {
             _modIdStr = ModIdStr;
             AdaptableLog.Info("Initialize " + _modIdStr);
+
+            if (IsLocalTest())
+            {
+                AdaptableLog.Info("当前是本地测试模组");
+                allPatchList.AddRange(localTestPatchList);
+            }
 
             harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceBackend), null);
 

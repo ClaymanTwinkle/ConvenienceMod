@@ -22,6 +22,11 @@ namespace ConvenienceBackend.CombatSimulator
         {
         }
 
+        public override void Initialize(Harmony harmony, string modIdStr)
+        {
+            base.Initialize(harmony, modIdStr);
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "SetTimeScale", new Type[] { typeof(float), typeof(DataContext) })]
         public static void CombatDomain_SetTimeScale_Prefix(ref float value)

@@ -63,7 +63,7 @@ namespace ConvenienceFrontend
             // new BetterArmorFrontPatch(),
         };
 
-        private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
+        private static readonly List<BaseFrontPatch> localTestPatchList = new List<BaseFrontPatch>()
         {
             // 模拟对战
             new CombatSimulatorFrontPatch(),
@@ -83,6 +83,11 @@ namespace ConvenienceFrontend
         {
             _modIdStr = ModIdStr;
             AdaptableLog.Info("Initialize " + _modIdStr);
+            if (IsLocalTest())
+            {
+                AdaptableLog.Info("当前是本地测试模组");
+                allPatchList.AddRange(localTestPatchList);
+            }
 
             InitConfig();
 
