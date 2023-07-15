@@ -14,11 +14,13 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
+using GameData.Domains.Item;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
+using NLog;
 using TaiwuModdingLib.Core.Utils;
 
 namespace ConvenienceBackend.CombatStrategy
@@ -26,6 +28,8 @@ namespace ConvenienceBackend.CombatStrategy
     internal class CombatStrategyBackendPatch: BaseBackendPatch
     {
         private static bool _startCombatCalled = false;
+        private static Logger _logger = LogManager.GetLogger("战斗策略");
+
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -39,9 +43,9 @@ namespace ConvenienceBackend.CombatStrategy
         {
             if (IsEnable()) return;
             if (!__instance.IsAlly) return;
-            AdaptableLog.Info("CombatCharacter::InitTeammateCommand");
+            _logger.Info("CombatCharacter::InitTeammateCommand");
             var currTeammateCommands = __instance.GetCurrTeammateCommands();
-            AdaptableLog.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
+            _logger.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
         }
 
         [HarmonyPrefix]
@@ -51,7 +55,7 @@ namespace ConvenienceBackend.CombatStrategy
             if (IsEnable() && autoCombat)
             {
                 autoCombat = false;
-                AdaptableLog.Info("系统设置打开原版自动战斗，但是因为战斗策略打开，所有禁用原版的自动战斗");
+                _logger.Info("系统设置打开原版自动战斗，但是因为战斗策略打开，所有禁用原版的自动战斗");
             }
         }
 
@@ -59,7 +63,7 @@ namespace ConvenienceBackend.CombatStrategy
         [HarmonyPatch(typeof(CombatDomain), "StartCombat")]
         public static void CombatDomain_StartCombat_Postfix()
         {
-            AdaptableLog.Info("开始战斗");
+            _logger.Info("开始战斗");
             _startCombatCalled = true;
             AICombatManager.StartCombat();
         }
@@ -70,7 +74,7 @@ namespace ConvenienceBackend.CombatStrategy
         {
             if (CombatStatusType.NotInCombat == __instance.GetCombatStatus())
             {
-                AdaptableLog.Info("重置战斗");
+                _logger.Info("重置战斗");
                 _startCombatCalled = false;
                 AICombatManager.ResetCombat();
             }
@@ -204,7 +208,7 @@ namespace ConvenienceBackend.CombatStrategy
                                 }
                                 catch (Exception ex)
                                 {
-                                    AdaptableLog.Warning("CombatStrategy Backend: Deserialize settings Json Failed:" + ex.Message, false);
+                                    _logger.Warn("CombatStrategy Backend: Deserialize settings Json Failed:" + ex.Message, false);
                                     if (ConvenienceBackend.IsLocalTest()) throw;
                                 }
                                 break;
@@ -264,7 +268,7 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 ____inAttackRange = false;
 
-                AdaptableLog.Info("我方空A " + Config.TrickType.Instance[____trickType].Name);
+                _logger.Info("我方空A " + Config.TrickType.Instance[____trickType].Name);
             }
         }
 
@@ -511,10 +515,17 @@ namespace ConvenienceBackend.CombatStrategy
                     case (short)StrategyType.SwitchWeapons:
                         {
                             if (strategy.switchWeaponAction == null) break;
-                            if (strategy.switchWeaponAction.weaponIndex < 0) break;
-                            if (strategy.switchWeaponAction.weaponIndex == selfChar.GetUsingWeaponIndex()) break;
+                            var weaponIndex = strategy.switchWeaponAction.weaponIndex;
+                            if (weaponIndex < 0) break;
+                            if (weaponIndex == selfChar.GetUsingWeaponIndex()) break;
+                            ItemKey weaponItemKey = selfChar.GetWeapons()[weaponIndex];
+                            if (!weaponItemKey.IsValid()) break;
+                            if (!instance.GetWeaponData(true, weaponItemKey).GetCanChangeTo()) break;
+                            if (execedStrategyList.Find(x => x.type == strategy.type) != null) break;
+                            if (selfChar.StateMachine.GetCurrentState().StateType != CombatCharacterStateType.Idle) break;
 
-                            instance.ChangeWeapon(context, strategy.switchWeaponAction.weaponIndex, true);
+                            instance.ChangeWeapon(context, weaponIndex, true);
+                            _logger.Info("切换武器[" + (weaponIndex + 1) + "]");
                             execedStrategyList.Add(strategy);
                             break;
                         }
@@ -632,7 +643,7 @@ namespace ConvenienceBackend.CombatStrategy
                         {
                             foreach (KeyValuePair<SkillEffectKey, short> kvp in effectDict)
                             {
-                                AdaptableLog.Info("有功法效果: " + kvp.Key.SkillId + " " + kvp.Value);
+                                _logger.Info("有功法效果: " + kvp.Key.SkillId + " " + kvp.Value);
                                 if (kvp.Key.SkillId == condition.subType)
                                 {
                                     findSkill = true;
@@ -659,7 +670,7 @@ namespace ConvenienceBackend.CombatStrategy
                         var weaponTricks = combatCharacter.GetWeaponTricks();
                         var currentTrickIndex = combatCharacter.GetWeaponTrickIndex();
                         var trick = weaponTricks[currentTrickIndex];
-                        AdaptableLog.Info("weaponTricks = "+trick + ", condition.value = " + condition.value);
+                        _logger.Info("weaponTricks = "+trick + ", condition.value = " + condition.value);
                         if (trick == condition.value && condition.judge == Judgement.Equals)
                         {
                             meetTheConditions = true;
