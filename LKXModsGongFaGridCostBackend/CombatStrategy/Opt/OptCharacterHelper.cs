@@ -9,11 +9,14 @@ using GameData.Domains;
 using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
 using GameData.Utilities;
+using NLog;
 
 namespace ConvenienceBackend.CombatStrategy.Opt
 {
     internal class OptCharacterHelper
     {
+        private static Logger _logger = LogManager.GetLogger("战斗策略");
+
         /// <summary>
         /// 施展技能
         /// </summary>
@@ -78,7 +81,7 @@ namespace ConvenienceBackend.CombatStrategy.Opt
             // 正在放技能，忽略
             if (charStateType == CombatCharacterStateType.CastSkill) return false;
 
-            AdaptableLog.Info("准备施展 " + skillItem.Name);
+            _logger.Info("准备施展 " + skillItem.Name);
 
             // 需要施展准备的功法
             instance.StartPrepareSkill(context, skillId, true);
