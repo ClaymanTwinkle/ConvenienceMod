@@ -101,7 +101,6 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                 }
                 catch (System.Exception ex)
                 { 
-                    
                 }
             }
         }

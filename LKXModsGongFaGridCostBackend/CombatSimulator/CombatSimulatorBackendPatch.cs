@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BehTree;
 using Config;
+using DeepQLearning.DRLAgent;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Combat;
@@ -12,12 +13,18 @@ using GameData.Domains.Organization;
 using GameData.GameDataBridge;
 using GameData.Utilities;
 using HarmonyLib;
+using NLog;
 using TaiwuModdingLib.Core.Utils;
 
 namespace ConvenienceBackend.CombatSimulator
 {
     internal class CombatSimulatorBackendPatch : BaseBackendPatch
     {
+        private static readonly Logger logger = LogManager.GetLogger("模拟训练");
+
+        private static GameEnvironment _environment = new();
+        private static DeepQLearn _brain;
+
         public override void OnModSettingUpdate(string modIdStr)
         {
         }
@@ -25,33 +32,7 @@ namespace ConvenienceBackend.CombatSimulator
         public override void Initialize(Harmony harmony, string modIdStr)
         {
             base.Initialize(harmony, modIdStr);
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "SetTimeScale", new Type[] { typeof(float), typeof(DataContext) })]
-        public static void CombatDomain_SetTimeScale_Prefix(ref float value)
-        {
-            if (value == 2f)
-            {
-                value = 10f;
-            }
-            AdaptableLog.Info("SetTimeScale " + value);
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "GetElement_CombatCharacterDict")]
-        public static bool CombatDomain_GetElement_CombatCharacterDict_Prefix(Dictionary<int, CombatCharacter> ____combatCharacterDict, int objectId, ref CombatCharacter __result)
-        {
-            if (!____combatCharacterDict.ContainsKey(objectId))
-            {
-                __result = null;
-
-                return false;
-            }
-
-            return true;
-        }
-            
+        }   
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "CallMethod")]
@@ -59,22 +40,6 @@ namespace ConvenienceBackend.CombatSimulator
         {
             if (operation.MethodId == 1970)
             {
-                var consummateLevel = 2;
-
-                var list = DomainManager.Character.GmCmd_GetAllCharacterName().FindAll(x=>DomainManager.Character.GetElement_Objects(x.CharId).GetConsummateLevel() == consummateLevel);
-
-                var a = list.GetRandom(context.Random);
-
-                var b = list.GetRandom(context.Random);
-
-                AdaptableLog.Info("开始模拟NPC对战: " + a.Name + "(" +a.CharId +")" + " VS " + b.Name + "(" + b.CharId + ")");
-
-                DomainManager.Combat.StartNpcCombat(context, new int[] { a.CharId, -1, -1, -1 }, new int[] { b.CharId, -1, -1, -1 });
-
-                DomainManager.Combat.SetTimeScale(context, 100f);
-                DomainManager.Combat.StartCombat(context);
-                DomainManager.Combat.SetTimeScale(context, 100f);
-
                 return false;
             }
 
@@ -93,6 +58,27 @@ namespace ConvenienceBackend.CombatSimulator
             // 13. GetCombatResultDisplayData
             // 14. SelectGetItem
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        public static void OnTickBegin(CombatDomain __instance, DataContext context)
+        {
+            if (_environment == null) return;
+
+            var state = _environment.Render();
+            // get action from brain
+            var actionIndex = _brain.Forward(state.ToNetInput());
+            _environment.Step(actionIndex);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        public static void OnTickEnd(CombatDomain __instance, DataContext context)
+        {
+            if (_environment == null) return;
+            double reward = _environment.SettleReward();
+            _brain.Backward(reward);
         }
 
         /// <summary>
@@ -136,6 +122,20 @@ namespace ConvenienceBackend.CombatSimulator
             CombatCharacter CombatChar = (CombatCharacter)__instance.GetFieldValue("CombatChar", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             
             AdaptableLog.Info(CombatChar.GetCharacter().GetId() + "进入状态" + __instance.StateType);
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "GetElement_CombatCharacterDict")]
+        public static bool CombatDomain_GetElement_CombatCharacterDict_Prefix(Dictionary<int, CombatCharacter> ____combatCharacterDict, int objectId, ref CombatCharacter __result)
+        {
+            if (!____combatCharacterDict.ContainsKey(objectId))
+            {
+                __result = null;
+
+                return false;
+            }
+
+            return true;
         }
     }
 }
