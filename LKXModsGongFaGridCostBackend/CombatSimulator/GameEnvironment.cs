@@ -1,23 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
 using ConvnetSharp;
 using DeepQLearning.DRLAgent;
 using GameData.Common;
+using GameData.DomainEvents;
 using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Utilities;
 using HarmonyLib;
 using NLog;
+using TaiwuModdingLib.Core.Utils;
 
 namespace ConvenienceBackend.CombatSimulator
 {
     internal class GameState 
     {
+        public const int MAX_STATE_COUNT = 17;
+
         /// <summary>
         /// 是否游戏结束
         /// </summary>
@@ -73,7 +78,7 @@ namespace ConvenienceBackend.CombatSimulator
 
         public Volume ToNetInput()
         {
-            double[] input_array = new double[17];
+            double[] input_array = new double[MAX_STATE_COUNT];
 
             // 最小最大距离
             var (currentMinDistance, currentMaxDistance) = DistanceRange;
@@ -111,14 +116,70 @@ namespace ConvenienceBackend.CombatSimulator
         }
     }
 
+    internal class GameReward
+    {
+        /// <summary>
+        /// 普通攻击击中收益
+        /// </summary>
+        public double normalAttackReward;
+
+        /// <summary>
+        /// 躲避收益，躲避普攻
+        /// </summary>
+        public double avoidNormalAttackReward;
+
+        /// <summary>
+        /// 伤害收益
+        /// </summary>
+        public double damageReward;
+
+        public double CalcTotal()
+        { 
+            return normalAttackReward + avoidNormalAttackReward + damageReward;
+        }
+
+        public void Clear()
+        { 
+            normalAttackReward = 0;
+            avoidNormalAttackReward = 0;
+            damageReward = 0;
+        }
+    }
+
+    internal enum ActionType
+    { 
+        /// <summary>
+        /// 呆立不动
+        /// </summary>
+        Idle,
+        /// <summary>
+        /// 向前移动
+        /// </summary>
+        MoveForward,
+        /// <summary>
+        /// 向后移动
+        /// </summary>
+        MoveBackward,
+        /// <summary>
+        /// 普通攻击
+        /// </summary>
+        NormalAttack,
+
+    }
 
     internal class GameEnvironment
     {
-        private static readonly Logger logger = LogManager.GetLogger("GameEnvironment");
+        private static readonly Logger logger = LogManager.GetLogger("模拟训练");
+
+        /// <summary>
+        /// 最大的动作个数
+        /// </summary>
+        public const int MAX_ACTION_COUNT = 4; 
+
+        private readonly GameReward Reward = new();
 
         public GameEnvironment()
         {
-
         }
 
         /// <summary>
@@ -128,22 +189,29 @@ namespace ConvenienceBackend.CombatSimulator
         /// <returns></returns>
         public void Reset()
         {
-            DataContext context = DomainManager.Combat.Context;
+            Reward.Clear();
+
+            DataContext context = DataContextManager.GetCurrentThreadDataContext();
             var combat = DomainManager.Combat;
 
-            var consummateLevel = 2;
+            var consummateLevel = 0;
 
             var list = DomainManager.Character.GmCmd_GetAllCharacterName().FindAll(x => DomainManager.Character.GetElement_Objects(x.CharId).GetConsummateLevel() == consummateLevel);
 
             var a = list.GetRandom(context.Random);
 
             var b = list.GetRandom(context.Random);
+            while (b.CharId == a.CharId)
+            { 
+                b = list.GetRandom(context.Random);
+            }
 
-            AdaptableLog.Info("开始模拟NPC对战: " + a.Name + "(" + a.CharId + ")" + " VS " + b.Name + "(" + b.CharId + ")");
+            logger.Info("开始模拟NPC对战: " + a.Name + "(" + a.CharId + ")" + " VS " + b.Name + "(" + b.CharId + ")");
 
             if (combat.IsInCombat())
             {
-                combat.EndNpcCombat(context);
+                logger.Info("当前在战斗中，先结束战斗");
+                combat.EndCombat(combat.GetCombatCharacter(true, true), context, false, false);
             }
             // 治疗+解毒
             var aChar = DomainManager.Character.GetElement_Objects(a.CharId);
@@ -163,7 +231,13 @@ namespace ConvenienceBackend.CombatSimulator
             bChar.SetInjuries(injuries, context);
 
             // 开始战斗
-            combat.StartNpcCombat(context, new int[] { a.CharId, -1, -1, -1 }, new int[] { b.CharId, -1, -1, -1 });
+            RegisterCombatEvents();
+
+            combat.SetWaitingDelaySettlement(false, context);
+            combat.CallMethod("PrepareCombat", BindingFlags.Instance | BindingFlags.NonPublic, context, (short)2, new int[] { a.CharId, -1, -1, -1 }, new int[] { b.CharId, -1, -1, -1 });
+            // combat.StartNpcCombat(context, new int[] { a.CharId, -1, -1, -1 }, new int[] { b.CharId, -1, -1, -1 });
+            // combat.PrepareCombat(context, 2, new int[] { a.CharId, -1, -1, -1 }, new int[] { b.CharId, -1, -1, -1 });
+            // this.SetSkillPower(skillPower, context);
             combat.SetTimeScale(context, 100f);
             combat.StartCombat(context);
             combat.SetTimeScale(context, 100f);
@@ -174,8 +248,22 @@ namespace ConvenienceBackend.CombatSimulator
         /// </summary>
         /// <param name="actionIndex"></param>
         public void Step(int actionIndex)
-        { 
-            
+        {
+            DataContext context = DataContextManager.GetCurrentThreadDataContext();
+            var combat = DomainManager.Combat;
+
+            switch ((ActionType)actionIndex)
+            {
+                case ActionType.Idle:
+                case ActionType.MoveForward:
+                case ActionType.MoveBackward:
+                    combat.SetMoveState((byte)actionIndex, true, true);
+                    break;
+
+                case ActionType.NormalAttack:
+                    combat.NormalAttack(context, true);
+                    break;
+            }
         }
 
         /// <summary>
@@ -195,20 +283,24 @@ namespace ConvenienceBackend.CombatSimulator
         /// <returns></returns>
         public double SettleReward()
         {
-            DataContext context = DomainManager.Combat.Context;
+            DataContext context = DataContextManager.GetCurrentThreadDataContext();
             var combat = DomainManager.Combat;
-
-            return 0;
+            var reward = Reward.CalcTotal();
+            Reward.Clear();
+            return reward;
         }
 
         /// <summary>
         /// 关闭环境
         /// </summary>
-        public void Close(DataContext context)
+        public void Close()
         {
-            if (DomainManager.Combat.IsInCombat())
+            DataContext context = DataContextManager.GetCurrentThreadDataContext();
+            var combat = DomainManager.Combat;
+
+            if (combat.IsInCombat())
             {
-                DomainManager.Combat.EndNpcCombat(context);
+                combat.EndCombat(combat.GetCombatCharacter(true, true), context, false, false);
             }
         }
 
@@ -233,6 +325,111 @@ namespace ConvenienceBackend.CombatSimulator
             };
 
             return state;
+        }
+
+        private void RegisterCombatEvents()
+        {
+            Events.RegisterHandler_NormalAttackCalcHitEnd(OnNormalAttackCalcHitEnd);
+            Events.RegisterHandler_DistanceChanged(OnDistanceChanged);
+
+            Events.RegisterHandler_CombatSettlement(OnCombatSettlement);
+            Events.RegisterHandler_CombatEnd(OnCombatEnd);
+        }
+
+        private void UnRegisterCombatEvents()
+        {
+            Events.UnRegisterHandler_NormalAttackCalcHitEnd(OnNormalAttackCalcHitEnd);
+            Events.UnRegisterHandler_DistanceChanged(OnDistanceChanged);
+
+            Events.UnRegisterHandler_CombatSettlement(OnCombatSettlement);
+            Events.UnRegisterHandler_CombatEnd(OnCombatEnd);
+        }
+
+
+        /// <summary>
+        /// 战斗结算
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="combatStatus"></param>
+        private void OnCombatSettlement(DataContext context, sbyte combatStatus)
+        {
+            if (combatStatus == CombatStatusType.SelfFail)
+            {
+                logger.Info("战斗结束，我方战败");
+            }
+            else if (combatStatus == CombatStatusType.EnemyFail)
+            {
+                logger.Info("战斗结束，敌方战败");
+            }
+            else if (combatStatus == CombatStatusType.SelfFlee)
+            {
+                logger.Info("战斗结束，我方逃跑");
+            }
+            else if (combatStatus == CombatStatusType.EnemyFlee)
+            {
+                logger.Info("战斗结束，敌方逃跑");
+            }
+        }
+
+        /// <summary>
+        /// 战斗结束
+        /// </summary>
+        /// <param name="context"></param>
+        private void OnCombatEnd(DataContext context)
+        {
+            UnRegisterCombatEvents();
+        }
+
+        /// <summary>
+        /// 普攻判定
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="attacker"></param>
+        /// <param name="defender"></param>
+        /// <param name="trickType"></param>
+        /// <param name="pursueIndex"></param>
+        /// <param name="hit"></param>
+        /// <param name="isFightBack"></param>
+        private void OnNormalAttackCalcHitEnd(DataContext context, CombatCharacter attacker, CombatCharacter defender, sbyte trickType, int pursueIndex, bool hit, bool isFightBack)
+        {
+            //logger.Debug(
+            //    string.Concat(new string[] {
+            //            attacker.IsAlly ? "【我方】" : "【敌方】",
+            //            GetCharName(attacker.GetId()),
+            //            "进行",
+            //            isFightBack ? "反击": (pursueIndex == 0 ? "普攻" : "第"+ pursueIndex +"次追击"),
+            //            hit ? "成功命中" : "被对方躲开了"
+            //    })
+            //);
+            if (attacker.IsAlly)
+            {
+                Reward.normalAttackReward += 1;
+            }
+            else
+            {
+            }
+        }
+
+        private void OnDistanceChanged(DataContext context, CombatCharacter mover, short distance, bool isMove, bool isForced)
+        {
+            if (!isMove) return;
+            //logger.Debug(
+            //    string.Concat(new string[] {
+            //            mover.IsAlly ? "【我方】" : "【敌方】",
+            //            GetCharName(mover.GetId()),
+            //            "向",
+            //            distance < 0 ? "前" : "后",
+            //            "移动",
+            //            Math.Abs(distance) + "距离",
+            //            "到" + DomainManager.Combat.GetCurrentDistance()
+            //    })
+            //);
+        }
+
+        private static string GetCharName(int charId)
+        {
+            var a = DomainManager.Character.GetRealName(charId);
+            return a.surname + a.givenName;
         }
     }
 }

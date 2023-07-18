@@ -5,25 +5,51 @@ using System.Text;
 using System.Threading.Tasks;
 using BehTree;
 using Config;
+using ConvnetSharp;
 using DeepQLearning.DRLAgent;
 using GameData.Common;
+using GameData.DomainEvents;
 using GameData.Domains;
 using GameData.Domains.Combat;
 using GameData.Domains.Organization;
+using GameData.Domains.SpecialEffect;
 using GameData.GameDataBridge;
 using GameData.Utilities;
 using HarmonyLib;
 using NLog;
 using TaiwuModdingLib.Core.Utils;
+using static GameData.DomainEvents.Events;
 
 namespace ConvenienceBackend.CombatSimulator
 {
+    // 1. ProcessCombatTeammateBetray
+    // 2. PrepareEnemyEquipments
+    // 3. PrepareCombat
+    // 4. SetAiOptions
+    // 5. SetTimeScale
+    // 6. GetProactiveSkillList
+    // 7. GetCanHealInjuryCount
+    // 8. GetCanHealPoisonCount
+    // 9. StartCombat
+    // 10. PlayMoveStepSound
+    // 11. GetWeaponInnerRatio
+    // 12. GetWeaponEffects
+    // 13. GetCombatResultDisplayData
+    // 14. SelectGetItem
     internal class CombatSimulatorBackendPatch : BaseBackendPatch
     {
         private static readonly Logger logger = LogManager.GetLogger("模拟训练");
 
         private static GameEnvironment _environment = new();
         private static DeepQLearn _brain;
+
+        private static bool _isStartLearning = false;
+
+        private const int MAX_COMBAT_LEARNING_COUNT = 1000000;
+        private static int _currentCombatCount = 0;
+
+        private const int MAX_SINGLE_COMBAT_STEP_COUNT = 1000;
+        private static int _currentSingleCombatStepCount = 0;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -32,7 +58,7 @@ namespace ConvenienceBackend.CombatSimulator
         public override void Initialize(Harmony harmony, string modIdStr)
         {
             base.Initialize(harmony, modIdStr);
-        }   
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "CallMethod")]
@@ -40,23 +66,16 @@ namespace ConvenienceBackend.CombatSimulator
         {
             if (operation.MethodId == 1970)
             {
+                if (_isStartLearning)
+                {
+                    StopLearning();
+                }
+                else
+                {
+                    StartLearning();
+                }
                 return false;
             }
-
-            // 1. ProcessCombatTeammateBetray
-            // 2. PrepareEnemyEquipments
-            // 3. PrepareCombat
-            // 4. SetAiOptions
-            // 5. SetTimeScale
-            // 6. GetProactiveSkillList
-            // 7. GetCanHealInjuryCount
-            // 8. GetCanHealPoisonCount
-            // 9. StartCombat
-            // 10. PlayMoveStepSound
-            // 11. GetWeaponInnerRatio
-            // 12. GetWeaponEffects
-            // 13. GetCombatResultDisplayData
-            // 14. SelectGetItem
             return true;
         }
 
@@ -65,6 +84,8 @@ namespace ConvenienceBackend.CombatSimulator
         public static void OnTickBegin(CombatDomain __instance, DataContext context)
         {
             if (_environment == null) return;
+            if (_brain == null) return;
+            if (!__instance.CanAcceptCommand()) return;
 
             var state = _environment.Render();
             // get action from brain
@@ -77,26 +98,19 @@ namespace ConvenienceBackend.CombatSimulator
         public static void OnTickEnd(CombatDomain __instance, DataContext context)
         {
             if (_environment == null) return;
+            if (_brain == null) return;
+            if (!__instance.CanAcceptCommand()) return;
+
             double reward = _environment.SettleReward();
             _brain.Backward(reward);
-        }
 
-        /// <summary>
-        /// 结束战斗
-        /// </summary>
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatDomain), "EndCombat")]
-        public static void CombatDomain_EndCombat_Postfix(CombatDomain __instance, CombatCharacter failChar, bool flee = false)
-        {
-            var mainChar = __instance.GetCombatCharacter(true, true).GetCharacter();
-            var enemyChar = __instance.GetCombatCharacter(false, true).GetCharacter();
+            if (_currentSingleCombatStepCount++ > MAX_SINGLE_COMBAT_STEP_COUNT)
+            {
+                logger.Debug("单局回合数超过" + MAX_SINGLE_COMBAT_STEP_COUNT + "，强制结束游戏");
+                _environment.Close();
+            }
 
-            var mainCharName = DomainManager.Character.GetRealName(mainChar.GetId());
-            var enemyCharName = DomainManager.Character.GetRealName(enemyChar.GetId());
-
-            var isMainWin = mainChar.GetId() != failChar.GetId();
-
-            AdaptableLog.Info("结束模拟NPC对战: " + (mainCharName.surname + mainCharName.givenName) + "(" + mainChar.GetId() + ")" + (isMainWin ? " 胜 " : " 负 ") + (enemyCharName.surname + enemyCharName.givenName) + "(" + enemyChar.GetId() + "), 原因是:" + (flee ? "一方逃跑":"一方战败"));
+            // logger.Debug("OnUpdate");
         }
 
         [HarmonyPostfix]
@@ -119,11 +133,18 @@ namespace ConvenienceBackend.CombatSimulator
         [HarmonyPatch(typeof(CombatCharacterStateSpecialShow), "OnEnter")]
         public static void CombatCharacterStateBase_OnEnter_Postfix(CombatCharacterStateBase __instance)
         {
-            CombatCharacter CombatChar = (CombatCharacter)__instance.GetFieldValue("CombatChar", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            
-            AdaptableLog.Info(CombatChar.GetCharacter().GetId() + "进入状态" + __instance.StateType);
+            // CombatCharacter CombatChar = (CombatCharacter)__instance.GetFieldValue("CombatChar", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            // AdaptableLog.Info(CombatChar.GetCharacter().GetId() + "进入状态" + __instance.StateType);
         }
 
+        /// <summary>
+        /// 修复可能的crash
+        /// </summary>
+        /// <param name="____combatCharacterDict"></param>
+        /// <param name="objectId"></param>
+        /// <param name="__result"></param>
+        /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "GetElement_CombatCharacterDict")]
         public static bool CombatDomain_GetElement_CombatCharacterDict_Prefix(Dictionary<int, CombatCharacter> ____combatCharacterDict, int objectId, ref CombatCharacter __result)
@@ -136,6 +157,147 @@ namespace ConvenienceBackend.CombatSimulator
             }
 
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "NeedShowMercy")]
+        public static bool NeedShowMercy(CombatCharacter failChar, ref bool __result)
+        {
+            __result = false;
+            return !_isStartLearning;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "EndCombat")]
+        public static void CombatDomain_EndCombat_Prefix(CombatCharacter failChar, DataContext context, bool flee, ref bool playAni)
+        {
+            if (!_isStartLearning) return;
+            playAni = false;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "EndCombat")]
+        public static void CombatDomain_EndCombat_Postfix(CombatCharacter failChar, DataContext context, bool flee, bool playAni)
+        {
+            if (!_isStartLearning) return;
+
+            if (_currentCombatCount > MAX_COMBAT_LEARNING_COUNT)
+            {
+                StopLearning();
+            }
+            else
+            {
+                logger.Debug("战斗结束，战斗回合数"+ _currentSingleCombatStepCount);
+                logger.Debug(_brain.VisSelf());
+                ConvenienceBackend.PostRunMainAction(delegate () {
+                    _currentCombatCount++;
+                    _currentSingleCombatStepCount = 0;
+                    logger.Debug("准备开始下一把");
+                    _environment.Reset();
+                }, 100);
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CombatDomain), "CombatSettlement")]
+        public static void CombatDomain_CombatSettlement_Prefix(DataContext context, sbyte statusType, ref bool playAni, bool clearAi)
+        {
+            if (!_isStartLearning) return;
+            playAni = false;
+        }
+
+        /// <summary>
+        /// 开始训练
+        /// </summary>
+        private static void StartLearning()
+        {
+            _currentCombatCount = 0;
+            _currentSingleCombatStepCount = 0;
+            _isStartLearning = true;
+            logger.Debug("开始训练");
+
+            _brain = BuildDeepQLearn();
+            _brain.learning = true;
+
+            RegisterCombatEvents();
+            _environment.Reset();
+        }
+
+        /// <summary>
+        /// 停止训练
+        /// </summary>
+        private static void StopLearning()
+        {
+            _isStartLearning = false;
+            logger.Debug("停止训练");
+
+            _environment.Close();
+            UnRegisterCombatEvents();
+            _brain = null;
+            _currentCombatCount = 0;
+            _currentSingleCombatStepCount = 0;
+        }
+
+
+        private static DeepQLearn BuildDeepQLearn()
+        {
+            var num_inputs = GameState.MAX_STATE_COUNT; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
+            var num_actions = GameEnvironment.MAX_ACTION_COUNT; // 5 possible angles agent can turn
+            var temporal_window = 4; // amount of temporal memory. 0 = agent lives in-the-moment :)
+            var network_size = num_inputs * temporal_window + num_actions * temporal_window + num_inputs;
+
+            var layer_defs = new List<LayerDefinition>
+            {
+                // the value function network computes a value of taking any of the possible actions
+                // given an input state. Here we specify one explicitly the hard way
+                // but user could also equivalently instead use opt.hidden_layer_sizes = [20,20]
+                // to just insert simple relu hidden layers.
+                new LayerDefinition { type = "input", out_sx = 1, out_sy = 1, out_depth = network_size },
+                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
+                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
+                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
+                new LayerDefinition { type = "regression", num_neurons = num_actions }
+            };
+
+            // options for the Temporal Difference learner that trains the above net
+            // by backpropping the temporal difference learning rule.
+            //var opt = new Options { method="sgd", learning_rate=0.01, l2_decay=0.001, momentum=0.9, batch_size=10, l1_decay=0.001 };
+            var opt = new Options { method = "adadelta", l2_decay = 0.001, batch_size = 10 };
+
+            var tdtrainer_options = new TrainingOptions
+            {
+                temporal_window = temporal_window,
+                experience_size = 30000,
+                start_learn_threshold = 1000,
+                gamma = 0.7,
+                learning_steps_total = 200000,
+                learning_steps_burnin = 3000,
+                epsilon_min = 0.05,
+                epsilon_test_time = 0.00,
+                layer_defs = layer_defs,
+                options = opt
+            };
+
+            return new DeepQLearn(GameState.MAX_STATE_COUNT, GameEnvironment.MAX_ACTION_COUNT, tdtrainer_options);
+        }
+
+        private static void RegisterCombatEvents()
+        {
+            logger.Debug("RegisterCombatEvents");
+
+            Events.RegisterHandler_CombatBegin(OnCombatBegin);
+        }
+
+        private static void UnRegisterCombatEvents()
+        {
+            logger.Debug("UnRegisterCombatEvents");
+
+            Events.UnRegisterHandler_CombatBegin(OnCombatBegin);
+        }
+
+        private static void OnCombatBegin(DataContext context)
+        {
+            logger.Debug("开始第" + _currentCombatCount + "次战斗");
         }
     }
 }

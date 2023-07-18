@@ -29,6 +29,7 @@ using GameData.Domains.World;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
+using Google.Protobuf.WellKnownTypes;
 using HarmonyLib;
 using Newtonsoft.Json;
 using NLog;
@@ -126,6 +127,32 @@ namespace ConvenienceBackend
             allPatchList.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
         }
 
+        private static readonly List<KeyValuePair<long, Action>> _runMainActionList = new List<KeyValuePair<long, Action>>();
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameDataBridge), "AdvanceFrame")]
+        public static void GameDataBridge_AdvanceFrame_Postfix()
+        {
+            long currentTimes = GetTimeStamp();
+
+            List<Action> actions = new List<Action>();
+
+            for (var i = _runMainActionList.Count - 1; i >= 0; i--)
+            {
+                if (currentTimes >= _runMainActionList[i].Key)
+                {
+                    actions.Add(_runMainActionList[i].Value);
+                    _runMainActionList.RemoveAt(i);
+                }
+            }
+            actions.ForEach(x => x.Invoke());
+        }
+
+        public static void PostRunMainAction(Action action, long delayTimes = 0L)
+        {
+            _runMainActionList.Add(new KeyValuePair<long, Action>(GetTimeStamp() + delayTimes, action));
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(GlobalDomain), "CallMethod")]
         public static bool GlobalDomain_CallMethod_Prefix(TaiwuDomain __instance, Operation operation, RawDataPool argDataPool, DataContext context, ref int __result)
@@ -152,6 +179,12 @@ namespace ConvenienceBackend
         public static bool IsLocalTest()
         {
             return _modIdStr.StartsWith("0_");
+        }
+
+        public static long GetTimeStamp()
+        {
+            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            return Convert.ToInt64(ts.TotalMilliseconds);
         }
 
         // Token: 0x04000001 RID: 1

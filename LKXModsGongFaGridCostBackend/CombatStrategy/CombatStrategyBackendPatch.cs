@@ -90,7 +90,7 @@ namespace ConvenienceBackend.CombatStrategy
             if (!IsEnable()) return;
 
             // 还没开始，不能执行
-            if (__instance.GetTimeScale() <= 0f || !__instance.IsInCombat() || !_startCombatCalled) return;
+            if (__instance.GetTimeScale() <= 0f || !__instance.CanAcceptCommand() || !_startCombatCalled) return;
 
             // 没有配置
             if (_settings == null) return;
