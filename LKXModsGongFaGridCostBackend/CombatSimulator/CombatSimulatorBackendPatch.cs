@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using BehTree;
@@ -11,11 +13,13 @@ using GameData.Common;
 using GameData.DomainEvents;
 using GameData.Domains;
 using GameData.Domains.Combat;
+using GameData.Domains.Mod;
 using GameData.Domains.Organization;
 using GameData.Domains.SpecialEffect;
 using GameData.GameDataBridge;
 using GameData.Utilities;
 using HarmonyLib;
+using Microsoft.VisualBasic;
 using NLog;
 using TaiwuModdingLib.Core.Utils;
 using static GameData.DomainEvents.Events;
@@ -40,24 +44,33 @@ namespace ConvenienceBackend.CombatSimulator
     {
         private static readonly Logger logger = LogManager.GetLogger("模拟训练");
 
-        private static GameEnvironment _environment = new();
-        private static DeepQLearn _brain;
-
         private static bool _isStartLearning = false;
 
-        private const int MAX_COMBAT_LEARNING_COUNT = 1000000;
+        private const int MAX_COMBAT_LEARNING_COUNT = 10000000;
         private static int _currentCombatCount = 0;
 
-        private const int MAX_SINGLE_COMBAT_STEP_COUNT = 1000;
+        private const bool LIMIT_SINGLE_COMBAT_STEP_COUNT = false;
+        private const int MAX_SINGLE_COMBAT_STEP_COUNT = 10000;
         private static int _currentSingleCombatStepCount = 0;
+
+        private static string _netFile = "";
+        private static string _analysisFile = "";
+
+        private static GameEnvironment _environment = new(MAX_SINGLE_COMBAT_STEP_COUNT);
+        private static DeepQLearn _brain;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
+
         }
 
         public override void Initialize(Harmony harmony, string modIdStr)
         {
             base.Initialize(harmony, modIdStr);
+            
+            string directoryName = DomainManager.Mod.GetModDirectory(modIdStr);
+            _netFile = Path.Combine(directoryName, "learn_data");
+            _analysisFile = Path.Combine(directoryName, "analysis_data.txt");
         }
 
         [HarmonyPrefix]
@@ -80,7 +93,7 @@ namespace ConvenienceBackend.CombatSimulator
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        [HarmonyPatch(typeof(CombatDomain), "CombatLoop")]
         public static void OnTickBegin(CombatDomain __instance, DataContext context)
         {
             if (_environment == null) return;
@@ -89,22 +102,33 @@ namespace ConvenienceBackend.CombatSimulator
 
             var state = _environment.Render();
             // get action from brain
-            var actionIndex = _brain.Forward(state.ToNetInput());
+            var actionIndex = _brain.forward(state.ToNetInput());
             _environment.Step(actionIndex);
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        [HarmonyPatch(typeof(CombatDomain), "CombatLoop")]
         public static void OnTickEnd(CombatDomain __instance, DataContext context)
         {
             if (_environment == null) return;
             if (_brain == null) return;
-            if (!__instance.CanAcceptCommand()) return;
 
             double reward = _environment.SettleReward();
-            _brain.Backward(reward);
+            _brain.backward(reward);
 
-            if (_currentSingleCombatStepCount++ > MAX_SINGLE_COMBAT_STEP_COUNT)
+
+            if (!__instance.IsInCombat() || __instance.CombatAboutToOver())
+            {
+                logger.Debug("战斗结束，最终结算奖励");
+            }
+
+            if (_currentSingleCombatStepCount % 10 == 0)
+            {
+                SaveAnalysisData();
+            }
+
+            _currentSingleCombatStepCount++;
+            if (LIMIT_SINGLE_COMBAT_STEP_COUNT && _currentSingleCombatStepCount > MAX_SINGLE_COMBAT_STEP_COUNT)
             {
                 logger.Debug("单局回合数超过" + MAX_SINGLE_COMBAT_STEP_COUNT + "，强制结束游戏");
                 _environment.Close();
@@ -159,12 +183,20 @@ namespace ConvenienceBackend.CombatSimulator
             return true;
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "NeedShowMercy")]
-        public static bool NeedShowMercy(CombatCharacter failChar, ref bool __result)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "CanFlee")]
+        public static void CanFlee(ref bool __result)
         {
+            if (!_isStartLearning) return;
             __result = false;
-            return !_isStartLearning;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatDomain), "NeedShowMercy")]
+        public static void NeedShowMercy(CombatCharacter failChar, ref bool __result)
+        {
+            if (!_isStartLearning) return;
+            __result = false;
         }
 
         [HarmonyPrefix]
@@ -188,7 +220,7 @@ namespace ConvenienceBackend.CombatSimulator
             else
             {
                 logger.Debug("战斗结束，战斗回合数"+ _currentSingleCombatStepCount);
-                logger.Debug(_brain.VisSelf());
+                logger.Debug(_brain.visSelf());
                 ConvenienceBackend.PostRunMainAction(delegate () {
                     _currentCombatCount++;
                     _currentSingleCombatStepCount = 0;
@@ -216,7 +248,7 @@ namespace ConvenienceBackend.CombatSimulator
             _isStartLearning = true;
             logger.Debug("开始训练");
 
-            _brain = BuildDeepQLearn();
+            _brain = LoadOrCreateDeepQLearn();
             _brain.learning = true;
 
             RegisterCombatEvents();
@@ -267,11 +299,11 @@ namespace ConvenienceBackend.CombatSimulator
             var tdtrainer_options = new TrainingOptions
             {
                 temporal_window = temporal_window,
-                experience_size = 30000,
-                start_learn_threshold = 1000,
+                experience_size = 300000,
+                start_learn_threshold = 10000,
                 gamma = 0.7,
-                learning_steps_total = 200000,
-                learning_steps_burnin = 3000,
+                learning_steps_total = 2000000,
+                learning_steps_burnin = 30000,
                 epsilon_min = 0.05,
                 epsilon_test_time = 0.00,
                 layer_defs = layer_defs,
@@ -281,11 +313,66 @@ namespace ConvenienceBackend.CombatSimulator
             return new DeepQLearn(GameState.MAX_STATE_COUNT, GameEnvironment.MAX_ACTION_COUNT, tdtrainer_options);
         }
 
+        private static void SaveLearning()
+        {
+            if (_brain == null) return;
+
+            using (FileStream fstream = new(_netFile, FileMode.Create))
+            {
+                new BinaryFormatter().Serialize(fstream, _brain);
+            }
+        }
+
+        private static DeepQLearn LoadOrCreateDeepQLearn()
+        {
+            if (File.Exists(_netFile))
+            {
+                using (FileStream fstream = new FileStream(_netFile, FileMode.Open))
+                {
+                    return new BinaryFormatter().Deserialize(fstream) as DeepQLearn;
+                }
+            }
+
+            return BuildDeepQLearn();
+        }
+
+        /// <summary>
+        /// 保存分析数据
+        /// </summary>
+        private static void SaveAnalysisData()
+        {
+            if (_brain == null) return;
+
+            var currentAnalysisInfo = _brain.GetLineData();
+
+            if (!System.IO.File.Exists(_analysisFile))
+            {
+                //没有则创建这个文件
+                FileStream fs1 = new(_analysisFile, FileMode.Create, FileAccess.Write);//创建写入文件               
+                StreamWriter sw = new(fs1);
+
+                sw.WriteLine(currentAnalysisInfo);//开始写入值
+                sw.Close();
+                fs1.Close();
+            }
+            else
+            {
+                using (FileStream fileStream = new FileStream(_analysisFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    using (StreamWriter writer = new StreamWriter(fileStream))
+                    {
+                        writer.WriteLine(currentAnalysisInfo);
+                    }
+                }
+            }
+        }
+
         private static void RegisterCombatEvents()
         {
             logger.Debug("RegisterCombatEvents");
 
             Events.RegisterHandler_CombatBegin(OnCombatBegin);
+            Events.RegisterHandler_CombatEnd(OnCombatEnd);
         }
 
         private static void UnRegisterCombatEvents()
@@ -293,11 +380,17 @@ namespace ConvenienceBackend.CombatSimulator
             logger.Debug("UnRegisterCombatEvents");
 
             Events.UnRegisterHandler_CombatBegin(OnCombatBegin);
+            Events.UnRegisterHandler_CombatEnd(OnCombatEnd);
         }
 
         private static void OnCombatBegin(DataContext context)
         {
             logger.Debug("开始第" + _currentCombatCount + "次战斗");
+        }
+
+        private static void OnCombatEnd(DataContext context)
+        {
+            SaveLearning();
         }
     }
 }

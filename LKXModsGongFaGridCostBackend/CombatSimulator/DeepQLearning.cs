@@ -61,21 +61,21 @@ namespace DeepQLearning.DRLAgent
         int num_states;
         int num_actions;
         int window_size;
-        List<Volume> stateWindow;
-        List<int> actionWindow;
-        List<double> rewardWindow;
-        List<double[]> netWindow;
+        List<Volume> state_window;
+        List<int> action_window;
+        List<double> reward_window;
+        List<double[]> net_window;
 
         double age;
         double forward_passes;
         public double epsilon;
         double latest_reward;
-        Volume lastInput;
+        Volume last_input;
         TrainingWindow average_reward_window;
         TrainingWindow average_loss_window;
         public bool learning;
 
-        Net valueNet;
+        Net value_net;
         public Trainer tdtrainer;
 
         Util util;
@@ -135,16 +135,16 @@ namespace DeepQLearning.DRLAgent
             this.num_states = num_states;
             this.num_actions = num_actions;
             this.window_size = Math.Max(this.temporal_window, 2); // must be at least 2, but if we want more context even more
-            this.stateWindow = new List<Volume>();
-            this.actionWindow = new List<int>();
-            this.rewardWindow = new List<double>();
-            this.netWindow = new List<double[]>();
+            this.state_window = new List<Volume>();
+            this.action_window = new List<int>();
+            this.reward_window = new List<double>();
+            this.net_window = new List<double[]>();
 
             // Init wth dummy data
-            for (int i = 0; i < window_size; i++) this.stateWindow.Add(new Volume(1, 1, 1));
-            for (int i = 0; i < window_size; i++) this.actionWindow.Add(0);
-            for (int i = 0; i < window_size; i++) this.rewardWindow.Add(0.0);
-            for (int i = 0; i < window_size; i++) this.netWindow.Add(new double[] { 0.0 });
+            for (int i = 0; i < window_size; i++) this.state_window.Add(new Volume(1, 1, 1));
+            for (int i = 0; i < window_size; i++) this.action_window.Add(0);
+            for (int i = 0; i < window_size; i++) this.reward_window.Add(0.0);
+            for (int i = 0; i < window_size; i++) this.net_window.Add(new double[] { 0.0 });
 
             // create [state -> value of all possible actions] modeling net for the value function
             var layer_defs = new List<LayerDefinition>();
@@ -182,8 +182,8 @@ namespace DeepQLearning.DRLAgent
             }
 
             // Create the network
-            this.valueNet = new Net();
-            this.valueNet.makeLayers(layer_defs);
+            this.value_net = new Net();
+            this.value_net.makeLayers(layer_defs);
 
             // and finally we need a Temporal Difference Learning trainer!
             var options = new Options { learning_rate = 0.01, momentum = 0.0, batch_size = 64, l2_decay = 0.01 };
@@ -192,7 +192,7 @@ namespace DeepQLearning.DRLAgent
                 options = opt.options; // allow user to overwrite this
             }
 
-            this.tdtrainer = new Trainer(this.valueNet, options);
+            this.tdtrainer = new Trainer(this.value_net, options);
 
             // experience replay
             this.experience = new List<Experience>();
@@ -205,27 +205,87 @@ namespace DeepQLearning.DRLAgent
             //this.last_input = [];
             this.average_reward_window = new TrainingWindow(1000, 10);
             this.average_loss_window = new TrainingWindow(1000, 10);
-            this.learning = false;
+            this.learning = true;
         }
 
-        /// <summary>
-        /// 向前
-        /// </summary>
-        /// <param name="inputArray"></param>
-        /// <returns></returns>
-        public int Forward(Volume inputArray)
+        public int random_action()
+        {
+            // a bit of a helper function. It returns a random action
+            // we are abstracting this away because in future we may want to 
+            // do more sophisticated things. For example some actions could be more
+            // or less likely at "rest"/default state.
+
+            int action = util.randi(0, this.num_actions);
+
+            if (this.random_action_distribution.Count != 0)
+            {
+                // okay, lets do some fancier sampling:
+                var p = util.randf(0, 1.0);
+                var cumprob = 0.0;
+                for (var k = 0; k < this.num_actions; k++)
+                {
+                    cumprob += this.random_action_distribution[k];
+                    if (p < cumprob) { action = k; break; }
+                }
+            }
+
+            return action;
+        }
+
+        public Action policy(double[] s)
+        {
+            // compute the value of doing any action in this state
+            // and return the argmax action and its value
+            var svol = new Volume(1, 1, this.net_inputs);
+            svol.w = s;
+            var action_values = this.value_net.forward(svol, false);
+            var maxk = 0;
+            var maxval = action_values.w[0];
+            for (var k = 1; k < this.num_actions; k++)
+            {
+                if (action_values.w[k] > maxval) { maxk = k; maxval = action_values.w[k]; }
+            }
+            return new Action { action = maxk, value = maxval };
+        }
+
+        public double[] getNetInput(Volume xt)
+        {
+            // return s = (x,a,x,a,x,a,xt) state vector. 
+            // It's a concatenation of last window_size (x,a) pairs and current state x
+            List<double> w = new List<double>();
+
+            // start with current state and now go backwards and append states and actions from history temporal_window times
+            w.AddRange(xt.w);
+
+            var n = this.window_size;
+            for (var k = 0; k < this.temporal_window; k++)
+            {
+                // state
+                w.AddRange(this.state_window[n - 1 - k].w);
+                // action, encoded as 1-of-k indicator vector. We scale it up a bit because
+                // we dont want weight regularization to undervalue this information, as it only exists once
+                var action1ofk = new double[this.num_actions];
+                for (var q = 0; q < this.num_actions; q++) action1ofk[q] = 0.0;
+                action1ofk[this.action_window[n - 1 - k]] = 1.0 * this.num_states;
+                w.AddRange(action1ofk);
+            }
+
+            return w.ToArray();
+        }
+
+        public int forward(Volume input_array)
         {
             // compute forward (behavior) pass given the input neuron signals from body
             this.forward_passes += 1;
-            this.lastInput = inputArray; // back this up
+            this.last_input = input_array; // back this up
 
             // create network input
             int action;
-            double[] netInput;
+            double[] net_input;
             if (this.forward_passes > this.temporal_window)
             {
                 // we have enough to actually do something reasonable
-                netInput = this.GetNetInput(inputArray);
+                net_input = this.getNetInput(input_array);
                 if (this.learning)
                 {
                     // compute epsilon for the epsilon-greedy policy
@@ -240,12 +300,12 @@ namespace DeepQLearning.DRLAgent
                 if (rf < this.epsilon)
                 {
                     // choose a random action with epsilon probability
-                    action = this.RandomAction();
+                    action = this.random_action();
                 }
                 else
                 {
                     // otherwise use our policy to make decision
-                    var maxact = this.DoPolicy(netInput);
+                    var maxact = this.policy(net_input);
                     action = maxact.action;
                 }
             }
@@ -253,32 +313,28 @@ namespace DeepQLearning.DRLAgent
             {
                 // pathological case that happens first few iterations 
                 // before we accumulate window_size inputs
-                netInput = new List<double>().ToArray();
-                action = this.RandomAction();
+                net_input = new List<double>().ToArray();
+                action = this.random_action();
             }
 
             // remember the state and action we took for backward pass
-            this.netWindow.RemoveAt(0);
-            this.netWindow.Add(netInput);
-            this.stateWindow.RemoveAt(0);
-            this.stateWindow.Add(inputArray);
-            this.actionWindow.RemoveAt(0);
-            this.actionWindow.Add(action);
+            this.net_window.RemoveAt(0);
+            this.net_window.Add(net_input);
+            this.state_window.RemoveAt(0);
+            this.state_window.Add(input_array);
+            this.action_window.RemoveAt(0);
+            this.action_window.Add(action);
 
             return action;
         }
 
-        /// <summary>
-        /// 向后
-        /// </summary>
-        /// <param name="reward"></param>
-        public void Backward(double reward)
+        public void backward(double reward)
         {
             this.latest_reward = reward;
             this.average_reward_window.add(reward);
 
-            this.rewardWindow.RemoveAt(0);
-            this.rewardWindow.Add(reward);
+            this.reward_window.RemoveAt(0);
+            this.reward_window.Add(reward);
 
             if (!this.learning) { return; }
 
@@ -291,10 +347,10 @@ namespace DeepQLearning.DRLAgent
             {
                 var e = new Experience();
                 var n = this.window_size;
-                e.state0 = this.netWindow[n - 2];
-                e.action0 = this.actionWindow[n - 2];
-                e.reward0 = this.rewardWindow[n - 2];
-                e.state1 = this.netWindow[n - 1];
+                e.state0 = this.net_window[n - 2];
+                e.action0 = this.action_window[n - 2];
+                e.reward0 = this.reward_window[n - 2];
+                e.state1 = this.net_window[n - 1];
 
                 if (this.experience.Count < this.experience_size)
                 {
@@ -319,7 +375,7 @@ namespace DeepQLearning.DRLAgent
                     var e = this.experience[re];
                     var x = new Volume(1, 1, this.net_inputs);
                     x.w = e.state0;
-                    var maxact = this.DoPolicy(e.state1);
+                    var maxact = this.policy(e.state1);
                     var r = e.reward0 + this.gamma * maxact.value;
 
                     var ystruct = new Entry { dim = e.action0, val = r };
@@ -332,94 +388,21 @@ namespace DeepQLearning.DRLAgent
             }
         }
 
-        /// <summary>
-        /// 打印信息
-        /// </summary>
-        /// <returns></returns>
-        public string VisSelf()
+        public string visSelf()
         {
             var t = "";
             t += "experience replay size: " + this.experience.Count + Environment.NewLine;
             t += "exploration epsilon: " + this.epsilon + Environment.NewLine;
             t += "age: " + this.age + Environment.NewLine;
-            t += "average Q-learning loss: " + this.average_loss_window.get_average() + Environment.NewLine;
-            t += "smooth-ish reward: " + this.average_reward_window.get_average() + Environment.NewLine;
+            t += "average Q-learning loss: " + this.average_loss_window.get_average().ToString("0." + new string('#', 339)) + Environment.NewLine;
+            t += "smooth-ish reward: " + this.average_reward_window.get_average().ToString("0." + new string('#', 339)) + Environment.NewLine;
 
             return t;
         }
 
-        /// <summary>
-        /// 随机选一个Action Index
-        /// </summary>
-        /// <returns></returns>
-        private int RandomAction()
+        public string GetLineData()
         {
-            // a bit of a helper function. It returns a random action
-            // we are abstracting this away because in future we may want to 
-            // do more sophisticated things. For example some actions could be more
-            // or less likely at "rest"/default state.
-
-            int action = util.randi(0, this.num_actions);
-
-            if (this.random_action_distribution.Count != 0)
-            {
-                // okay, lets do some fancier sampling:
-                var p = util.randf(0, 1.0);
-                var cumprob = 0.0;
-                for (var k = 0; k < this.num_actions; k++)
-                {
-                    cumprob += this.random_action_distribution[k];
-                    if (p < cumprob) { action = k; break; }
-                }
-            }
-
-            return action;
-        }
-
-        /// <summary>
-        /// 执行策略，选择最大值得Action执行
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        private Action DoPolicy(double[] s)
-        {
-            // compute the value of doing any action in this state
-            // and return the argmax action and its value
-            var svol = new Volume(1, 1, this.net_inputs);
-            svol.w = s;
-            var actionValues = this.valueNet.forward(svol, false);
-            var maxk = 0;
-            var maxval = actionValues.w[0];
-            for (var k = 1; k < this.num_actions; k++)
-            {
-                if (actionValues.w[k] > maxval) { maxk = k; maxval = actionValues.w[k]; }
-            }
-            return new Action { action = maxk, value = maxval };
-        }
-
-        private double[] GetNetInput(Volume xt)
-        {
-            // return s = (x,a,x,a,x,a,xt) state vector. 
-            // It's a concatenation of last window_size (x,a) pairs and current state x
-            List<double> w = new List<double>();
-
-            // start with current state and now go backwards and append states and actions from history temporal_window times
-            w.AddRange(xt.w);
-
-            var n = this.window_size;
-            for (var k = 0; k < this.temporal_window; k++)
-            {
-                // state
-                w.AddRange(this.stateWindow[n - 1 - k].w);
-                // action, encoded as 1-of-k indicator vector. We scale it up a bit because
-                // we dont want weight regularization to undervalue this information, as it only exists once
-                var action1ofk = new double[this.num_actions];
-                for (var q = 0; q < this.num_actions; q++) action1ofk[q] = 0.0;
-                action1ofk[this.actionWindow[n - 1 - k]] = 1.0 * this.num_states;
-                w.AddRange(action1ofk);
-            }
-
-            return w.ToArray();
+            return this.age + "," + this.average_reward_window.get_average().ToString("0." + new string('#', 339)) + "," + this.average_loss_window.get_average().ToString("0." + new string('#', 339));
         }
     }
 }

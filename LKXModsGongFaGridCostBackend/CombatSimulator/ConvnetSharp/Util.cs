@@ -59,7 +59,8 @@ namespace ConvnetSharp
         // Random number utilities
         bool return_v = false;
         double v_val = 0.0;
-        public Random random = new Random();
+        [NonSerialized]
+        public static Random random = new Random();
 
         public double gaussRandom()
         {

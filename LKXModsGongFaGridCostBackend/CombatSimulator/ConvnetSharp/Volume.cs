@@ -36,6 +36,8 @@ namespace ConvnetSharp
         private void Init(int sx, int sy, int depth, double c)
         {
             // we were given dimensions of the vol
+            if (sx == 1073741823)
+                sx = sx;
             this.sx = sx;
             this.sy = sy;
             this.depth = depth;

@@ -43,7 +43,7 @@ namespace ConvnetSharp
                 // do dropout
                 for (var i = 0; i < N; i++)
                 {
-                    if (util.random.NextDouble() < this.drop_prob)
+                    if (Util.random.NextDouble() < this.drop_prob)
                     {
                         // drop!
                         V2.w[i] = 0;
