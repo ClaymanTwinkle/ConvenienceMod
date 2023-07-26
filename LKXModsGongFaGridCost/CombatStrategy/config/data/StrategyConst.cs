@@ -85,24 +85,6 @@ namespace ConvenienceFrontend.CombatStrategy
             "否"
         };
 
-        public static readonly List<string[]> JudgementList = new List<string[]>
-        {
-            JudgementOptions,
-            YesOrNo
-        };
-
-        public static readonly List<string[]> OptionsList = new List<string[]>
-        {
-            StrategyConst.WeaponTypeOptions, // 0
-            StrategyConst.SkillTypeOptions,  // 1
-            StrategyConst.TrickTypeOptions,  // 2
-            GetTrickNameList().ToArray(),    // 3
-            DefeatMarkOptions,               // 4
-            YesOrNo,                         // 5
-            SatisfiedorDissatisfied,         // 6
-            GetSpecialEffectNameList().ToArray(),  // 7
-            CharacterAttribute
-        };
 
         // Token: 0x04000033 RID: 51
         public static readonly string[] SkillTypeOptions = new string[]
@@ -265,6 +247,25 @@ namespace ConvenienceFrontend.CombatStrategy
             "腐毒",
             "幻毒",
             "内息"
+        };
+
+        public static readonly List<string[]> JudgementList = new List<string[]>
+        {
+            JudgementOptions,
+            YesOrNo
+        };
+
+        public static readonly List<string[]> OptionsList = new List<string[]>
+        {
+            StrategyConst.WeaponTypeOptions, // 0
+            StrategyConst.SkillTypeOptions,  // 1
+            StrategyConst.TrickTypeOptions,  // 2
+            GetTrickNameList().ToArray(),    // 3
+            DefeatMarkOptions,               // 4
+            YesOrNo,                         // 5
+            SatisfiedorDissatisfied,         // 6
+            GetSpecialEffectNameList().ToArray(),  // 7
+            CharacterAttribute
         };
 
         // Token: 0x02000014 RID: 20
