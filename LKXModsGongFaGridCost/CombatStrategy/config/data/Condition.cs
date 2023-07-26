@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using UnityEngine;
 
 namespace ConvenienceFrontend.CombatStrategy
 {
@@ -73,34 +74,37 @@ namespace ConvenienceFrontend.CombatStrategy
             // value
             if (judgeItem == JudgeItem.WeaponType)
             {
-                stringBuilder.Append(StrategyConst.WeaponTypeOptions[value]);
+                stringBuilder.Append(StrategyConst.WeaponTypeOptions[value]).Append(' ');
             }
             else if (judgeItem == JudgeItem.PreparingAction)
             {
-                stringBuilder.Append(StrategyConst.SkillTypeOptions[value]);
+                stringBuilder.Append(StrategyConst.SkillTypeOptions[value]).Append(' ');
             }
             else if (judgeItem == JudgeItem.CanUseSkill)
             {
-                stringBuilder.Append(StrategyConst.SatisfiedorDissatisfied[value]);
+                stringBuilder.Append(StrategyConst.SatisfiedorDissatisfied[value]).Append(' ');
             }
             else if (judgeItem == JudgeItem.AffectingSkill)
             {
-                stringBuilder.Append(StrategyConst.YesOrNo[value]);
+                stringBuilder.Append(StrategyConst.YesOrNo[value]).Append(' ');
             }
-            else
+            else if (judgeItem == JudgeItem.CurrentTrick)
             {
-                stringBuilder.Append(StrategyConst.JudgementOptions[(int)judge]).Append(' ');
-                if (judgeItem == JudgeItem.CurrentTrick)
-                {
-                    stringBuilder.Append(TrickType.Instance[value].Name);
-                }
-                else
-                {
-                    string format = (judgeItem == JudgeItem.Distance) ? "f1" : "f0";
-                    float multiplyer = uiItem.Multiplyer;
-                    stringBuilder.Append(((float)value / multiplyer).ToString(format));
-                }
+                stringBuilder.Append(TrickType.Instance[value].Name).Append(' ');
             }
+
+            if (uiItem.judgementIndex != -1)
+            {
+                stringBuilder.Append(StrategyConst.JudgementList[uiItem.judgementIndex][(int)judge]).Append(' ');
+            }
+
+            if (uiItem.ShowNumSetter)
+            {
+                string format = (judgeItem == JudgeItem.Distance) ? "f1" : "f0";
+                float multiplyer = uiItem.Multiplyer;
+                stringBuilder.Append(((float)value / multiplyer).ToString(format));
+            }
+
             return stringBuilder.ToString();
         }
 

@@ -616,7 +616,12 @@ namespace ConvenienceBackend.CombatStrategy
                     case JudgeItem.PreparingAction:
                         if (condition.value < 3)
                         {
-                            meetTheConditions = (combatCharacter.GetPreparingSkillId() >= 0 && CheckCondition((int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1), condition));
+                            var value = -1;
+                            if (combatCharacter.GetPreparingSkillId() >= 0)
+                            {
+                                value = (int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1);
+                            }
+                            meetTheConditions = (condition.value == value && condition.judge == Judgement.Equals) || (condition.value != value && condition.judge != Judgement.Equals);
                         }
                         else
                         {
@@ -624,15 +629,15 @@ namespace ConvenienceBackend.CombatStrategy
                             {
                                 case 3:
                                     // 治疗
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 0;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 0 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 0 && condition.judge != Judgement.Equals);
                                     break;
                                 case 4:
                                     // 解毒
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 1;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 1 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 1 && condition.judge != Judgement.Equals);
                                     break;
                                 case 5:
                                     // 逃跑
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 2;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 2 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 2 && condition.judge != Judgement.Equals);
                                     break;
                             }
                         }
