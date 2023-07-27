@@ -242,7 +242,9 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 int value = itemOptions.value;
                 condition.item = (JudgeItem)value;
                 condition.judge = (Judgement)judgementOptions.value;
-                if (StrategyConst.ItemOptions[value].ShowNumSetter)
+                StrategyConst.Item uiItem = StrategyConst.ItemOptions[value];
+
+                if (uiItem.ShowNumSetter)
                 {
                     float.TryParse(inputField.text, out float floatValue);
                     condition.value = ((int)(floatValue * StrategyConst.ItemOptions[value].Multiplyer));
@@ -253,11 +255,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                     condition.value = valueOptions.value;
                 }
 
-                if (condition.item == JudgeItem.HasTrick)
-                {
-                    condition.subType = valueOptions.value - 1;
-                }
-                else if (condition.item == JudgeItem.HasSkillEffect || condition.item == JudgeItem.CanUseSkill || condition.item == JudgeItem.AffectingSkill)
+                if (uiItem.ShowSelectSkillBtn)
                 {
                     CombatSkillItem combatSkillItem = CombatSkill.Instance[selectButton.GetComponentInChildren<TextMeshProUGUI>().text];
                     if (combatSkillItem != null)
@@ -269,9 +267,9 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                         condition.subType = -1;
                     }
                 }
-                else if (condition.item == JudgeItem.DefeatMarkCount)
+                else if (condition.item == JudgeItem.HasTrick)
                 {
-                    condition.subType = valueOptions.value;
+                    condition.subType = valueOptions.value - 1;
                 }
                 else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
                 {

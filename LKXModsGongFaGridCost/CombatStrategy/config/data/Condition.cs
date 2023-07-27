@@ -42,7 +42,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 stringBuilder.Append(StrategyConst.PlayerOptions[isAlly ? 0 : 1]).Append(' ');
             }
-            if (judgeItem == JudgeItem.HasSkillEffect || judgeItem == JudgeItem.CanUseSkill || judgeItem == JudgeItem.AffectingSkill)
+            if (uiItem.ShowSelectSkillBtn)
             {
                 CombatSkillItem combatSkillItem = CombatSkill.Instance[subType];
                 if (combatSkillItem != null)

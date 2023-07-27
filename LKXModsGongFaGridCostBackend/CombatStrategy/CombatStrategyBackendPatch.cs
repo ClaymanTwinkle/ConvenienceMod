@@ -31,6 +31,8 @@ namespace ConvenienceBackend.CombatStrategy
         private static Logger _logger = LogManager.GetLogger("战斗策略");
 
 
+        private static Dictionary<short, int> _prepareSkillCountMap = new Dictionary<short, int>();
+
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "ReplaceAI", ref _replaceAi);
@@ -76,6 +78,9 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 _logger.Info("重置战斗");
                 _startCombatCalled = false;
+                _switchWeaponsCD = 0;
+                _prepareSkillCountMap.Clear();
+
                 AICombatManager.ResetCombat();
             }
         }
@@ -259,7 +264,7 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="____inAttackRange"></param>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CombatCharacterStateAttack), "OnEnter")]
-        public static void CCombatCharacterStateAttack_OnEnter_Postfix(CombatCharacterStateAttack __instance, CombatCharacter ___CombatChar, sbyte ____trickType, ref bool ____inAttackRange)
+        public static void CombatCharacterStateAttack_OnEnter_Postfix(CombatCharacterStateAttack __instance, CombatCharacter ___CombatChar, sbyte ____trickType, ref bool ____inAttackRange)
         {
             if (!IsEnable()) return;
             if (!___CombatChar.IsAlly) return;
@@ -269,6 +274,26 @@ namespace ConvenienceBackend.CombatStrategy
                 ____inAttackRange = false;
 
                 _logger.Info("我方空A " + Config.TrickType.Instance[____trickType].Name);
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatCharacterStatePrepareSkill), "OnEnter")]
+        public static void CombatCharacterStatePrepareSkill_OnEnter_Postfix(CombatCharacterStatePrepareSkill __instance, CombatCharacter ___CombatChar)
+        {
+            if (!IsEnable()) return;
+            if (!___CombatChar.IsAlly) return;
+
+            var skillId = ___CombatChar.GetPreparingSkillId();
+            if (skillId == -1) return;
+
+            if (_prepareSkillCountMap.ContainsKey(skillId))
+            {
+                _prepareSkillCountMap[skillId] = _prepareSkillCountMap[skillId];
+            }
+            else
+            {
+                _prepareSkillCountMap[skillId] = 1;
             }
         }
 
@@ -831,6 +856,19 @@ namespace ConvenienceBackend.CombatStrategy
                                 // 内息
                                 meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetDisorderOfQi()/10, condition);
                             }
+                        }
+                        break;
+                    case JudgeItem.NumOfPrepareSkill:
+                        {
+                            var count = 0;
+
+                            var skillId = (short)condition.subType;
+
+                            if (_prepareSkillCountMap.ContainsKey(skillId))
+                            {
+                                count = _prepareSkillCountMap[skillId];
+                            }
+                            meetTheConditions = CheckCondition(count, condition);
                         }
                         break;
                     default:

@@ -94,6 +94,11 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <summary>
         /// 人物属性
         /// </summary>
-        CharacterAttribute
+        CharacterAttribute,
+
+        /// <summary>
+        /// 技能施展次数
+        /// </summary>
+        NumOfPrepareSkill
     }
 }
