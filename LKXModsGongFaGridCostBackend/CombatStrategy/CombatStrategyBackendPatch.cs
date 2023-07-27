@@ -31,7 +31,7 @@ namespace ConvenienceBackend.CombatStrategy
         private static Logger _logger = LogManager.GetLogger("战斗策略");
 
 
-        private static Dictionary<short, int> _prepareSkillCountMap = new Dictionary<short, int>();
+        private static Dictionary<short, int> _prepareSkillCountMap = new();
 
         public override void OnModSettingUpdate(string modIdStr)
         {
