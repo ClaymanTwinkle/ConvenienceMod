@@ -46,7 +46,7 @@ namespace ConvenienceBackend.CombatSimulator
 
         private static bool _isStartLearning = false;
 
-        private const int MAX_COMBAT_LEARNING_COUNT = 10000000;
+        private const int MAX_COMBAT_LEARNING_COUNT = 1;
         private static int _currentCombatCount = 0;
 
         private const bool LIMIT_SINGLE_COMBAT_STEP_COUNT = false;
@@ -215,6 +215,7 @@ namespace ConvenienceBackend.CombatSimulator
 
             if (_currentCombatCount > MAX_COMBAT_LEARNING_COUNT)
             {
+                logger.Debug("战斗结束，结束训练");
                 StopLearning();
             }
             else

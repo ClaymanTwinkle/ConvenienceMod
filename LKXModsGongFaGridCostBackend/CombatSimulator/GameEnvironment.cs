@@ -16,6 +16,7 @@ using GameData.Domains.Combat;
 using GameData.Utilities;
 using HarmonyLib;
 using NLog;
+using NLog.Fluent;
 using TaiwuModdingLib.Core.Utils;
 
 namespace ConvenienceBackend.CombatSimulator
@@ -206,7 +207,7 @@ namespace ConvenienceBackend.CombatSimulator
         private int _selfCharId = -1;
         private int _enemyCharId = -1;
 
-        private bool _debug = false;
+        private static bool _debug = true;
 
         public GameEnvironment(int timeScale)
         {
@@ -282,10 +283,23 @@ namespace ConvenienceBackend.CombatSimulator
             switch ((ActionType)actionIndex)
             {
                 case ActionType.IDLE:
+                    DebugLog("执行命令：不动");
                     break;
                 case ActionType.Stand:
                 case ActionType.MoveForward:
                 case ActionType.MoveBackward:
+                    if (actionIndex == 1)
+                    {
+                        DebugLog("执行命令：停止移动");
+                    }
+                    else if (actionIndex == 2)
+                    {
+                        DebugLog("执行命令：向前移动");
+                    }
+                    else
+                    {
+                        DebugLog("执行命令：向前移动");
+                    }
                     combat.SetMoveState((byte)(actionIndex-1), true, true);
                     break;
 
@@ -294,6 +308,7 @@ namespace ConvenienceBackend.CombatSimulator
                     {
                         Reward.invalidReward = -1;
                     }
+                    DebugLog("执行命令：普通攻击");
                     combat.NormalAttack(context, true);
                    
                     break;
@@ -321,6 +336,9 @@ namespace ConvenienceBackend.CombatSimulator
             var combat = DomainManager.Combat;
             var reward = Reward.CalcTotal();
             Reward.Clear();
+
+            DebugLog("结算奖励："+reward);
+
             return reward;
         }
 
@@ -463,18 +481,15 @@ namespace ConvenienceBackend.CombatSimulator
         {
             if (attacker.IsAlly)
             {
-                if (_debug)
-                {
-                    logger.Debug(
-                        string.Concat(new string[] {
-                                                attacker.IsAlly ? "【我方】" : "【敌方】",
-                                                GetCharName(attacker.GetId()),
-                                                "进行",
-                                                isFightBack ? "反击": (pursueIndex == 0 ? "普攻" : "第"+ pursueIndex +"次追击"),
-                                                hit ? "成功命中" : "被对方躲开了"
-                        })
-                    );
-                }
+                DebugLog(
+                    string.Concat(new string[] {
+                        attacker.IsAlly ? "【我方】" : "【敌方】",
+                        GetCharName(attacker.GetId()),
+                        "进行",
+                        isFightBack ? "反击": (pursueIndex == 0 ? "普攻" : "第"+ pursueIndex +"次追击"),
+                        hit ? "成功命中" : "被对方躲开了"
+                    })
+                );
 
                 Reward.normalAttackReward += 3;
             }
@@ -492,6 +507,13 @@ namespace ConvenienceBackend.CombatSimulator
                 {
                     // A空判断
                     Reward.normalAttackReward -= 1;
+                    DebugLog(
+                        string.Concat(new string[] {
+                            attacker.IsAlly ? "【我方】" : "【敌方】",
+                            GetCharName(attacker.GetId()),
+                            "普通攻击空了"
+                        })
+                    );
                 }
             }
         }
@@ -530,8 +552,7 @@ namespace ConvenienceBackend.CombatSimulator
                 }
             }
 
-            if (!_debug) return;
-            logger.Debug(
+            DebugLog(
                 string.Concat(new string[] {
                         mover.IsAlly ? "【我方】" : "【敌方】",
                         GetCharName(mover.GetId()),
@@ -567,6 +588,12 @@ namespace ConvenienceBackend.CombatSimulator
             var injuries = aChar.GetInjuries();
             injuries.Initialize();
             aChar.SetInjuries(injuries, context);
+        }
+
+        private static void DebugLog(string log)
+        {
+            if (!_debug) return;
+            logger.Debug(log);
         }
     }
 }
