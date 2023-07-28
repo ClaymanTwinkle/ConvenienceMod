@@ -65,7 +65,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
             GameObject judgementOption = GameObjectCreationUtils.InstantiateUIElement(panelGameObject.transform, "CommonDropdown");
             Extentions.SetWidth(judgementOption.GetComponent<RectTransform>(), 180f);
             CDropdown judgementDropDown = judgementOption.GetComponent<CDropdown>();
-            judgementDropDown.AddOptions(StrategyConst.JudgementOptions.ToList<string>());
+            // judgementDropDown.AddOptions(StrategyConst.JudgementOptions.ToList<string>());
             refers.AddMono(judgementDropDown, "JudgementOptions");
             judgementOption.SetActive(false);
 
@@ -79,28 +79,40 @@ namespace ConvenienceFrontend.CombatStrategy.ui
             itemOptions.onValueChanged.RemoveAllListeners();
             itemOptions.onValueChanged.AddListener(delegate (int val)
             {
-                StrategyConst.Item item2 = StrategyConst.ItemOptions[val];
-                // 数值输入框
-                if (item2.ShowNumSetter)
+                StrategyConst.Item item = StrategyConst.ItemOptions[val];
+
+                // 比较
+                if (item.judgementIndex != -1)
                 {
                     judgementOption.SetActive(true);
+                    judgementDropDown.ClearOptions();
+                    judgementDropDown.AddOptions(StrategyConst.JudgementList[item.judgementIndex].ToList());
+                    judgementDropDown.value = 0;
+                }
+                else
+                {
+                    judgementOption.SetActive(false);
+                }
+
+                // 数值输入框
+                if (item.ShowNumSetter)
+                {
                     inputField.SetActive(true);
                     TextMeshProUGUI placeholder = (TextMeshProUGUI)input.placeholder;
-                    placeholder.text = item2.Multiplyer == 1f ? "0" : "0.0";
+                    placeholder.text = item.Multiplyer == 1f ? "0" : "0.0";
                     confirm.interactable = float.TryParse(input.text, out float num);
                     input.text = "";
                 }
                 else
                 {
-                    judgementOption.SetActive(false);
                     inputField.SetActive(false);
                 }
 
                 // 子选项
-                if (item2.OptionIndex >= 0)
+                if (item.OptionIndex >= 0)
                 {
                     valueDropDown.ClearOptions();
-                    valueDropDown.AddOptions(StrategyConst.OptionsList[item2.OptionIndex].ToList<string>());
+                    valueDropDown.AddOptions(StrategyConst.OptionsList[item.OptionIndex].ToList<string>());
                     valueOption.SetActive(true);
                     confirm.interactable = true;
                     judgementDropDown.value = 0;
@@ -111,7 +123,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 }
 
                 // 选择技能按钮
-                selectButtonGameObject.SetActive(item2.ShowSelectSkillBtn);
+                selectButtonGameObject.SetActive(item.ShowSelectSkillBtn);
                 selectButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 16f;
                 selectButton.GetComponentInChildren<TextMeshProUGUI>().text = "选择技能";
             });
@@ -230,7 +242,9 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                 int value = itemOptions.value;
                 condition.item = (JudgeItem)value;
                 condition.judge = (Judgement)judgementOptions.value;
-                if (StrategyConst.ItemOptions[value].ShowNumSetter)
+                StrategyConst.Item uiItem = StrategyConst.ItemOptions[value];
+
+                if (uiItem.ShowNumSetter)
                 {
                     float.TryParse(inputField.text, out float floatValue);
                     condition.value = ((int)(floatValue * StrategyConst.ItemOptions[value].Multiplyer));
@@ -241,11 +255,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                     condition.value = valueOptions.value;
                 }
 
-                if (condition.item == JudgeItem.HasTrick)
-                {
-                    condition.subType = valueOptions.value - 1;
-                }
-                else if (condition.item == JudgeItem.HasSkillEffect || condition.item == JudgeItem.CanUseSkill || condition.item == JudgeItem.AffectingSkill)
+                if (uiItem.ShowSelectSkillBtn)
                 {
                     CombatSkillItem combatSkillItem = CombatSkill.Instance[selectButton.GetComponentInChildren<TextMeshProUGUI>().text];
                     if (combatSkillItem != null)
@@ -257,9 +267,9 @@ namespace ConvenienceFrontend.CombatStrategy.ui
                         condition.subType = -1;
                     }
                 }
-                else if (condition.item == JudgeItem.DefeatMarkCount)
+                else if (condition.item == JudgeItem.HasTrick)
                 {
-                    condition.subType = valueOptions.value;
+                    condition.subType = valueOptions.value - 1;
                 }
                 else if (condition.item == JudgeItem.Buff || condition.item == JudgeItem.Debuff)
                 {

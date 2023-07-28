@@ -31,6 +31,8 @@ namespace ConvenienceBackend.CombatStrategy
         private static Logger _logger = LogManager.GetLogger("战斗策略");
 
 
+        private static Dictionary<short, int> _prepareSkillCountMap = new();
+
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "ReplaceAI", ref _replaceAi);
@@ -76,6 +78,9 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 _logger.Info("重置战斗");
                 _startCombatCalled = false;
+                _switchWeaponsCD = 0;
+                _prepareSkillCountMap.Clear();
+
                 AICombatManager.ResetCombat();
             }
         }
@@ -259,7 +264,7 @@ namespace ConvenienceBackend.CombatStrategy
         /// <param name="____inAttackRange"></param>
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CombatCharacterStateAttack), "OnEnter")]
-        public static void CCombatCharacterStateAttack_OnEnter_Postfix(CombatCharacterStateAttack __instance, CombatCharacter ___CombatChar, sbyte ____trickType, ref bool ____inAttackRange)
+        public static void CombatCharacterStateAttack_OnEnter_Postfix(CombatCharacterStateAttack __instance, CombatCharacter ___CombatChar, sbyte ____trickType, ref bool ____inAttackRange)
         {
             if (!IsEnable()) return;
             if (!___CombatChar.IsAlly) return;
@@ -269,6 +274,26 @@ namespace ConvenienceBackend.CombatStrategy
                 ____inAttackRange = false;
 
                 _logger.Info("我方空A " + Config.TrickType.Instance[____trickType].Name);
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CombatCharacterStatePrepareSkill), "OnEnter")]
+        public static void CombatCharacterStatePrepareSkill_OnEnter_Postfix(CombatCharacterStatePrepareSkill __instance, CombatCharacter ___CombatChar)
+        {
+            if (!IsEnable()) return;
+            if (!___CombatChar.IsAlly) return;
+
+            var skillId = ___CombatChar.GetPreparingSkillId();
+            if (skillId == -1) return;
+
+            if (_prepareSkillCountMap.ContainsKey(skillId))
+            {
+                _prepareSkillCountMap[skillId] = _prepareSkillCountMap[skillId];
+            }
+            else
+            {
+                _prepareSkillCountMap[skillId] = 1;
             }
         }
 
@@ -616,7 +641,12 @@ namespace ConvenienceBackend.CombatStrategy
                     case JudgeItem.PreparingAction:
                         if (condition.value < 3)
                         {
-                            meetTheConditions = (combatCharacter.GetPreparingSkillId() >= 0 && CheckCondition((int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1), condition));
+                            var value = -1;
+                            if (combatCharacter.GetPreparingSkillId() >= 0)
+                            {
+                                value = (int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1);
+                            }
+                            meetTheConditions = (condition.value == value && condition.judge == Judgement.Equals) || (condition.value != value && condition.judge != Judgement.Equals);
                         }
                         else
                         {
@@ -624,15 +654,15 @@ namespace ConvenienceBackend.CombatStrategy
                             {
                                 case 3:
                                     // 治疗
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 0;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 0 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 0 && condition.judge != Judgement.Equals);
                                     break;
                                 case 4:
                                     // 解毒
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 1;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 1 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 1 && condition.judge != Judgement.Equals);
                                     break;
                                 case 5:
                                     // 逃跑
-                                    meetTheConditions = combatCharacter.GetPreparingOtherAction() == 2;
+                                    meetTheConditions = (combatCharacter.GetPreparingOtherAction() == 2 && condition.judge == Judgement.Equals) || (combatCharacter.GetPreparingOtherAction() != 2 && condition.judge != Judgement.Equals);
                                     break;
                             }
                         }
@@ -826,6 +856,19 @@ namespace ConvenienceBackend.CombatStrategy
                                 // 内息
                                 meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetDisorderOfQi()/10, condition);
                             }
+                        }
+                        break;
+                    case JudgeItem.NumOfPrepareSkill:
+                        {
+                            var count = 0;
+
+                            var skillId = (short)condition.subType;
+
+                            if (_prepareSkillCountMap.ContainsKey(skillId))
+                            {
+                                count = _prepareSkillCountMap[skillId];
+                            }
+                            meetTheConditions = CheckCondition(count, condition);
                         }
                         break;
                     default:

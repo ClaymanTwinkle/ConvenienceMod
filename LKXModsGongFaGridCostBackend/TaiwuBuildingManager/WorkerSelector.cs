@@ -33,7 +33,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             // AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + _availableWorker.Count);
 
             int num9 = _availableWorker.Count - 1;
-            int maxProduceValue = _configData.MaxProduceValue;
+            int maxProduceValue = _configData.TemplateId == BuildingBlock.DefKey.BookCollectionRoom ? 100 : _configData.MaxProduceValue;
 
             var wokers = new int[3] { -1, -1, -1 };
 

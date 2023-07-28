@@ -43,12 +43,27 @@ namespace ConvenienceFrontend.CombatStrategy
             NormalAttack = 5,
         }
 
-        // Token: 0x04000030 RID: 48
-        public static readonly string[] JudgementOptions = new string[]
+        // Token: 0x04000032 RID: 50
+        public static readonly StrategyConst.Item[] ItemOptions = new StrategyConst.Item[]
         {
-            "等于",
-            "大于",
-            "小于"
+            new StrategyConst.Item("距离", true, 10f, -1, false, 0),              // 0
+            new StrategyConst.Item("脚力", true, 10f, -1, false, 0),              // 1  
+            new StrategyConst.Item("装备", false, 1f, 0, false, -1),               // 2
+            new StrategyConst.Item("正在施展", false, 1f, 1, false, 1),           // 3
+            new StrategyConst.Item("身法值", true, 10f, -1, false, 0),            // 4
+            new StrategyConst.Item("式的数量", true, 1f, 2, false, 0),            // 5
+            new StrategyConst.Item("功法效果层数", true, 1f, -1, true, 0),         // 6
+            new StrategyConst.Item("架势", true, 1f, -1, false, 0),               // 7
+            new StrategyConst.Item("提气", true, 1f, -1, false, 0),               // 8
+            new StrategyConst.Item("当前式", false, 1f, 3, false, -1),              // 9
+            new StrategyConst.Item("战败标记", true, 1f, 4, false, 0),             // 10
+            new StrategyConst.Item("施展条件", false, 1f, 6, true, -1),             // 11
+            new StrategyConst.Item("运功中", false, 1f, 5, true, -1),               // 12
+            new StrategyConst.Item("增益效果", true, 1f, 7, false, 0),             // 13
+            new StrategyConst.Item("减益效果", true, 1f, 7, false, 0),             // 14
+            new StrategyConst.Item("蛊引数", true, 1f, -1, false, 0),              // 15
+            new StrategyConst.Item("属性", true, 1f, 8, false, 0),                 // 16
+            new StrategyConst.Item("已施展次数", true, 1f, -1, true, 0)             // 17
         };
 
         // Token: 0x04000031 RID: 49
@@ -58,27 +73,19 @@ namespace ConvenienceFrontend.CombatStrategy
             "敌人"
         };
 
-        // Token: 0x04000032 RID: 50
-        public static readonly StrategyConst.Item[] ItemOptions = new StrategyConst.Item[]
+        // Token: 0x04000030 RID: 48
+        public static readonly string[] JudgementOptions = new string[]
         {
-            new StrategyConst.Item("距离", true, 10f, -1),              // 0
-            new StrategyConst.Item("脚力", true, 10f, -1),              // 1  
-            new StrategyConst.Item("装备", 0),                          // 2
-            new StrategyConst.Item("正在施展", 1),                      // 3
-            new StrategyConst.Item("身法值", true, 10f, -1),             // 4
-            new StrategyConst.Item("式的数量", true, 1f, 2),             // 5
-            new StrategyConst.Item("功法效果层数", true, 1f, -1, true),  // 6
-            new StrategyConst.Item("架势", true, 1f, -1),               // 7
-            new StrategyConst.Item("提气", true, 1f, -1),                 // 8
-            new StrategyConst.Item("当前式", false, 1f, 3),              // 9
-            new StrategyConst.Item("战败标记", true, 1f, 4),             // 10
-            new StrategyConst.Item("施展条件", false, 1f, 6, true),      // 11
-            new StrategyConst.Item("运功中", false, 1f, 5, true),        // 12
-            new StrategyConst.Item("增益效果", true, 1f, 7, false),      // 13
-            new StrategyConst.Item("减益效果", true, 1f, 7, false),       // 14
-            new StrategyConst.Item("蛊引数", true, 1f, -1, false),       // 15
-            new StrategyConst.Item("属性", true, 1f, 8, false)            // 16
+            "等于",
+            "大于",
+            "小于"
         };
+        public static readonly string[] YesOrNo = new string[]
+        {
+            "是",
+            "否"
+        };
+
 
         // Token: 0x04000033 RID: 51
         public static readonly string[] SkillTypeOptions = new string[]
@@ -220,11 +227,6 @@ namespace ConvenienceFrontend.CombatStrategy
             "向后移动",
         };
 
-        public static readonly string[] YesOrNo = new string[]
-        {
-            "是",
-            "否"
-        };
 
         public static readonly string[] SatisfiedorDissatisfied = new string[]
         {
@@ -248,7 +250,12 @@ namespace ConvenienceFrontend.CombatStrategy
             "内息"
         };
 
-        // Token: 0x04000036 RID: 54
+        public static readonly List<string[]> JudgementList = new List<string[]>
+        {
+            JudgementOptions,
+            YesOrNo
+        };
+
         public static readonly List<string[]> OptionsList = new List<string[]>
         {
             StrategyConst.WeaponTypeOptions, // 0
@@ -262,28 +269,17 @@ namespace ConvenienceFrontend.CombatStrategy
             CharacterAttribute
         };
 
-
         // Token: 0x02000014 RID: 20
         public struct Item
         {
-            // Token: 0x0600007E RID: 126 RVA: 0x00007AB6 File Offset: 0x00005CB6
-            public Item(string name, int optionIndex)
-            {
-                this.Name = name;
-                this.OptionIndex = optionIndex;
-                this.ShowNumSetter = false;
-                this.Multiplyer = 0f;
-                this.ShowSelectSkillBtn = false;
-            }
-
-            // Token: 0x0600007F RID: 127 RVA: 0x00007AD9 File Offset: 0x00005CD9
-            public Item(string name, bool showNumSetter, float multiplyer, int optionIndex, bool showSelectSkillBtn = false)
+            public Item(string name, bool showNumSetter, float multiplyer, int optionIndex, bool showSelectSkillBtn = false, int judgementIndex = -1)
             {
                 this.Name = name;
                 this.ShowNumSetter = showNumSetter;
                 this.Multiplyer = multiplyer;
                 this.OptionIndex = optionIndex;
                 this.ShowSelectSkillBtn = showSelectSkillBtn;
+                this.judgementIndex = judgementIndex;
             }
 
             public string Name;
@@ -295,6 +291,8 @@ namespace ConvenienceFrontend.CombatStrategy
             public int OptionIndex;
 
             public bool ShowSelectSkillBtn;
+
+            public int judgementIndex;
         }
     }
 }
