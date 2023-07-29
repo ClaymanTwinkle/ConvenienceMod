@@ -94,9 +94,10 @@ namespace ConvenienceBackend.CombatSimulator
             // 脚力
             input_array[5] = SelfChar.GetMobilityValue() / 1000;
             input_array[6] = EnemyChar.GetMobilityValue() / 1000;
-            // 身法条
-            input_array[7] = (SelfChar.GetSkillMobility() * 1000.0 / GlobalConfig.Instance.AgileSkillMobility) / 1000;
-            input_array[8] = (EnemyChar.GetSkillMobility() * 1000.0 / GlobalConfig.Instance.AgileSkillMobility) / 1000;
+            // 移动状态
+            input_array[7] = GameEnvironment.GetMoveState(SelfChar)/2;
+            input_array[8] = GameEnvironment.GetMoveState(EnemyChar)/2;
+
             // 能不能普通攻击
             input_array[9] = CanNormalAttack.Item1 ? 1 : 0;
             input_array[10] = CanNormalAttack.Item2 ? 1 : 0;
@@ -108,6 +109,10 @@ namespace ConvenienceBackend.CombatSimulator
             // 状态
             input_array[15] = ((int)(SelfChar.StateMachine.GetCurrentState().StateType) + 2.0) / 18.0;
             input_array[16] = ((int)(EnemyChar.StateMachine.GetCurrentState().StateType) + 2.0) / 18.0;
+
+            // 身法条
+            // input_array[7] = (SelfChar.GetSkillMobility() * 1000.0 / GlobalConfig.Instance.AgileSkillMobility) / 1000;
+            // input_array[8] = (EnemyChar.GetSkillMobility() * 1000.0 / GlobalConfig.Instance.AgileSkillMobility) / 1000;
 
             Volume input = new(input_array.Length, 1, 1)
             {
@@ -141,18 +146,13 @@ namespace ConvenienceBackend.CombatSimulator
         public double damageReward;
 
         /// <summary>
-        /// 无效奖励
-        /// </summary>
-        public double invalidReward;
-
-        /// <summary>
         /// 胜利奖励
         /// </summary>
         public double victoryReward;
 
         public double CalcTotal()
         { 
-            return normalAttackReward + avoidNormalAttackReward + moveReward + damageReward + invalidReward + victoryReward;
+            return normalAttackReward + avoidNormalAttackReward + moveReward + damageReward + victoryReward;
         }
 
         public void Clear()
@@ -161,7 +161,6 @@ namespace ConvenienceBackend.CombatSimulator
             avoidNormalAttackReward = 0;
             moveReward = 0;
             damageReward = 0;
-            invalidReward = 0;
             victoryReward = 0;
         }
     }
@@ -207,9 +206,9 @@ namespace ConvenienceBackend.CombatSimulator
         private int _selfCharId = -1;
         private int _enemyCharId = -1;
 
-        private static bool _debug = true;
+        private static bool _debug = false;
 
-        public GameEnvironment(int timeScale)
+        public GameEnvironment(int timeScale = 1)
         {
             this.timeScale = timeScale;
         }
@@ -286,31 +285,25 @@ namespace ConvenienceBackend.CombatSimulator
                     DebugLog("执行命令：不动");
                     break;
                 case ActionType.Stand:
+                    DebugLog("执行命令：停止移动");
+                    CalcMoveReward(combat.GetCombatCharacter(true), (byte)(actionIndex - 1));
+                    combat.SetMoveState((byte)(actionIndex - 1), true, true);
+                    break;
                 case ActionType.MoveForward:
+                    DebugLog("执行命令：向前移动");
+                    CalcMoveReward(combat.GetCombatCharacter(true), (byte)(actionIndex - 1));
+                    combat.SetMoveState((byte)(actionIndex - 1), true, true);
+                    break;
                 case ActionType.MoveBackward:
-                    if (actionIndex == 1)
-                    {
-                        DebugLog("执行命令：停止移动");
-                    }
-                    else if (actionIndex == 2)
-                    {
-                        DebugLog("执行命令：向前移动");
-                    }
-                    else
-                    {
-                        DebugLog("执行命令：向前移动");
-                    }
+                    DebugLog("执行命令：向后移动");
+                    CalcMoveReward(combat.GetCombatCharacter(true), (byte)(actionIndex - 1));
                     combat.SetMoveState((byte)(actionIndex-1), true, true);
                     break;
 
                 case ActionType.NormalAttack:
-                    if (!combat.CanNormalAttack(true))
-                    {
-                        Reward.invalidReward = -1;
-                    }
+                    CalcNormalAttackReward(combat.GetCombatCharacter(true));
                     DebugLog("执行命令：普通攻击");
                     combat.NormalAttack(context, true);
-                   
                     break;
             }
         }
@@ -420,7 +413,7 @@ namespace ConvenienceBackend.CombatSimulator
             else if (combatStatus == CombatStatusType.EnemyFail)
             {
                 logger.Info("战斗结束，敌方战败");
-                Reward.victoryReward = 50;
+                Reward.victoryReward = 5;
             }
             else if (combatStatus == CombatStatusType.SelfFlee)
             {
@@ -491,7 +484,7 @@ namespace ConvenienceBackend.CombatSimulator
                     })
                 );
 
-                Reward.normalAttackReward += 3;
+                // Reward.normalAttackReward += 3;
             }
             else
             {
@@ -506,7 +499,7 @@ namespace ConvenienceBackend.CombatSimulator
                 if (!SkillUtils.IsAttack(skillId) && attacker.GetAttackOutOfRange())
                 {
                     // A空判断
-                    Reward.normalAttackReward -= 1;
+                    // Reward.normalAttackReward -= 1;
                     DebugLog(
                         string.Concat(new string[] {
                             attacker.IsAlly ? "【我方】" : "【敌方】",
@@ -523,35 +516,6 @@ namespace ConvenienceBackend.CombatSimulator
             if (!isMove) return;
             if (!mover.IsAlly) return;
 
-            var attackRange = mover.GetAttackRange();
-
-            var oldDistance = DomainManager.Combat.GetCurrentDistance() - distance;
-
-            if (attackRange.Outer > oldDistance)
-            {
-                if (distance > 0)
-                {
-                    // 太靠前了，要退后
-                    Reward.moveReward += 0.1;
-                }
-                else
-                {
-                    Reward.moveReward -= 0.2;
-                }
-            }
-            else if (attackRange.Inner < oldDistance)
-            {
-                if (distance < 0)
-                {
-                    // 太靠后了，要前进
-                    Reward.moveReward += 0.1;
-                }
-                else
-                {
-                    Reward.moveReward -= 0.2;
-                }
-            }
-
             DebugLog(
                 string.Concat(new string[] {
                         mover.IsAlly ? "【我方】" : "【敌方】",
@@ -565,11 +529,70 @@ namespace ConvenienceBackend.CombatSimulator
             );
         }
 
+        private void CalcNormalAttackReward(CombatCharacter selfChar)
+        {
+            if (!DomainManager.Combat.CanNormalAttack(true))
+            {
+                Reward.normalAttackReward -= 0.2;
+            }
+            else if (!DomainManager.Combat.InAttackRange(selfChar))
+            {
+                Reward.normalAttackReward -= 0.2;
+            }
+            else
+            {
+                Reward.normalAttackReward +=0.4;
+            }
+        }
+
+        private void CalcMoveReward(CombatCharacter selfChar, byte moveState)
+        {
+            var attackRange = selfChar.GetAttackRange();
+
+            var oldDistance = DomainManager.Combat.GetCurrentDistance();
+
+            if (attackRange.Outer >= oldDistance)
+            {
+                if (moveState == 2)
+                {
+                    // 太靠前了，要退后
+                    Reward.moveReward += 0.1;
+                }
+                else
+                {
+                    Reward.moveReward -= 0.2;
+                }
+            }
+            else if (attackRange.Inner <= oldDistance)
+            {
+                if (moveState == 1)
+                {
+                    // 太靠后了，要前进
+                    Reward.moveReward += 0.1;
+                }
+                else
+                {
+                    Reward.moveReward -= 0.2;
+                }
+            }
+            else
+            {
+                if (moveState == 0)
+                {
+                    // Reward.moveReward += 0.1;
+                }
+                else
+                {
+                    Reward.moveReward -= 0.2;
+                }
+            }
+        }
+
         private void OnAddInjury(DataContext context, CombatCharacter character, sbyte bodyPart, bool isInner, sbyte value, bool changeToOld)
         {
             if (!character.IsAlly && !changeToOld && value>0)
             {
-                Reward.damageReward += value*5;
+                // Reward.damageReward += value;
             }
         }
 
@@ -577,6 +600,11 @@ namespace ConvenienceBackend.CombatSimulator
         {
             var a = DomainManager.Character.GetRealName(charId);
             return a.surname + a.givenName;
+        }
+
+        public static int GetMoveState(CombatCharacter combatChar)
+        { 
+          return (!combatChar.KeepMoving) ? 0 : (combatChar.MoveForward ? 1 : 2);
         }
 
         private static void RepairChar(DataContext context, int charId)

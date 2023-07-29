@@ -7,7 +7,8 @@ namespace ConvenienceFrontend.CombatStrategy
     {
         public bool isEnable = true;
 
-        public bool UseAICombat = false;
+        // 使用AI战斗
+        public bool UseAI = false;
 
         // 自动移动
         public bool AutoMove = true;
@@ -78,8 +79,8 @@ namespace ConvenienceFrontend.CombatStrategy
             bool result = false;
             switch (name)
             {
-                case "UseAICombat":
-                    result = this.UseAICombat;
+                case "UseAI":
+                    result = this.UseAI;
                     break;
 
                 case "AutoMove":
@@ -115,8 +116,8 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             switch (name)
             {
-                case "UseAICombat":
-                    this.UseAICombat = value;
+                case "UseAI":
+                    this.UseAI = value;
                     break;
                 case "AutoMove":
                     this.AutoMove = value;

@@ -88,14 +88,11 @@ namespace ConvenienceBackend.CombatStrategy
 
         // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
+        [HarmonyPatch(typeof(CombatDomain), "CombatLoop")]
         public static void CombatDomain_OnUpdate_Prefix(CombatDomain __instance, DataContext context)
         {
             // 没有开启战斗策略
             if (!IsEnable()) return;
-
-            // 还没开始，不能执行
-            if (__instance.GetTimeScale() <= 0f || !__instance.CanAcceptCommand() || !_startCombatCalled) return;
 
             // 没有配置
             if (_settings == null) return;
@@ -107,18 +104,19 @@ namespace ConvenienceBackend.CombatStrategy
             if (!_settings.isEnable) return;
 
             // 不是玩家
-            CombatCharacter combatCharacter = __instance.GetCombatCharacter(true, false);
+            CombatCharacter combatCharacter = __instance.GetCombatCharacter(true, true);
             if (!__instance.IsMainCharacter(combatCharacter)) return;
 
 
-            //if (_settings.UseAICombat) 
-            //{
-            //    AICombatManager.HandleCombatUpdate(__instance, context, combatCharacter);
-            //    return;
-            //}
+            // AI模式
+            if (_settings.UseAI)
+            {
+                AICombatManager.HandleCombatUpdate(__instance, context, combatCharacter);
+                return;
+            }
 
-            List<Strategy> execStrategy = new List<Strategy>();
-
+            // 策略模式
+            List<Strategy> execStrategy = new();
             // 自动执行策略
             if (_settings.AutoCastSkill)
             {

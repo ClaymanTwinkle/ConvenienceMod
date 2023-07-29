@@ -10,7 +10,7 @@ namespace ConvenienceBackend.CombatStrategy.Data
     {
         public bool isEnable { get; set; }
 
-        public bool UseAICombat { get; set; }
+        public bool UseAI { get; set; }
 
         public bool AutoMove { get; set; }
 

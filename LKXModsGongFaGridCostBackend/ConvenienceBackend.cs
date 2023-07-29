@@ -187,6 +187,15 @@ namespace ConvenienceBackend
             return Convert.ToInt64(ts.TotalMilliseconds);
         }
 
+        /// <summary>
+        /// 获取mod文件夹
+        /// </summary>
+        /// <returns></returns>
+        public static String GetModDirectory()
+        {
+            return DomainManager.Mod.GetModDirectory(_modIdStr);
+        }
+
         // Token: 0x04000001 RID: 1
         private Harmony harmony;
 

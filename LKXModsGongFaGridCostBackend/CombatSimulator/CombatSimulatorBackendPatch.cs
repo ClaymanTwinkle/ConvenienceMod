@@ -46,15 +46,12 @@ namespace ConvenienceBackend.CombatSimulator
 
         private static bool _isStartLearning = false;
 
-        private const int MAX_COMBAT_LEARNING_COUNT = 1;
+        private const int MAX_COMBAT_LEARNING_COUNT = 100000;
         private static int _currentCombatCount = 0;
 
         private const bool LIMIT_SINGLE_COMBAT_STEP_COUNT = false;
         private const int MAX_SINGLE_COMBAT_STEP_COUNT = 10000;
         private static int _currentSingleCombatStepCount = 0;
-
-        private static string _netFile = "";
-        private static string _analysisFile = "";
 
         private static GameEnvironment _environment = new(MAX_SINGLE_COMBAT_STEP_COUNT);
         private static DeepQLearn _brain;
@@ -67,10 +64,6 @@ namespace ConvenienceBackend.CombatSimulator
         public override void Initialize(Harmony harmony, string modIdStr)
         {
             base.Initialize(harmony, modIdStr);
-            
-            string directoryName = DomainManager.Mod.GetModDirectory(modIdStr);
-            _netFile = Path.Combine(directoryName, "learn_data");
-            _analysisFile = Path.Combine(directoryName, "analysis_data.txt");
         }
 
         [HarmonyPrefix]
@@ -124,7 +117,7 @@ namespace ConvenienceBackend.CombatSimulator
 
             if (_currentSingleCombatStepCount % 10 == 0)
             {
-                SaveAnalysisData();
+                DeepQLearnManager.SaveAnalysisData(_brain);
             }
 
             _currentSingleCombatStepCount++;
@@ -249,7 +242,7 @@ namespace ConvenienceBackend.CombatSimulator
             _isStartLearning = true;
             logger.Debug("开始训练");
 
-            _brain = LoadOrCreateDeepQLearn();
+            _brain = DeepQLearnManager.LoadOrCreateDeepQLearn();
             _brain.learning = true;
 
             RegisterCombatEvents();
@@ -269,103 +262,6 @@ namespace ConvenienceBackend.CombatSimulator
             _brain = null;
             _currentCombatCount = 0;
             _currentSingleCombatStepCount = 0;
-        }
-
-
-        private static DeepQLearn BuildDeepQLearn()
-        {
-            var num_inputs = GameState.MAX_STATE_COUNT; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
-            var num_actions = GameEnvironment.MAX_ACTION_COUNT; // 5 possible angles agent can turn
-            var temporal_window = 4; // amount of temporal memory. 0 = agent lives in-the-moment :)
-            var network_size = num_inputs * temporal_window + num_actions * temporal_window + num_inputs;
-
-            var layer_defs = new List<LayerDefinition>
-            {
-                // the value function network computes a value of taking any of the possible actions
-                // given an input state. Here we specify one explicitly the hard way
-                // but user could also equivalently instead use opt.hidden_layer_sizes = [20,20]
-                // to just insert simple relu hidden layers.
-                new LayerDefinition { type = "input", out_sx = 1, out_sy = 1, out_depth = network_size },
-                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
-                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
-                new LayerDefinition { type = "fc", num_neurons = 96, activation = "relu" },
-                new LayerDefinition { type = "regression", num_neurons = num_actions }
-            };
-
-            // options for the Temporal Difference learner that trains the above net
-            // by backpropping the temporal difference learning rule.
-            //var opt = new Options { method="sgd", learning_rate=0.01, l2_decay=0.001, momentum=0.9, batch_size=10, l1_decay=0.001 };
-            var opt = new Options { method = "adadelta", l2_decay = 0.001, batch_size = 10 };
-
-            var tdtrainer_options = new TrainingOptions
-            {
-                temporal_window = temporal_window,
-                experience_size = 300000,
-                start_learn_threshold = 10000,
-                gamma = 0.7,
-                learning_steps_total = 2000000,
-                learning_steps_burnin = 30000,
-                epsilon_min = 0.05,
-                epsilon_test_time = 0.00,
-                layer_defs = layer_defs,
-                options = opt
-            };
-
-            return new DeepQLearn(GameState.MAX_STATE_COUNT, GameEnvironment.MAX_ACTION_COUNT, tdtrainer_options);
-        }
-
-        private static void SaveLearning()
-        {
-            if (_brain == null) return;
-
-            using (FileStream fstream = new(_netFile, FileMode.Create))
-            {
-                new BinaryFormatter().Serialize(fstream, _brain);
-            }
-        }
-
-        private static DeepQLearn LoadOrCreateDeepQLearn()
-        {
-            if (File.Exists(_netFile))
-            {
-                using (FileStream fstream = new FileStream(_netFile, FileMode.Open))
-                {
-                    return new BinaryFormatter().Deserialize(fstream) as DeepQLearn;
-                }
-            }
-
-            return BuildDeepQLearn();
-        }
-
-        /// <summary>
-        /// 保存分析数据
-        /// </summary>
-        private static void SaveAnalysisData()
-        {
-            if (_brain == null) return;
-
-            var currentAnalysisInfo = _brain.GetLineData();
-
-            if (!System.IO.File.Exists(_analysisFile))
-            {
-                //没有则创建这个文件
-                FileStream fs1 = new(_analysisFile, FileMode.Create, FileAccess.Write);//创建写入文件               
-                StreamWriter sw = new(fs1);
-
-                sw.WriteLine(currentAnalysisInfo);//开始写入值
-                sw.Close();
-                fs1.Close();
-            }
-            else
-            {
-                using (FileStream fileStream = new FileStream(_analysisFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                {
-                    using (StreamWriter writer = new StreamWriter(fileStream))
-                    {
-                        writer.WriteLine(currentAnalysisInfo);
-                    }
-                }
-            }
         }
 
         private static void RegisterCombatEvents()
@@ -391,7 +287,7 @@ namespace ConvenienceBackend.CombatSimulator
 
         private static void OnCombatEnd(DataContext context)
         {
-            SaveLearning();
+            DeepQLearnManager.SaveLearning(_brain);
         }
     }
 }

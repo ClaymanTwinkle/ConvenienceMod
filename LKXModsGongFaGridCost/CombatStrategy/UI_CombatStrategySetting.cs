@@ -105,7 +105,7 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (!ConvenienceFrontend.IsLocalTest()) return;
             Transform transform = UIUtils.CreateSettingPanel(parent, "AICombat", "AI设置").transform;
-            base.AddMono(UIUtils.CreateToggle(transform, "UseAICombat", "AI代打", "注意：优先会使用AI代打，战斗策略将不会生效"), "UseAICombat");
+            base.AddMono(UIUtils.CreateToggle(transform, "UseAI", "AI代打", "注意：优先会使用AI代打，战斗策略将不会生效"), "UseAI");
         }
 
         private void BuildMoveSettings(Transform parent)
