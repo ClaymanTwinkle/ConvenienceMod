@@ -43,6 +43,8 @@ namespace ConvenienceBackend.CombatSimulator
     internal class CombatSimulatorBackendPatch : BaseBackendPatch
     {
         private static readonly Logger logger = LogManager.GetLogger("模拟训练");
+        private static readonly bool EnableAnalysis = false;
+
 
         private static bool _isStartLearning = false;
 
@@ -50,7 +52,7 @@ namespace ConvenienceBackend.CombatSimulator
         private static int _currentCombatCount = 0;
 
         private const bool LIMIT_SINGLE_COMBAT_STEP_COUNT = false;
-        private const int MAX_SINGLE_COMBAT_STEP_COUNT = 10000;
+        private const int MAX_SINGLE_COMBAT_STEP_COUNT = 100000;
         private static int _currentSingleCombatStepCount = 0;
 
         private static GameEnvironment _environment = new(MAX_SINGLE_COMBAT_STEP_COUNT);
@@ -115,7 +117,7 @@ namespace ConvenienceBackend.CombatSimulator
                 logger.Debug("战斗结束，最终结算奖励");
             }
 
-            if (_currentSingleCombatStepCount % 10 == 0)
+            if (EnableAnalysis && _currentSingleCombatStepCount % 100 == 0)
             {
                 DeepQLearnManager.SaveAnalysisData(_brain);
             }

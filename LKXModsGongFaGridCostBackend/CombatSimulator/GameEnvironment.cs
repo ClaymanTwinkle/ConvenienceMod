@@ -556,11 +556,11 @@ namespace ConvenienceBackend.CombatSimulator
                 if (moveState == 2)
                 {
                     // 太靠前了，要退后
-                    Reward.moveReward += 0.1;
+                    Reward.moveReward += 0.2;
                 }
                 else
                 {
-                    Reward.moveReward -= 0.2;
+                    Reward.moveReward -= 0.1;
                 }
             }
             else if (attackRange.Inner <= oldDistance)
@@ -568,11 +568,11 @@ namespace ConvenienceBackend.CombatSimulator
                 if (moveState == 1)
                 {
                     // 太靠后了，要前进
-                    Reward.moveReward += 0.1;
+                    Reward.moveReward += 0.2;
                 }
                 else
                 {
-                    Reward.moveReward -= 0.2;
+                    Reward.moveReward -= 0.1;
                 }
             }
             else
@@ -583,7 +583,7 @@ namespace ConvenienceBackend.CombatSimulator
                 }
                 else
                 {
-                    Reward.moveReward -= 0.2;
+                    Reward.moveReward -= 0.1;
                 }
             }
         }
