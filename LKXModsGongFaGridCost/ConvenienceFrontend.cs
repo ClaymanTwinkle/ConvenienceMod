@@ -42,7 +42,7 @@ namespace ConvenienceFrontend
         private readonly List<BaseFrontPatch> allPatchList = new List<BaseFrontPatch>()
         {
             // 较艺必胜
-            new ComparativeArtFrontPatch(),
+            // new ComparativeArtFrontPatch(),
             // 自动战斗
             new CombatStrategyMod(),
             // 自定义偷窃

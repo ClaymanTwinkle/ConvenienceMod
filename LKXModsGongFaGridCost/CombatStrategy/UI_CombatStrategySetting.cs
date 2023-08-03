@@ -220,7 +220,7 @@ namespace ConvenienceFrontend.CombatStrategy
                                 RefreshStrategyProgrammeOptions();
                             }
                         });
-                    }), tipContent: "不同功法BD有不同的战斗策略方案！"),
+                    })),
                     new UI_PopupMenu.BtnData("方案改名", true, new Action(() =>
                     {
                         ShowInputTextPanel(parent2, "输入方案名称", dropdown.options[dropdown.value].text, delegate (string val)
@@ -232,19 +232,19 @@ namespace ConvenienceFrontend.CombatStrategy
                                 dropdown.RefreshShownValue();
                             }
                         });
-                    }), tipContent: "给方案改个好名字"),
+                    })),
                     new UI_PopupMenu.BtnData("复制方案", true, new Action(() =>
                     {
                         var copyStrategy = ConfigManager.CopyStrategyProgramme();
                         copyStrategy.name += "（复制版）" + ConfigManager.Programmes.Count;
                         // 刷新UI
                         RefreshStrategyProgrammeOptions();
-                    }), tipContent: "复制当前方案"),
+                    })),
                     new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
                     {
                         UIUtils.ShowTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
                         GUIUtility.systemCopyBuffer = ConfigManager.GetCurrentStrategyProgrammeJson();
-                    }), tipContent: "导出当前方案内容到剪切板"),
+                    })),
                     new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
                     {
                         var Programme = ConfigManager.CreateNewStrategyProgrammeFromClipboard();
@@ -257,7 +257,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             UIUtils.ShowTips("提示", "剪切板无方案内容，请复制方案内容后再点击导入！");
                         }
-                    }), tipContent: "从剪切板中读取方案内容并导入"),
+                    })),
 
                     new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", true, new Action(() =>
                     {
@@ -278,7 +278,7 @@ namespace ConvenienceFrontend.CombatStrategy
                                 RefreshCurrentStrategyUI();
                             }
                         }));
-                    }), tipContent: "根据当前配置的功法BD，生成简单的策略"),
+                    })),
                     new UI_PopupMenu.BtnData("<color=red>删除方案</color>", true, new Action(() =>
                     {
                         if (dropdown.options.Count > 1)
@@ -307,7 +307,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             UIUtils.ShowTips("警告", "请至少保留一个方案!");
                         }
-                    }), tipContent: "删除当前选中的方案")
+                    }))
                 };
 
                 ShowMenu(btnList, manageStrategyProgrammeButton.transform.position);
@@ -653,32 +653,32 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                     });
                     ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.ConvertAll(x => x.TemplateId), _onSelected);
-                }), null, null, "自动施展功法", -1, null, null, null),
+                })),
                 new UI_PopupMenu.BtnData("变招", true, new Action(() =>
                 {
                     this.ShowChangeTacticsPanel(skillRefers, strategy);
-                }), tipContent: "自动变招"),
+                })),
                 new UI_PopupMenu.BtnData("切换武器", true, new Action(() =>
                 {
                     this.ShowSwitchWeaponPanel(skillRefers, strategy);
-                }), tipContent: "自动切换武器"),
+                })),
                 new UI_PopupMenu.BtnData("队友协助", true, new Action(() =>
                 {
                     this.ShowTeammateCommandPanel(skillRefers, strategy);
-                }), tipContent: "可自动执行队友指令"),
+                })),
                 new UI_PopupMenu.BtnData("自动移动", true, new Action(() =>
                 {
                     this._moveActionSelectPanel.Show(skillRefers, strategy, new Action(() =>
                     {
                         this.RenderStrategySkillText(strategy, skillRefers);
                     }));
-                }), tipContent: "移动方式改为由策略触发，让移动变得更灵活；注意：该策略若执行了，默认的自动移动将不会执行"),
+                })),
                 new UI_PopupMenu.BtnData("普通攻击", true, new Action(() =>
                 {
                     strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
                     strategy.SetAction(new NormalAttackAction());
                     this.RenderStrategySkillText(strategy, skillRefers);
-                }), tipContent: "触发普通攻击"),
+                })),
                 new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
                 {
                     Condition condition = new Condition();
@@ -689,7 +689,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     content.GetComponent<GridLayoutGroup>().CalculateLayoutInputVertical();
                     LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
-                }, null, null, "策略触发的前提条件，可添加多个条件", -1, null, null, null),
+                }),
                 new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
                 {
                     CombatStrategyMod.Strategies.Remove(strategy);
@@ -699,7 +699,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }
                     Object.Destroy(transform.gameObject);
                     LayoutRebuilder.MarkLayoutForRebuild(_strategySettings);
-                }, null, null, null, -1, null, null, null)
+                })
             };
             skillRefers.CGet<CButton>("Button").ClearAndAddListener(delegate ()
             {
@@ -727,7 +727,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 new UI_PopupMenu.BtnData("设置条件", true, delegate()
                 {
                     this.ShowConditionSetter(transform, condition);
-                }, null, null, null, -1, null, null, null),
+                }),
                 new UI_PopupMenu.BtnData("删除条件", true, delegate()
                 {
                     strategy.conditions.Remove(condition);
@@ -739,7 +739,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     }
                     Object.Destroy(transform.gameObject);
                     LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings);
-                }, null, null, null, -1, null, null, null)
+                })
             };
             component.CGet<CButton>("Button").ClearAndAddListener(delegate ()
             {

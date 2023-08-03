@@ -78,7 +78,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             rollAttributeWindow.characterDataController = QuicklyCreateCharacterFrontend.dataController_Instance;
             rollAttributeWindow.SetRootCanvas(componentInParent);
 
-            QuicklyCreateCharacterFrontend.guideGo = UIFactory.GetCommonButtonGo("人物属性", new UnityAction(rollAttributeWindow.Open), false);
+            QuicklyCreateCharacterFrontend.guideGo = UIFactory.GetCommonButtonGo("Roll属性", new UnityAction(rollAttributeWindow.Open), false);
             QuicklyCreateCharacterFrontend.guideGo.transform.SetParent(ctoggleGroup.transform, false);
             Vector2 sizeDelta = QuicklyCreateCharacterFrontend.guideGo.transform.GetComponent<RectTransform>().sizeDelta;
             Vector2 vector = new Vector2(500f, 500f) + sizeDelta / 2f - new Vector2(0f, sizeDelta.y);
