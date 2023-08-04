@@ -11,6 +11,7 @@ using GameData.Domains.Character;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using Newtonsoft.Json;
+using FrameWork.ModSystem;
 
 namespace ConvenienceFrontend.QuicklyCreateCharacter
 {

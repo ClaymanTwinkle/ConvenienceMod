@@ -271,7 +271,7 @@ namespace ConvenienceFrontend.CombatStrategy
             SingletonObject.getInstance<GlobalSettings>().SetAutoCombat(_autoCombat);
             ConfigManager.GlobalSettings.isEnable = _autoCombat;
             CombatStrategyMod.SendSettings();
-            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.GlobalSettings.isEnable, false);
+            __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.GlobalSettings.isEnable);
 
             UpdateAutoAttackTips();
             UpdateAutoMoveText();
