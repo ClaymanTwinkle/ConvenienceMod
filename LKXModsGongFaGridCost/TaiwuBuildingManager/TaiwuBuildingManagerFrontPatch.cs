@@ -200,9 +200,10 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             if (!ConvenienceFrontend.Config.GetTypedValue<bool>("Toggle_EnableBuildResource")) return;
 
             Dictionary<EBuildingBlockClass, List<BuildingBlockItem>> _buildingMap = (Dictionary<EBuildingBlockClass, List<BuildingBlockItem>>)Traverse.Create(__instance).Field("_buildingMap").GetValue();
+            Dictionary<short, int> _legaciesBuildingDict = (Dictionary<short, int>)Traverse.Create(__instance).Field("_legaciesBuildingDict").GetValue();
             BuildingBlock.Instance.Iterate(delegate (BuildingBlockItem item)
             {
-                if (item.Class == EBuildingBlockClass.BornResource && item.Type != EBuildingBlockType.UselessResource)
+                if (item.Class == EBuildingBlockClass.BornResource && item.Type != EBuildingBlockType.UselessResource && _legaciesBuildingDict.ContainsKey(item.TemplateId))
                 {
                     _buildingMap[EBuildingBlockClass.Resource].Add(item);
                 }
