@@ -49,6 +49,10 @@ namespace ConvenienceFrontend.CombatStrategy
                 {
                     stringBuilder.Append(combatSkillItem.Name).Append(' ');
                 }
+                else 
+                {
+                    stringBuilder.Append("未选择技能").Append(' ');
+                }
             }
             else if (judgeItem == JudgeItem.HasTrick && subType >= 0)
             {

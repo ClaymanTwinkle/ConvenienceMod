@@ -257,14 +257,17 @@ namespace ConvenienceFrontend.CombatStrategy.ui
 
                 if (uiItem.ShowSelectSkillBtn)
                 {
-                    CombatSkillItem combatSkillItem = CombatSkill.Instance[selectButton.GetComponentInChildren<TextMeshProUGUI>().text];
-                    if (combatSkillItem != null)
-                    {
-                        condition.subType = combatSkillItem.TemplateId;
-                    }
-                    else
-                    {
-                        condition.subType = -1;
+                    try {
+                        CombatSkillItem combatSkillItem = CombatSkill.Instance[selectButton.GetComponentInChildren<TextMeshProUGUI>().text];
+                        if (combatSkillItem != null)
+                        {
+                            condition.subType = combatSkillItem.TemplateId;
+                        }
+                        else
+                        {
+                            condition.subType = -1;
+                        }
+                    } catch {
                     }
                 }
                 else if (condition.item == JudgeItem.HasTrick)
