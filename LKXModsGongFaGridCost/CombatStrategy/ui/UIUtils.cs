@@ -222,7 +222,7 @@ namespace ConvenienceFrontend.CombatStrategy
             rectTransform.sizeDelta = parent.GetComponent<RectTransform>().rect.size;
             rectTransform.SetParent(parent, false);
             UIUtils.CreateTitle(rectTransform, title);
-            UIUtils.DrawBorder(rectTransform);
+            //UIUtils.DrawBorder(rectTransform);
             GameObject gameObject2 = new GameObject("Settings");
             RectTransform rectTransform2 = gameObject2.AddComponent<RectTransform>();
             Extentions.SetAnchor(rectTransform2, Vector2.up, Vector2.up);
