@@ -10,6 +10,8 @@ using ConvenienceFrontend.CombatStrategy.config.data;
 using FrameWork.ModSystem;
 using static Spine.Unity.MeshGenerator;
 using UnityEngine;
+using System.Diagnostics.Eventing.Reader;
+using GameData.Utilities;
 
 namespace ConvenienceFrontend.CombatStrategy.config
 {
@@ -125,13 +127,14 @@ namespace ConvenienceFrontend.CombatStrategy.config
             bool strategiesChanged = false;
             if (_settingFile != string.Empty)
             {
-                string text = JsonConvert.SerializeObject(GlobalSettings);
-                if (!text.Equals(_settingsJson))
-                {
-                    _settingsJson = text;
-                    File.WriteAllText(_settingFile, text);
-                    settingsChanged = true;
-                }
+                //string text = JsonConvert.SerializeObject(GlobalSettings);
+                //if (!text.Equals(_settingsJson))
+                //{
+                //    _settingsJson = text;
+                //    File.WriteAllText(_settingFile, text);
+                //    settingsChanged = true;
+                //}
+                settingsChanged = true;
             }
 
             if (_originSelectStrategyIndex != GlobalSettings.SelectStrategyIndex)

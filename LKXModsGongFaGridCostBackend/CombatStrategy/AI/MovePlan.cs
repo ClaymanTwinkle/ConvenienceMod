@@ -90,7 +90,7 @@ namespace ConvenienceBackend.CombatStrategy.AI
                 var moveState = currentDistance > targetDistance ? (byte)1 : (byte)2;
                 instance.SetMoveState(moveState, true);
 
-                return (selfChar.GetAffectingMoveSkillId() >= 0) ? (selfChar.GetSkillMobility() > 0) : selfChar.GetMobilityLevel() > 0 && selfChar.GetMobilityValue() >= (short)CombatDomain.MoveCostMobility[(int)selfChar.GetMobilityLevel()];
+                return (selfChar.GetAffectingMoveSkillId() >= 0) ? (selfChar.GetSkillMobility() > 0) : selfChar.GetMobilityLevel() > 0 && selfChar.GetMobilityValue() >= (short)instance.GetMoveCostMobility(selfChar);
             }
         }
 

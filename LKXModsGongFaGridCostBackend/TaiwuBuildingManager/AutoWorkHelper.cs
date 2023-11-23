@@ -9,7 +9,6 @@ using GameData.Domains.Building;
 using GameData.Domains.Map;
 using GameData.Domains;
 using GameData.Utilities;
-using BehTree;
 using Newtonsoft.Json.Linq;
 
 namespace ConvenienceBackend.TaiwuBuildingManager

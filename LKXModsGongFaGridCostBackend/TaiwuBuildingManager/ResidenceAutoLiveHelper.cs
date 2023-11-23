@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using GameData.Common;
 using GameData.Domains.Map;
 using GameData.Domains;
-using BehTree;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {

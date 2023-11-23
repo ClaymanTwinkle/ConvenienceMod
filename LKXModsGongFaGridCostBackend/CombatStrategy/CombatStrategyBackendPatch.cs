@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
-using BehTree;
 using Config;
 using ConvenienceBackend.CombatStrategy.Data;
 using ConvenienceBackend.CombatStrategy.Opt;
@@ -27,6 +26,8 @@ namespace ConvenienceBackend.CombatStrategy
 {
     internal class CombatStrategyBackendPatch: BaseBackendPatch
     {
+        private const int MOD_MAX_MOBILITY = 1000;
+
         private static bool _startCombatCalled = false;
         private static Logger _logger = LogManager.GetLogger("战斗策略");
 
@@ -204,6 +205,7 @@ namespace ConvenienceBackend.CombatStrategy
                                 Serializer.Deserialize(argDataPool, num, ref json);
                                 try
                                 {
+                                    _logger.Info("Flag_UpdateSettingsJson");
                                     _settings = JsonConvert.DeserializeObject<Settings>(json);
                                     _needRemoveTrick = _settings.RemoveTrick.Contains(true);
                                     if (!_settings.AutoMove || !_settings.isEnable)
@@ -232,6 +234,7 @@ namespace ConvenienceBackend.CombatStrategy
                             {
                                 string json = null;
                                 Serializer.Deserialize(argDataPool, num, ref json);
+                                _logger.Info("Flag_UpdateStrategiesJson");
 
                                 UpdateStrategies(JsonConvert.DeserializeObject<List<Strategy>>(json), __instance);
                                 break;
@@ -250,6 +253,7 @@ namespace ConvenienceBackend.CombatStrategy
             }
             else
             {
+                _logger.Info("CallMethod = " + operation.MethodId);
                 result = true;
             }
             return result;
@@ -349,7 +353,7 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 if (_settings.TargetDistance > (int)currentDistance)
                 {
-                    instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)2 : (byte)0, true);
+                    instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)2 : (byte)0, true, true);
                 }
                 else
                 {
@@ -374,7 +378,7 @@ namespace ConvenienceBackend.CombatStrategy
                     }
                     else
                     {
-                        instance.SetMoveState(1, true);
+                        instance.SetMoveState(1, true, true);
                     }
                 }
             }
@@ -383,7 +387,7 @@ namespace ConvenienceBackend.CombatStrategy
                 bool flag6 = _settings.TargetDistance < (int)currentDistance;
                 if (flag6)
                 {
-                    instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)1 : (byte)0, true);
+                    instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)1 : (byte)0, true, true);
                 }
                 else
                 {
@@ -408,7 +412,7 @@ namespace ConvenienceBackend.CombatStrategy
                     }
                     else
                     {
-                        instance.SetMoveState(2, true);
+                        instance.SetMoveState(2, true, true);
                     }
                 }
             }
@@ -436,7 +440,7 @@ namespace ConvenienceBackend.CombatStrategy
                 }
                 else
                 {
-                    short mobilityValue = selfChar.GetMobilityValue();
+                    short mobilityValue = (short)(selfChar.GetMobilityValue() * MOD_MAX_MOBILITY / selfChar.GetMaxMobility());
                     int maxMobility = selfChar.GetMaxMobility();
                     short mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
                     if (selfChar.GetAffectingMoveSkillId() < 0)
@@ -449,7 +453,7 @@ namespace ConvenienceBackend.CombatStrategy
                         {
                             if ((int)mobilityValue > (isMoveForward ? _settings.MobilityAllowForward : _settings.MobilityAllowBackward))
                             {
-                                instance.SetMoveState(moveState, true);
+                                instance.SetMoveState(moveState, true, true);
                             }
                             else
                             {
@@ -460,7 +464,7 @@ namespace ConvenienceBackend.CombatStrategy
                     else
                     {
                         // 有身法就无需判断脚力
-                        instance.SetMoveState(moveState, true);
+                        instance.SetMoveState(moveState, true, true);
                     }
                 }
             }
@@ -590,7 +594,7 @@ namespace ConvenienceBackend.CombatStrategy
                         {
                             if (strategy.autoMoveAction == null) break;
 
-                            instance.SetMoveState((byte)strategy.autoMoveAction.type, true);
+                            instance.SetMoveState((byte)strategy.autoMoveAction.type, true, true);
                             execedStrategyList.Add(strategy);
                             break;
                         }
@@ -633,7 +637,7 @@ namespace ConvenienceBackend.CombatStrategy
                         meetTheConditions = CheckCondition((int)instance.GetCurrentDistance(), condition);
                         break;
                     case JudgeItem.Mobility:
-                        meetTheConditions = CheckCondition((int)combatCharacter.GetMobilityValue(), condition);
+                        meetTheConditions = CheckCondition((int)(combatCharacter.GetMobilityValue() * MOD_MAX_MOBILITY / combatCharacter.GetMaxMobility()), condition);
                         break;
                     case JudgeItem.WeaponType:
                         meetTheConditions = CheckCondition((int)Config.Weapon.Instance[DomainManager.Item.GetElement_Weapons(instance.GetUsingWeaponKey(combatCharacter).Id).GetTemplateId()].ItemSubType, condition);
