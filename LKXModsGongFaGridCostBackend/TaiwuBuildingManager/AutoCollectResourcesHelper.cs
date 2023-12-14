@@ -60,9 +60,11 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
             var allAreaBlocks = DomainManager.Map.GetAreaBlocks(taiwuVillageLocation.AreaId).ToArray().FindAll(x => x.CurrResources.Get(collectResourceType) > 0 && !DomainManager.Taiwu.TryGetElement_VillagerWorkLocations(x.GetLocation(), out var xx));
             allAreaBlocks.Sort((a, b) => b.CurrResources.Get(collectResourceType) - a.CurrResources.Get(collectResourceType));
+
             foreach (var mapBlockData in allAreaBlocks)
             {
                 var charId = DomainManager.Taiwu.GetAllVillagersAvailableForWork(true).FirstOrDefault(-1);
+                AdaptableLog.Info("总共闲人数量" + DomainManager.Taiwu.GetAllVillagersAvailableForWork(true).Count);
 
                 if (charId > -1)
                 {
@@ -99,7 +101,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             foreach (var location in _collectResourceLocations)
             {
-                DomainManager.Taiwu.StopVillagerWork(context, location.AreaId, location.BlockId, 10);
+                DomainManager.Taiwu.StopVillagerWorkOptional(context, location.AreaId, location.BlockId, 10, true);
             }
 
             AdaptableLog.Info("遣散闲人采资源团" + _collectResourceLocations.Count + "人");

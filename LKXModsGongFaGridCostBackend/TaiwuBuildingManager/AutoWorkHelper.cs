@@ -56,13 +56,14 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             var workers = WorkerSelector.SelectWorkersByLifeSkillAttainment(element_BuildingBlocks.TemplateId, buildingBlockKey, !_ToggleWorkMode[1]);
             if (workers.All(x => x < 0))
             {
+                AdaptableLog.Info("【"+ element_BuildingBlocks.TemplateId + "】没有工人了");
                 return;
             }
             for (sbyte i = 0; i < workers.Length; i++)
             {
                 if (workers[i] > -1)
                 {
-                    AdaptableLog.Info("SetShopManager = " + workers[i]);
+                    AdaptableLog.Info("【" + element_BuildingBlocks.TemplateId + "】SetShopManager = " + workers[i]);
                     DomainManager.Building.SetShopManager(context, buildingBlockKey, i, workers[i]);
                 }
             }

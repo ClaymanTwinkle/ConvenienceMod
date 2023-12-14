@@ -61,12 +61,16 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_BuildingManage), "OnClick")]
-        public static void UI_BuildingManage_OnClick_Pro(CButton btn)
+        public static void UI_BuildingManage_OnClick_Pro(UI_BuildingManage __instance, CButton btn)
         {
+            // var traverse = Traverse.Create(__instance);
+
             // ExpandQuickSelectBtn
             // ConfirmBtn
             // ShopQuickSelectBtn
-            Debug.Log("OnClick: " + btn.name);
+            // Debug.Log(traverse.Field("_isResultFirst").GetValue<bool>());
+            // Debug.Log(traverse.Field("_blockData").GetValue<BuildingBlockData>().TemplateId + "OnClick: " + btn.name);
+
         }
 
         [HarmonyPostfix]
