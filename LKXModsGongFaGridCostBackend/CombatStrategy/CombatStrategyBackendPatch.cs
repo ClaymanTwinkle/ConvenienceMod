@@ -512,12 +512,23 @@ namespace ConvenienceBackend.CombatStrategy
                             bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
                             if (beyondRange && skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
                             {
-                                // 检查催破功法是否在施法范围中
-                                OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, skillId);
-                                if ((int)instance.GetCurrentDistance() < skillAttackRange.Outer || (int)instance.GetCurrentDistance() > skillAttackRange.Inner)
+                                if (string.Equals(skillItem.Name.ToString(), "无极剑式") || string.Equals(skillItem.Name.ToString(), "光相指"))
                                 {
-                                    // 不在施法范围中，跳过
-                                    break;
+                                    if (!skillData.GetCanUse())
+                                    {
+                                        break;// 不可用，直接break
+                                    }
+                                }
+                                else
+                                {
+                                    // 检查催破功法是否在施法范围中
+                                    OuterAndInnerInts skillAttackRange = instance.GetSkillAttackRange(selfChar, skillId);
+
+                                    if ((int)instance.GetCurrentDistance() < skillAttackRange.Outer || (int)instance.GetCurrentDistance() > skillAttackRange.Inner)
+                                    {
+                                        // 不在施法范围中，跳过
+                                        break;
+                                    }
                                 }
                             }
 
