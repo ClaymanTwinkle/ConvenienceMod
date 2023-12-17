@@ -5,3 +5,7 @@
 /.vs
 bin/
 obj/
+/LKXModsGongFaGridCost/.vs
+/LKXModsGongFaGridCost/ConvenienceFrontend.csproj
+*.user
+/LKXModsGongFaGridCostBackend/ConvenienceBackend.csproj
