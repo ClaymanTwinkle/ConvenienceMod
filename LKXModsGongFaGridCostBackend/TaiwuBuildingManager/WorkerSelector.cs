@@ -35,6 +35,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             int num9 = _availableWorker.Count - 1;
             int maxProduceValue = _configData.TemplateId == BuildingBlock.DefKey.BookCollectionRoom ? 100 : _configData.MaxProduceValue;
 
+            var specialBlock = _configData.TemplateId == BuildingBlock.DefKey.MakeupRoom || _configData.TemplateId == BuildingBlock.DefKey.PhoenixPlatform;
             if (_configData.TemplateId == BuildingBlock.DefKey.MakeupRoom || _configData.TemplateId == BuildingBlock.DefKey.PhoenixPlatform)
             {
                 useEfficiency = false;
@@ -44,7 +45,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // AdaptableLog.Info("SelectWorkersByLifeSkillAttainment " + maxProduceValue);
 
-            if (maxProduceValue > 0 || !useEfficiency)
+            if (maxProduceValue > 0 || specialBlock)
             {
                 int produceValue = 0;
                 var _selectingShopManagerIndex = 0;
