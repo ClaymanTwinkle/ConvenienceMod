@@ -512,8 +512,9 @@ namespace ConvenienceBackend.CombatStrategy
                             bool beyondRange = strategy.conditions.Find((Data.Condition condition) => condition.item == JudgeItem.Distance) == null;
                             if (beyondRange && skillData != null && skillItem.EquipType == CombatSkillEquipType.Attack)
                             {
-                                if (string.Equals(skillItem.Name.ToString(), "无极剑式") || string.Equals(skillItem.Name.ToString(), "光相指"))
+                                if (540 == skillId || 410 == skillId)
                                 {
+                                    // 光相指、无极剑式无视攻击范围
                                     if (!skillData.GetCanUse())
                                     {
                                         break;// 不可用，直接break
