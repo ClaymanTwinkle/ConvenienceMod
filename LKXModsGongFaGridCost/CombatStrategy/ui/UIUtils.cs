@@ -20,7 +20,7 @@ namespace ConvenienceFrontend.CombatStrategy
         public static void PrepareMaterial()
         {
             ResLoader.Load<GameObject>("RemakeResources/Prefab/Views/UI_SystemSetting", new Action<GameObject>(PrefabLoaded), null);
-            ResLoader.Load<GameObject>("RemakeResources/Prefab/Views/UI_ModPanel", new Action<GameObject>(PrefabLoaded), null);
+            ResLoader.Load<GameObject>("RemakeResources/Prefab/Views/Mod/UI_ModPanel", new Action<GameObject>(PrefabLoaded), null);
             UIUtils.BuildToggle();
             UIUtils.BuildSliderBar();
             UIUtils.BuildDropDown();
@@ -40,38 +40,42 @@ namespace ConvenienceFrontend.CombatStrategy
 				{
 					UIUtils._ui_ModPanel = obj;
 				}
-			}
+            }
 		}
 
         // Token: 0x06000023 RID: 35 RVA: 0x00003334 File Offset: 0x00001534
         private static void BuildToggle()
         {
-            UIUtils.toggle = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(5).GetChild(2).gameObject);
+            UIUtils.toggle = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(2).gameObject); // Camera_UIRoot/Canvas/LayerPopUp/UI_ModPanel/SettingWidgets/ToggleContainer
             UIUtils.toggle.SetActive(false);
             RectTransform component = UIUtils.toggle.GetComponent<RectTransform>();
             Extentions.SetPivot(component, UIUtils.LeftCenter);
             component.anchoredPosition = new Vector2(0f, -30f);
             component.sizeDelta = new Vector2(400f, 60f);
-            RectTransform component2 = UIUtils.toggle.transform.GetChild(0).GetComponent<RectTransform>();
+            RectTransform component2 = UIUtils.toggle.transform.GetChild(2).GetComponent<RectTransform>(); // label
             Extentions.SetPivot(component2, UIUtils.LeftCenter);
             component2.anchoredPosition = Vector2.zero;
+
+            UIUtils.toggle.transform.GetChild(0).gameObject.SetActive(false); // ButtonLeft
+            UIUtils.toggle.transform.GetChild(1).gameObject.SetActive(false); // ButtonEdit
+            UIUtils.toggle.transform.GetChild(3).gameObject.SetActive(false); // Dot
         }
 
         // Token: 0x06000024 RID: 36 RVA: 0x000033E4 File Offset: 0x000015E4
         private static void BuildSliderBar()
         {
-            UIUtils.sliderBar = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(5).GetChild(3).gameObject);
+            UIUtils.sliderBar = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(3).gameObject);
             UIUtils.sliderBar.SetActive(false);
             UIUtils.sliderBar.GetComponent<RectTransform>().sizeDelta = new Vector2(380f, 60f);
-            Object.DestroyImmediate(UIUtils.sliderBar.transform.GetChild(0).gameObject);
-            RectTransform component = UIUtils.sliderBar.transform.GetChild(0).GetComponent<RectTransform>();
-            Extentions.SetAnchor(component, UIUtils.LeftCenter, UIUtils.LeftCenter);
-            component.anchoredPosition = Vector2.zero;
-            UIUtils.sliderBar.transform.GetChild(1).GetComponent<RectTransform>().anchoredPosition = new Vector2(10f, 0f);
-            UIUtils.sliderBar.transform.GetChild(2).GetComponent<RectTransform>().anchoredPosition = new Vector2(8f, 0f);
-            RectTransform component2 = UIUtils.sliderBar.transform.GetChild(3).GetComponent<RectTransform>();
-            component2.offsetMin = new Vector2(112f, -5f);
-            component2.offsetMax = new Vector2(-13f, 5f);
+            // Object.DestroyImmediate(UIUtils.sliderBar.transform.GetChild(0).gameObject); // Label
+            // RectTransform component = UIUtils.sliderBar.transform.GetChild(0).GetComponent<RectTransform>(); // Label
+            // Extentions.SetAnchor(component, UIUtils.LeftCenter, UIUtils.LeftCenter);
+            // component.anchoredPosition = Vector2.zero;
+            // UIUtils.sliderBar.transform.GetChild(3).GetComponent<RectTransform>().anchoredPosition = new Vector2(10f, 0f); // dot
+            // UIUtils.sliderBar.transform.GetChild(4).GetComponent<RectTransform>().anchoredPosition = new Vector2(8f, 0f); // CurValueBack
+            RectTransform component2 = UIUtils.sliderBar.transform.GetChild(5).GetComponent<RectTransform>();
+            // component2.offsetMin = new Vector2(112f, -5f);
+            // component2.offsetMax = new Vector2(-13f, 5f);
             CSlider component3 = component2.GetComponent<CSlider>();
             RectTransform fillRect = component3.fillRect;
             RectTransform handleRect = component3.handleRect;
@@ -81,12 +85,17 @@ namespace ConvenienceFrontend.CombatStrategy
             tslider.fillRect = fillRect;
             tslider.handleRect = handleRect;
             tslider.ClickAudioKey = clickAudioKey;
+
+            UIUtils.sliderBar.transform.GetChild(0).gameObject.SetActive(false); // ButtonLeft
+            UIUtils.sliderBar.transform.GetChild(1).gameObject.SetActive(false); // ButtonEdit
+            UIUtils.sliderBar.transform.GetChild(2).gameObject.SetActive(false); // Label
+            UIUtils.sliderBar.transform.GetChild(3).gameObject.SetActive(false); // Dot
         }
 
         // Token: 0x06000025 RID: 37 RVA: 0x00003574 File Offset: 0x00001774
         private static void BuildDropDown()
         {
-            UIUtils.dropDown = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(5).GetChild(1).gameObject);
+            UIUtils.dropDown = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(1).gameObject);
             UIUtils.dropDown.SetActive(false);
             UIUtils.dropDown.GetComponent<RectTransform>().sizeDelta = new Vector2(380f, 60f);
             RectTransform component = UIUtils.dropDown.transform.GetChild(0).GetComponent<RectTransform>();
@@ -94,19 +103,19 @@ namespace ConvenienceFrontend.CombatStrategy
             Extentions.SetPivot(component, UIUtils.LeftCenter);
             component.anchoredPosition = Vector2.zero;
             component.sizeDelta = new Vector2(80f, 35f);
-            GameObject gameObject = component.GetChild(1).gameObject;
-            Object.Destroy(gameObject.GetComponent<LayoutElement>());
-            Object.Destroy(gameObject.GetComponent<UIRectSizeController>());
-            Object.Destroy(gameObject.GetComponent<ContentSizeFitter>());
-            Object.Destroy(gameObject.GetComponent<MouseTipDisplayer>());
+            GameObject gameObject = component.GetChild(2).gameObject;
+            // Object.Destroy(gameObject.GetComponent<LayoutElement>());
+            // Object.Destroy(gameObject.GetComponent<UIRectSizeController>());
+            // Object.Destroy(gameObject.GetComponent<ContentSizeFitter>());
+            // Object.Destroy(gameObject.GetComponent<MouseTipDisplayer>());
             gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(60f, 25f);
-            GameObject gameObject2 = UIUtils.dropDown.transform.GetChild(1).gameObject;
-            RectTransform component2 = UIUtils.dropDown.transform.GetChild(1).GetComponent<RectTransform>();
-            component2.anchoredPosition = new Vector2(80f, 0f);
-            component2.sizeDelta = new Vector2(-100f, -12f);
+            GameObject gameObject2 = UIUtils.dropDown.transform.GetChild(4).gameObject;
+            RectTransform component2 = UIUtils.dropDown.transform.GetChild(4).GetComponent<RectTransform>();
+            // component2.anchoredPosition = new Vector2(80f, 0f);
+            // component2.sizeDelta = new Vector2(-100f, -12f);
             Object.DestroyImmediate(gameObject2.GetComponent<CDropdown>());
-            Object.DestroyImmediate(component2.GetChild(4).gameObject);
             Object.DestroyImmediate(component2.GetChild(3).gameObject);
+            Object.DestroyImmediate(component2.GetChild(2).gameObject);
             Refers component3 = UIUtils.dropDown.GetComponent<Refers>();
             CButton cbutton = gameObject2.AddComponent<CButton>();
             component3.AddMono(cbutton, "Button");
@@ -114,6 +123,10 @@ namespace ConvenienceFrontend.CombatStrategy
             componentInChildren.fontSizeMax = 24f;
             componentInChildren.enableAutoSizing = true;
             component3.AddMono(componentInChildren, "DropDownLabel");
+
+            UIUtils.dropDown.transform.GetChild(0).gameObject.SetActive(false); // ButtonLeft
+            UIUtils.dropDown.transform.GetChild(1).gameObject.SetActive(false); // ButtonEdit
+            UIUtils.dropDown.transform.GetChild(3).gameObject.SetActive(false); // Dot
         }
 
         // Token: 0x06000026 RID: 38 RVA: 0x00003758 File Offset: 0x00001958
@@ -122,7 +135,7 @@ namespace ConvenienceFrontend.CombatStrategy
             bool flag = UIUtils.freeLabel == null;
             if (flag)
             {
-                UIUtils.freeLabel = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(5).GetChild(3).GetChild(0).gameObject);
+                UIUtils.freeLabel = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(3).GetChild(2).gameObject); // Camera_UIRoot/Canvas/LayerPopUp/UI_ModPanel/SettingWidgets/SliderContainer/
                 Extentions.SetPivot(UIUtils.freeLabel.GetComponent<RectTransform>(), UIUtils.LeftCenter);
                 RectTransform component = UIUtils.freeLabel.transform.GetChild(0).GetComponent<RectTransform>();
                 Extentions.SetPivot(component, UIUtils.LeftCenter);
@@ -261,7 +274,7 @@ namespace ConvenienceFrontend.CombatStrategy
             bool flag = UIUtils.title == null;
             if (flag)
             {
-                UIUtils.title = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(4).GetChild(2).GetChild(2).gameObject);
+                UIUtils.title = Object.Instantiate<GameObject>(UIUtils._ui_ModPanel.transform.GetChild(3).GetChild(3).GetChild(1).GetChild(1).GetChild(1).gameObject); // Camera_UIRoot/Canvas/LayerPopUp/UI_ModPanel/AnimRoot/CurModPanel/ModInfo/BasicInfo/TagTitle
                 Object.DestroyImmediate(UIUtils.title.GetComponentInChildren<TextLanguage>());
                 RectTransform component = UIUtils.title.GetComponent<RectTransform>();
                 Extentions.SetAnchor(component, Vector2.up, Vector2.up);
@@ -285,13 +298,11 @@ namespace ConvenienceFrontend.CombatStrategy
             return gameObject;
         }
 
-        // Token: 0x0600002E RID: 46 RVA: 0x00003E08 File Offset: 0x00002008
         public static Transform CreateRow(Transform parent)
         {
-            bool flag = UIUtils.rowContainer == null;
-            if (flag)
+            if (UIUtils.rowContainer == null)
             {
-                UIUtils.rowContainer = UIUtils._ui_ModPanel.transform.GetChild(5).GetChild(0).gameObject;
+                UIUtils.rowContainer = UIUtils._ui_ModPanel.transform.GetChild(4).GetChild(0).gameObject; // Camera_UIRoot/Canvas/LayerPopUp/UI_ModPanel/SettingWidgets/RowContainer
             }
             return Object.Instantiate<GameObject>(UIUtils.rowContainer, parent).transform;
         }
@@ -301,8 +312,8 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             UIUtils.GetFreeLabel(parent, preLabel);
             GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.sliderBar, parent);
-            bool flag = endLabel != null;
-            if (flag)
+            // gameObject.transform.GetChild(2).GetComponentInChildren<TextMeshProUGUI>().text = ""; // Label
+            if (endLabel != null)
             {
                 UIUtils.GetFreeLabel(parent, endLabel);
             }
@@ -346,7 +357,22 @@ namespace ConvenienceFrontend.CombatStrategy
             gameObject.name = name;
             TextMeshProUGUI textMeshProUGUI = gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Label");
             textMeshProUGUI.text = label;
-            return gameObject.transform.GetChild(1).GetComponent<CToggle>();
+            return gameObject.transform.GetComponentInChildren<CToggle>();
+        }
+
+        public static CToggle CreateToggle(Transform parent, string name, string label, string labelOn, string labelOff)
+        {
+            GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.toggle, parent);
+            gameObject.SetActive(true);
+            gameObject.name = name;
+            TextMeshProUGUI textMeshProUGUI = gameObject.GetComponent<Refers>().CGet<TextMeshProUGUI>("Label");
+            textMeshProUGUI.text = label;
+            var toggle = gameObject.transform.GetComponentInChildren<CToggle>();
+
+            toggle.LabelList[1].text = labelOn;
+            toggle.LabelList[0].text = labelOff;
+
+            return toggle;
         }
 
         public static CToggle CreateToggle(Transform parent, string name, string label, string description)
@@ -361,31 +387,25 @@ namespace ConvenienceFrontend.CombatStrategy
             component.PresetParam[0] = description;
             component.Refresh();
 
-            return gameObject.transform.GetChild(1).GetComponent<CToggle>();
+            return gameObject.transform.GetComponentInChildren<CToggle>();
         }
 
         // Token: 0x06000031 RID: 49 RVA: 0x00003F4C File Offset: 0x0000214C
         public static CToggle CreateToggle(Transform parent, string name, string labelOn, string labelOff, string preLabel = null, string endLabel = null)
         {
-            GameObject gameObject = new GameObject(name);
-            RectTransform rectTransform = gameObject.AddComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(200f, -30f);
-            rectTransform.sizeDelta = new Vector2(400f, 60f);
-            rectTransform.SetParent(parent);
-            Vector2 vector = Vector2.zero;
-            bool flag = preLabel != null;
-            if (flag)
+            var newParent = CreateRow(parent);
+            // Vector2 vector = Vector2.zero;
+            if (preLabel != null)
             {
-                GameObject gameObject2 = UIUtils.GetFreeLabel(rectTransform, preLabel);
-                vector += new Vector2(gameObject2.GetComponent<RectTransform>().rect.width + 5f, 0f);
+                GameObject gameObject2 = UIUtils.GetFreeLabel(newParent, preLabel);
+                // vector += new Vector2(gameObject2.GetComponent<RectTransform>().rect.width + 5f, 0f);
             }
-            GameObject gameObject3 = UIUtils.CreateSingleToggle(rectTransform, name, labelOn, labelOff, vector);
-            vector += new Vector2(75f, 0f);
-            bool flag2 = endLabel != null;
-            if (flag2)
+            GameObject gameObject3 = UIUtils.CreateSingleToggle(newParent, name, labelOn, labelOff);
+            // vector += new Vector2(75f, 0f);
+            if (endLabel != null)
             {
-                GameObject gameObject4 = UIUtils.GetFreeLabel(rectTransform, endLabel);
-                gameObject4.GetComponent<RectTransform>().anchoredPosition = vector;
+                GameObject gameObject4 = UIUtils.GetFreeLabel(newParent, endLabel);
+                // gameObject4.GetComponent<RectTransform>().anchoredPosition = vector;
             }
             return gameObject3.GetComponent<CToggle>();
         }
@@ -402,6 +422,20 @@ namespace ConvenienceFrontend.CombatStrategy
             component.CGet<TextMeshProUGUI>("LabelOn").text = label;
             component.CGet<CToggle>("Toggle").Key = key;
             return component.CGet<CToggle>("Toggle");
+        }
+
+        public static GameObject CreateSingleToggle(Transform parent, string name, string labelOn, string labelOff)
+        {
+            GameObject gameObject = Object.Instantiate<GameObject>(UIUtils.GetSingleToggle(), parent);
+            gameObject.SetActive(true);
+            gameObject.name = name;
+            UIRectSizeController.FollowerConfig value = gameObject.GetComponentInChildren<UIRectSizeController>().ControlList[0];
+            value.SizeOffset = new Vector2(22f, 0f);
+            gameObject.GetComponentInChildren<UIRectSizeController>().ControlList[0] = value;
+            Refers component = gameObject.GetComponent<Refers>();
+            component.CGet<TextMeshProUGUI>("LabelOff").text = labelOff;
+            component.CGet<TextMeshProUGUI>("LabelOn").text = labelOn;
+            return gameObject;
         }
 
         // Token: 0x06000033 RID: 51 RVA: 0x000040C0 File Offset: 0x000022C0
@@ -733,7 +767,7 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         // Token: 0x0400004B RID: 75
-        private static readonly Vector2 LeftCenter = new Vector2(0f, 0.5f);
+        private static readonly Vector2 LeftCenter = new Vector2(0f, 0f);
 
         // Token: 0x0400004C RID: 76
         private static GameObject _ui_ModPanel;

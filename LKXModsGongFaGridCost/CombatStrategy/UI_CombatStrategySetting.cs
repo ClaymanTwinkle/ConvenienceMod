@@ -141,9 +141,8 @@ namespace ConvenienceFrontend.CombatStrategy
         private void BuildAttackSettings(Transform parent)
         {
             Transform transform = UIUtils.CreateSettingPanel(parent, "AttackSettings", "攻击设置").transform;
-            Transform parent2 = UIUtils.CreateRow(transform);
-            base.AddMono(UIUtils.CreateToggle(parent2, "AutoAttack", "自动攻击"), "AutoAttack");
-            base.AddMono(UIUtils.CreateToggle(parent2, "IgnoreRange", "无视", "只限", null, "攻击范围"), "IgnoreRange");
+            base.AddMono(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "AutoAttack", "自动攻击"), "AutoAttack");
+            base.AddMono(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "IgnoreRange", "自动攻击无视攻击范围"), "IgnoreRange");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "AttackBufferMin", 0, 30, 10, "f1", "在攻击范围下限的", "距离内，不自动攻击"), "AttackBufferMin");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "AttackBufferMax", 0, 30, 10, "f1", "在攻击范围上限的", "距离内，不自动攻击"), "AttackBufferMax");
             base.AddMono(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "ShowAutoAttackTips", "自动攻击提示"), "ShowAutoAttackTips");

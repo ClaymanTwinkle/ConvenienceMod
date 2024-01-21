@@ -133,7 +133,7 @@ namespace ConvenienceFrontend.CustomWeapon
                     }
                 }
 
-                AsynchMethodCall<ItemKey, List<String>>(6, 160, itemKey, newTricks, delegate (int offset, RawDataPool dataPool)
+                AsyncMethodCall<ItemKey, List<String>>(6, 160, itemKey, newTricks, delegate (int offset, RawDataPool dataPool)
                 {
                     this.ShowDialog("修改结果", "修改成功", null);
                 });
