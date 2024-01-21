@@ -13,62 +13,6 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
 {
     internal class UIFactory
     {
-        // Token: 0x0600003F RID: 63 RVA: 0x000059C0 File Offset: 0x00003BC0
-        public static void PrintChild(Transform elementsRootTF, int level)
-        {
-            GameObject gameObject = elementsRootTF.gameObject;
-            Component[] components = gameObject.GetComponents<Component>();
-            Debug.Log(string.Format("----------------------------IsNULL{0}------------------------------------------", gameObject == null));
-            Debug.Log("-----------------------------" + elementsRootTF.name + "------------------------------------------------");
-            for (int i = 0; i < components.Length; i++)
-            {
-                Debug.Log(string.Format("-----------------------------{0}------------------------------------------------", components[i].GetType()));
-            }
-            for (int j = 0; j < gameObject.transform.childCount; j++)
-            {
-                bool flag = j >= 100;
-                if (flag)
-                {
-                    break;
-                }
-                Transform child = gameObject.transform.GetChild(j);
-                Component[] components2 = child.GetComponents<Component>();
-                Debug.Log(string.Format("--------------------No{0}childName: {1}------------------------------------------", j, child.name));
-                for (int k = 0; k < components2.Length; k++)
-                {
-                    bool flag2 = components2[k].GetType().IsEquivalentTo(typeof(MouseTipDisplayer));
-                    Debug.Log(string.Format("--------------------No{0}child  {1}name: {2}------------------------------------------", j, k, components2[k].name));
-                    Debug.Log(string.Format("--------------------No{0}child  {1}type: {2} {3}------------------------------------------", new object[]
-                    {
-                        j,
-                        k,
-                        components2[k].GetType(),
-                        flag2
-                    }));
-                    bool flag3 = level >= 3;
-                    if (flag3)
-                    {
-                        for (int l = 0; l < child.childCount; l++)
-                        {
-                            Transform child2 = child.GetChild(l);
-                            Debug.Log(string.Format("--------------------------------No{0} grandChildName: {1}------------------------------------------", l, child2.name));
-                            for (int m = 0; m < child2.childCount; m++)
-                            {
-                                Transform child3 = child2.GetChild(m);
-                                Debug.Log(string.Format("-------------------------------------------No{0} grandgrandChildName: {1}------------------------------------------", m, child3.name));
-                                Component[] components3 = child3.GetComponents<Component>();
-                                foreach (Component component in components3)
-                                {
-                                    Debug.Log(string.Format("-------------------------------------------No{0} grandgrandChild: ComType {1}------------------------------------------", m, component.GetType()));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Token: 0x06000040 RID: 64 RVA: 0x00005C48 File Offset: 0x00003E48
         public static GameObject GetRollButtonGo(string buttonText, UnityAction onClick)
         {
             //GameObject gameObject = Object.Instantiate<GameObject>(UIFactory.GetButtonPrefab());
@@ -110,7 +54,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                     UIElement.CharacterMenuInfo
                 });
                 GameObject gameObject = uielementPrefabs[0];
-                Transform child = gameObject.transform.GetChild(0).GetChild(5).GetChild(0).GetChild(0);
+                Transform child = gameObject.transform.GetChild(0).GetChild(4).GetChild(0).GetChild(0); // Camera_UIRoot/Canvas/LayerPopUp/UI_CharacterMenuInfo/ElementsRoot/AreaFeature/FeatureTtitle/Feature
                 UIFactory._blankLabelPrefab = child.gameObject;
             }
             GameObject gameObject2 = Object.Instantiate<GameObject>(UIFactory._blankLabelPrefab);
@@ -129,7 +73,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                     UIElement.CharacterMenuInfo
                 });
                 GameObject gameObject = uielementPrefabs[0];
-                Transform child = gameObject.transform.GetChild(0).GetChild(5).GetChild(0);
+                Transform child = gameObject.transform.GetChild(0).GetChild(4).GetChild(0); // Camera_UIRoot/Canvas/LayerPopUp/UI_CharacterMenuInfo/ElementsRoot/AreaFeature/FeatureTtitle
                 UIFactory._subTitlePrefab = child.gameObject;
             }
             GameObject gameObject2 = Object.Instantiate<GameObject>(UIFactory._subTitlePrefab);
@@ -287,7 +231,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             });
 
             GameObject gameObject = uielementPrefabs[0];
-            Transform child = gameObject.transform.GetChild(0).GetChild(5).GetChild(3);
+            Transform child = gameObject.transform.GetChild(0).GetChild(4).GetChild(3);
             return Object.Instantiate<GameObject>(gameObject.GetComponentInChildren<InfinityScroll>().gameObject);
         }
 
@@ -299,7 +243,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
                 UIElement.CharacterMenuInfo
             });
             GameObject gameObject = uielementPrefabs[0];
-            Transform child = gameObject.transform.GetChild(0).GetChild(5).GetChild(2);
+            Transform child = gameObject.transform.GetChild(0).GetChild(4).GetChild(2);
             return Object.Instantiate<GameObject>(child.gameObject);
         }
 
