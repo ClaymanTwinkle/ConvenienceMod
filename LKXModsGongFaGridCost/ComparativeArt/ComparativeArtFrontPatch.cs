@@ -19,7 +19,7 @@ namespace ConvenienceFrontend
         {
             if (!_artAlwaysWin) return;
 
-            // __instance.CGet<CButton>("BtnForceGiveUp").onClick.Invoke();
+            __instance.CGet<CButton>("BtnForceGiveUp").onClick.Invoke();
         }
     }
 }
