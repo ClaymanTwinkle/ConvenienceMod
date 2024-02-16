@@ -25,7 +25,6 @@ namespace ConvenienceFrontend.IgnoreReadFinishBook
     internal class IgnoreReadFinishBookFrontPatch : BaseFrontPatch
     {
         private static bool _enableFilterReadFinishBook = false;
-        private static bool _enableShowNeiliTips = false;
 
         public override void Dispose()
         {
@@ -40,37 +39,8 @@ namespace ConvenienceFrontend.IgnoreReadFinishBook
         public override void OnModSettingUpdate(string modIdStr)
         {
             ModManager.GetSetting(modIdStr, "Toggle_EnableFilterReadFinishBook", ref _enableFilterReadFinishBook);
-            ModManager.GetSetting(modIdStr, "Toggle_EnableShowNeiliTips", ref _enableShowNeiliTips);
             // UpdateCombatSkillBookReadingProgress
 
-        }
-
-
-        /// <summary>
-        /// 内力运转完显示一个“完”字
-        /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="skillData"></param>
-        /// <param name="skillView"></param>
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_SelectSkill), "OnRenderCombatSkill")]
-        public static void UI_SelectSkill_OnRenderCombatSkill_Postfix(UI_SelectSkill __instance, CombatSkillDisplayData skillData, CombatSkillView skillView)
-        {
-            if (!_enableShowNeiliTips) return;
-
-            var name = "FinishNeiliText";
-            TextMeshProUGUI neiliFinishText;
-            if (skillView.Names.Contains(name))
-            {
-                neiliFinishText = skillView.CGet<TextMeshProUGUI>(name);
-            }
-            else
-            {
-                neiliFinishText = GameObjectCreationUtils.UGUICreateTMPText(skillView.transform, new Vector2(0, 0), new Vector2(90, 50), 28, "运转完");
-                neiliFinishText.outlineColor = Color.black;
-                skillView.AddMono(neiliFinishText, name);
-            }
-            neiliFinishText.gameObject.SetActive(skillData != null && Config.CombatSkill.Instance[skillData.TemplateId].EquipType == CombatSkillEquipType.Neigong && skillData.MaxObtainableNeili == skillData.ObtainedNeili && skillData.PracticeLevel > 0);
         }
 
 
