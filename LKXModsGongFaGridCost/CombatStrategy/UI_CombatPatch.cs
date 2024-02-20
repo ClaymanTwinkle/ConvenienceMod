@@ -144,10 +144,10 @@ namespace ConvenienceFrontend.CombatStrategy
             if (!CombatStrategyMod.ReplaceAI) return;
 
             _autoCombat = false;
-            ConfigManager.GlobalSettings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
+            CombatStrategyConfigManager.GlobalSettings.isEnable = SingletonObject.getInstance<GlobalSettings>().AutoCombat;
 
             CombatStrategyMod.SendSettings();
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetEnableStrategiesJson());
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, CombatStrategyConfigManager.GetEnableStrategiesJson());
             if (CombatStrategyMod.ProgrammeSettingsSettings.ShowAutoAttackTips)
             {
                 Debug.Log("CombatStrategyMod.Settings.ShowAutoAttackTips && UI_CombatPatch.autoAttackTips == null");
@@ -262,14 +262,14 @@ namespace ConvenienceFrontend.CombatStrategy
         [HarmonyPatch(typeof(UI_Combat), "OnDisable")]
         public static void UI_Combat_OnDisable_Postfix()
         {
-            ConfigManager.SaveJsons();
+            CombatStrategyConfigManager.SaveJsons();
         }
 
         private static void OnClickAutoFight(UI_Combat __instance)
         {
             _autoCombat = !_autoCombat;
             SingletonObject.getInstance<GlobalSettings>().SetAutoCombat(_autoCombat);
-            ConfigManager.GlobalSettings.isEnable = _autoCombat;
+            CombatStrategyConfigManager.GlobalSettings.isEnable = _autoCombat;
             CombatStrategyMod.SendSettings();
             __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.GlobalSettings.isEnable);
 
@@ -280,7 +280,7 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000047 RID: 71 RVA: 0x00005868 File Offset: 0x00003A68
         private static void OnClickSettings(UI_Combat instance)
         {
-            ConfigManager.SaveJsons();
+            CombatStrategyConfigManager.SaveJsons();
             SkeletonGraphic speedAni = instance.CGet<SkeletonGraphic>("SpeedAni");
             ReflectionExtensions.ModifyField<UI_Combat>(instance, "_selectingUseItem", true);
             bool needResume;

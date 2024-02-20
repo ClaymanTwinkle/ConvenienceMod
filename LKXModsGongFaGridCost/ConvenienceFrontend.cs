@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using ConvenienceFrontend.CombatSimulator;
 using ConvenienceFrontend.CombatStrategy;
+using ConvenienceFrontend.CricketCombatOptimize;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.IgnoreReadFinishBook;
@@ -26,8 +27,8 @@ namespace ConvenienceFrontend
     public class ConvenienceFrontend : TaiwuRemakePlugin
     {
         private const string CONFIG_FILE_NAME = "ModConfig.json";
+
         private const int LOAD_CONFIG_METHOD_ID = 1994;
-        private static string _config_file_path = CONFIG_FILE_NAME;
 
         // Token: 0x04000001 RID: 1
         private Harmony harmony;
@@ -37,7 +38,7 @@ namespace ConvenienceFrontend
 
         public static Dictionary<string, System.Object> Config = new Dictionary<string, object>();
 
-        private static string _modIdStr = "1_";
+        public static string _modIdStr = "1_";
 
         private readonly List<BaseFrontPatch> allPatchList = new List<BaseFrontPatch>()
         {
@@ -61,12 +62,15 @@ namespace ConvenienceFrontend
             new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
             // new BetterArmorFrontPatch(),
+            
         };
 
         private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
         {
             // 模拟对战
-            new CombatSimulatorFrontPatch(),
+            // new CombatSimulatorFrontPatch(),
+            // 蛐蛐战斗优化
+            new CricketCombatOptimizeFrontPatch()
         };
 
         public override void OnModSettingUpdate()
@@ -76,6 +80,10 @@ namespace ConvenienceFrontend
             ModManager.GetSetting(base.ModIdStr, "Toggle_Total", ref ConvenienceFrontend.bool_Toggle_Total);
 
             allPatchList.ForEach((BaseFrontPatch patch) => patch.OnModSettingUpdate(base.ModIdStr));
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseFrontPatch patch) => patch.OnModSettingUpdate(base.ModIdStr));
+            }
         }
 
         // Token: 0x06000002 RID: 2 RVA: 0x00002069 File Offset: 0x00000269
@@ -91,6 +99,12 @@ namespace ConvenienceFrontend
             allPatchList.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
             allPatchList.ForEach((BaseFrontPatch patch) => patch.Initialize(harmony, base.ModIdStr));
 
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));
+                extraPatchList.ForEach((BaseFrontPatch patch) => patch.Initialize(harmony, base.ModIdStr));
+            }
+
             SendLoadSettings();
         }
 
@@ -98,6 +112,10 @@ namespace ConvenienceFrontend
         public override void Dispose()
         {
             allPatchList.ForEach((BaseFrontPatch patch) => patch.Dispose());
+            if (IsLocalTest()) 
+            {
+                extraPatchList.ForEach((BaseFrontPatch patch) => patch.Dispose());
+            }
 
             if (this.harmony != null)
             {
@@ -111,12 +129,16 @@ namespace ConvenienceFrontend
         {
             base.OnEnterNewWorld();
             allPatchList.ForEach((BaseFrontPatch patch) => patch.OnEnterNewWorld());
+            if (IsLocalTest())
+                extraPatchList.ForEach((BaseFrontPatch patch) => patch.OnEnterNewWorld());
         }
 
         // Token: 0x06000004 RID: 4 RVA: 0x000020F0 File Offset: 0x000002F0
         public override void OnLoadedArchiveData()
         {
             allPatchList.ForEach((BaseFrontPatch patch) => patch.OnLoadedArchiveData());
+            if (IsLocalTest())
+                extraPatchList.ForEach((BaseFrontPatch patch) => patch.OnLoadedArchiveData());
         }
 
         [HarmonyPostfix]
@@ -128,15 +150,12 @@ namespace ConvenienceFrontend
 
         private void InitConfig()
         {
-            string directoryName = ModManager.GetModInfo(base.ModIdStr).DirectoryName;
-            _config_file_path = Path.Combine(directoryName, CONFIG_FILE_NAME);
-
             LoadConfig();
         }
 
         public static void SaveConfig(bool send = true)
         {
-            JsonFileUtils.WriteFile(_config_file_path, Config);
+            GlobalConfigManager.SaveConfig(CONFIG_FILE_NAME, Config);
             if (send) 
             {
                 SendLoadSettings();
@@ -145,7 +164,7 @@ namespace ConvenienceFrontend
 
         public static void LoadConfig()
         {
-            Config = JsonFileUtils.ReadFile<Dictionary<string, System.Object>>(_config_file_path);
+            Config = GlobalConfigManager.LoadConfig<Dictionary<string, System.Object>>(CONFIG_FILE_NAME);
             if (Config == null)
             { 
                 Config = new Dictionary<string, System.Object>();

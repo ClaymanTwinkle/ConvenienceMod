@@ -55,6 +55,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             MouseTipMapBlock.print("");
             
             UI_Reading.print("");
+            UI_CricketCombat.print("");
             // GameDataBridge.AddMethodCall(Element.GameDataListenerId, 1, 10);
             //GameDataBridge.AddMethodCall(Element.GameDataListenerId, 1, 9, leftDays);
         }

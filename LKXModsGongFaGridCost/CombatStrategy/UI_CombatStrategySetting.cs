@@ -115,9 +115,9 @@ namespace ConvenienceFrontend.CombatStrategy
             base.AddMono(UIUtils.CreateToggle(UIUtils.CreateRow(transform), "AutoMove", "自动移动"), "AutoMove");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance", 20, 120, 10, "f1", "目标距离", null), "TargetDistance");
             base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "TargetDistance2", 20, 120, 10, "f1", "备用目标距离", null), "TargetDistance2");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowForward", 50, 100, 100, "p0", "当脚力值大于", "时，允许前进"), "MobilityAllowForward");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowBackward", 50, 100, 100, "p0", "当脚力值大于", "时，允许后退"), "MobilityAllowBackward");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityRecoverCap", 50, 100, 100, "p0", "脚力值恢复到", "后，重新开始移动"), "MobilityRecoverCap");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowForward", 0, 100, 100, "p0", "当脚力值大于", "时，允许前进"), "MobilityAllowForward");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityAllowBackward", 0, 100, 100, "p0", "当脚力值大于", "时，允许后退"), "MobilityAllowBackward");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MobilityRecoverCap", 0, 100, 100, "p0", "脚力值恢复到", "后，重新开始移动"), "MobilityRecoverCap");
             string[] options = new string[]
             {
                 "快",
@@ -193,11 +193,11 @@ namespace ConvenienceFrontend.CombatStrategy
             CDropdown dropdown = dropdownGameObject.GetComponent<CDropdown>();
             dropdown.onValueChanged.RemoveAllListeners();
             dropdown.ClearOptions();
-            dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
-            dropdown.value = ConfigManager.GlobalSettings.SelectStrategyIndex;
+            dropdown.AddOptions(CombatStrategyConfigManager.Programmes.ConvertAll(x => x.name));
+            dropdown.value = CombatStrategyConfigManager.GlobalSettings.SelectStrategyIndex;
             dropdown.onValueChanged.AddListener(delegate (int val)
             {
-                ConfigManager.ChangeStrategyProgramme(val);
+                CombatStrategyConfigManager.ChangeStrategyProgramme(val);
                 RefreshCurrentStrategyUI();
             });
             base.AddMono(dropdown, "StrategyProgrammeOptions");
@@ -214,7 +214,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             if (val != null && val != string.Empty)
                             {
-                                var programme = ConfigManager.CreateNewStrategyProgramme(val);
+                                var programme = CombatStrategyConfigManager.CreateNewStrategyProgramme(val);
 
                                 RefreshStrategyProgrammeOptions();
                             }
@@ -226,7 +226,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             if (val != null && val != string.Empty)
                             {
-                                ConfigManager.CurrentStrategyProgramme.name = val;
+                                CombatStrategyConfigManager.CurrentStrategyProgramme.name = val;
                                 dropdown.options[dropdown.value].text = val;
                                 dropdown.RefreshShownValue();
                             }
@@ -234,19 +234,19 @@ namespace ConvenienceFrontend.CombatStrategy
                     })),
                     new UI_PopupMenu.BtnData("复制方案", true, new Action(() =>
                     {
-                        var copyStrategy = ConfigManager.CopyStrategyProgramme();
-                        copyStrategy.name += "（复制版）" + ConfigManager.Programmes.Count;
+                        var copyStrategy = CombatStrategyConfigManager.CopyStrategyProgramme();
+                        copyStrategy.name += "（复制版）" + CombatStrategyConfigManager.Programmes.Count;
                         // 刷新UI
                         RefreshStrategyProgrammeOptions();
                     })),
                     new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
                     {
                         UIUtils.ShowTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
-                        GUIUtility.systemCopyBuffer = ConfigManager.GetCurrentStrategyProgrammeJson();
+                        GUIUtility.systemCopyBuffer = CombatStrategyConfigManager.GetCurrentStrategyProgrammeJson();
                     })),
                     new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
                     {
-                        var Programme = ConfigManager.CreateNewStrategyProgrammeFromClipboard();
+                        var Programme = CombatStrategyConfigManager.CreateNewStrategyProgrammeFromClipboard();
                         if (Programme != null)
                         {
                             RefreshStrategyProgrammeOptions();
@@ -265,11 +265,11 @@ namespace ConvenienceFrontend.CombatStrategy
                             UIUtils.ShowTips("提示", "请进入游戏中使用");
                             return;
                         }
-                        var programme = ConfigManager.CreateNewStrategyProgramme("自动生成策略" + ConfigManager.Programmes.Count);
+                        var programme = CombatStrategyConfigManager.CreateNewStrategyProgramme("自动生成策略" + CombatStrategyConfigManager.Programmes.Count);
 
                         RefreshStrategyProgrammeOptions();
 
-                        GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetEnableStrategiesJson(), new Action<string>(json=>{
+                        GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, CombatStrategyConfigManager.GetEnableStrategiesJson(), new Action<string>(json=>{
                             if (json != null)
                             {
                                 programme.strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
@@ -284,10 +284,10 @@ namespace ConvenienceFrontend.CombatStrategy
                         {
                             void action ()
                             {
-                                ConfigManager.Programmes.RemoveAt(dropdown.value);
+                                CombatStrategyConfigManager.Programmes.RemoveAt(dropdown.value);
 
                                 dropdown.ClearOptions();
-                                dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+                                dropdown.AddOptions(CombatStrategyConfigManager.Programmes.ConvertAll(x => x.name));
                                 dropdown.value = 0;
                                 dropdown.onValueChanged.Invoke(dropdown.value);
                             }
@@ -320,10 +320,10 @@ namespace ConvenienceFrontend.CombatStrategy
                     UIUtils.ShowTips("提示", "请进入游戏中使用");
                     return;
                 }
-                GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, ConfigManager.GetAllStrategiesJson(), new Action<string>(json => {
+                GameDataBridgeUtils.SendData(8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_AutoGenerateStrategy, CombatStrategyConfigManager.GetAllStrategiesJson(), new Action<string>(json => {
                     if (json != null)
                     {
-                        var programme = ConfigManager.CurrentStrategyProgramme;
+                        var programme = CombatStrategyConfigManager.CurrentStrategyProgramme;
                         programme.strategies = JsonConvert.DeserializeObject<List<Strategy>>(json);
                         programme.strategies.ForEach(x => x.enabled = true);
                         RefreshCurrentStrategyUI();
@@ -446,7 +446,7 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             Debug.Log("SaveConfigAndSend");
 
-            ValueTuple<bool, bool> valueTuple = ConfigManager.SaveJsons();
+            ValueTuple<bool, bool> valueTuple = CombatStrategyConfigManager.SaveJsons();
             bool settingsChanged = valueTuple.Item1;
             bool strategiesChanged = valueTuple.Item2;
             if (this._inCombat)
@@ -457,7 +457,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 }
                 if (strategiesChanged)
                 {
-                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, ConfigManager.GetEnableStrategiesJson());
+                    GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateStrategiesJson, CombatStrategyConfigManager.GetEnableStrategiesJson());
                 }
             }
         }
@@ -1149,7 +1149,7 @@ namespace ConvenienceFrontend.CombatStrategy
         private void RefreshAutoFillStrategyButton()
         {
             var autoFillStrategyButton = CGet<CButton>("AutoFillStrategyButton");
-            autoFillStrategyButton.gameObject.SetActive(ConfigManager.CurrentStrategyProgramme.strategies.Count == 0);
+            autoFillStrategyButton.gameObject.SetActive(CombatStrategyConfigManager.CurrentStrategyProgramme.strategies.Count == 0);
         }
 
         /// <summary>
@@ -1160,7 +1160,7 @@ namespace ConvenienceFrontend.CombatStrategy
             var dropdown = CGet<CDropdown>("StrategyProgrammeOptions");
 
             dropdown.ClearOptions();
-            dropdown.AddOptions(ConfigManager.Programmes.ConvertAll(x => x.name));
+            dropdown.AddOptions(CombatStrategyConfigManager.Programmes.ConvertAll(x => x.name));
             dropdown.value = dropdown.options.Count - 1;
             dropdown.onValueChanged.Invoke(dropdown.value);
         }

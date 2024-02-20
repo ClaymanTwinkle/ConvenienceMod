@@ -41,7 +41,7 @@
     <Compile Include="CombatStrategy\config\data\AutoMoveAction.cs" />
     <Compile Include="CombatStrategy\config\data\ChangeTrickAction.cs" />
     <Compile Include="CombatStrategy\config\data\Condition.cs" />
-    <Compile Include="CombatStrategy\config\ConfigManager.cs" />
+    <Compile Include="CombatStrategy\config\CombatStrategyConfigManager.cs" />
     <Compile Include="CombatStrategy\config\data\GlobalSettings.cs" />
     <Compile Include="CombatStrategy\config\data\JudgeItem.cs" />
     <Compile Include="CombatStrategy\config\data\Judgement.cs" />
@@ -49,7 +49,6 @@
     <Compile Include="CombatStrategy\config\data\NormalAttackAction.cs" />
     <Compile Include="CombatStrategy\config\data\StrategyProgramme.cs" />
     <Compile Include="CombatStrategy\GameDataBridgeConst.cs" />
-    <Compile Include="CombatStrategy\Settings.cs" />
     <Compile Include="CombatStrategy\config\data\SettingsConst.cs" />
     <Compile Include="CombatStrategy\config\data\Strategy.cs" />
     <Compile Include="CombatStrategy\config\data\StrategyConst.cs" />
@@ -61,6 +60,7 @@
     <Compile Include="CombatStrategy\ui\UIUtils.cs" />
     <Compile Include="CombatStrategy\UI_CombatPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatStrategySetting.cs" />
+    <Compile Include="CricketCombatOptimize\CricketCombatOptimizeFrontPatch.cs" />
     <Compile Include="CustomSteal\CustomStealFrontPatch.cs" />
     <Compile Include="CustomWeapon\CustomWeaponFrontPatch.cs" />
     <Compile Include="CustomWeapon\UI_ChangeTrick.cs" />
@@ -89,6 +89,7 @@
     <Compile Include="TaiwuBuildingManager\GameDataBridgeConst.cs" />
     <Compile Include="TaiwuBuildingManager\TaiwuBuildingManagerFrontPatch.cs" />
     <Compile Include="TaiwuBuildingManager\UI_TaiwuBuildingManager.cs" />
+    <Compile Include="Utils\GlobalConfigManager.cs" />
     <Compile Include="Utils\GameDataBridgeUtils.cs" />
     <Compile Include="Utils\JsonFileUtils.cs" />
   </ItemGroup>

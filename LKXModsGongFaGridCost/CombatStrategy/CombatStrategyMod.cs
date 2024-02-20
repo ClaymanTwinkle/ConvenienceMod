@@ -24,12 +24,12 @@ namespace ConvenienceFrontend.CombatStrategy
             ModManager.GetSetting(ModIdStr, "ReplaceAI", ref ReplaceAI);
 
             ModInfo modInfo = ModManager.GetModInfo(ModManager.EnabledMods.Find((ModId mod) => mod.ToString() == ModIdStr));
-            ConfigManager.Initialize(modInfo);
+            CombatStrategyConfigManager.Initialize(modInfo);
             CombatStrategyMod._modId = modInfo.ModId;
             harmony.PatchAll(typeof(CombatStrategyMod));
             harmony.PatchAll(typeof(UI_CombatPatch));
             UIUtils.PrepareMaterial();
-            ConfigManager.ReadJsons();
+            CombatStrategyConfigManager.ReadJsons();
         }
 
         // Token: 0x06000006 RID: 6 RVA: 0x0000217E File Offset: 0x0000037E
@@ -80,16 +80,16 @@ namespace ConvenienceFrontend.CombatStrategy
 
         public static void SendSettings()
         {
-            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, ConfigManager.GetBackendSettingsJson());
+            GameDataBridge.AddMethodCall<ushort, string>(-1, 8, GameDataBridgeConst.MethodId, GameDataBridgeConst.Flag.Flag_UpdateSettingsJson, CombatStrategyConfigManager.GetBackendSettingsJson());
         }
 
         // Token: 0x04000005 RID: 5
-        public static BackendSettings ProgrammeSettingsSettings => ConfigManager.ProgrammeSettings;
+        public static BackendSettings ProgrammeSettingsSettings => CombatStrategyConfigManager.ProgrammeSettings;
 
-        public static Settings GlobalSettings => ConfigManager.GlobalSettings;
+        public static config.data.GlobalSettings GlobalSettings => CombatStrategyConfigManager.GlobalSettings;
 
         // Token: 0x04000006 RID: 6
-        public static List<Strategy> Strategies => ConfigManager.Strategies;
+        public static List<Strategy> Strategies => CombatStrategyConfigManager.Strategies;
 
         public static bool ReplaceAI;
 

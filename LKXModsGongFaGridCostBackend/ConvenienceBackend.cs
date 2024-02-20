@@ -12,6 +12,7 @@ using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.ModifyCombatSkill;
 using ConvenienceBackend.NotNTR;
+using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
 using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
@@ -62,6 +63,8 @@ namespace ConvenienceBackend
             new QuicklyCreateCharacterBackend(),
             // 平衡装备
             // new BetterArmorBackendPatch(),
+            // 志向优化
+            new ProfessionOptimizeBackend(),
         };
 
         private static string _modIdStr = "1_";

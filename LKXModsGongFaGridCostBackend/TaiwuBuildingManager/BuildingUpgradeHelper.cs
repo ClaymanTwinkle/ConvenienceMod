@@ -28,8 +28,8 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             Location taiwuVillageLocation = DomainManager.Taiwu.GetTaiwuVillageLocation();
             var buildingAreaData = DomainManager.Building.GetBuildingAreaData(taiwuVillageLocation);
 
-            // 优先building
-            BuildingFinder.FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.Building).ForEach(x => {
+
+            Action<BuildingBlockKey> action = x => {
                 BuildingBlockData buildingBlockData = DomainManager.Building.GetElement_BuildingBlocks(x);
                 var wokers = WorkerSelector.SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
                 if (wokers.Any(x => x > -1))
@@ -40,21 +40,13 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                         DomainManager.Building.Upgrade(context, x, wokers);
                     }
                 }
-            });
+            };
+
+            // 优先building
+            BuildingFinder.FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.Building).ForEach(action);
 
             // 优先main building
-            BuildingFinder.FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.MainBuilding).ForEach(x => {
-                BuildingBlockData buildingBlockData = DomainManager.Building.GetElement_BuildingBlocks(x);
-                var wokers = WorkerSelector.SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
-                if (wokers.Any(x => x > -1))
-                {
-                    BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingBlockData.TemplateId];
-                    if (DomainManager.Building.CanUpgrade(x) && DomainManager.Building.UpgradeIsHaveEnoughResource(buildingBlockData) && buildingBlockData.Level < buildingBlockItem.MaxLevel)
-                    {
-                        DomainManager.Building.Upgrade(context, x, wokers);
-                    }
-                }
-            });
+            BuildingFinder.FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.MainBuilding).ForEach(action);
         }
     }
 }
