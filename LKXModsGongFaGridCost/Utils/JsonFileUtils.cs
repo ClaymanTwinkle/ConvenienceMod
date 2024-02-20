@@ -11,7 +11,6 @@ namespace ConvenienceFrontend.Utils
 {
     internal class JsonFileUtils
     {
-
         public static T ReadFile<T>(string path)
         {
             if (!File.Exists(path))
