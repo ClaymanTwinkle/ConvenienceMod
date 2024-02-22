@@ -9,12 +9,16 @@ using GameData.Domains;
 using GameData.Utilities;
 using Newtonsoft.Json.Linq;
 using GameData.Domains.TaiwuEvent;
+using GameData.Domains.Taiwu;
+using NLog;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {
     internal class AutoCollectResourcesHelper
     {
         private static List<Location> _collectResourceLocations = new List<Location>();
+
+        private static Logger _logger = LogManager.GetLogger("太吾管家");
 
         // 过月自动采资源
         private static bool _enableCollectResource = false;
@@ -61,7 +65,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             var allAreaBlocks = DomainManager.Map.GetAreaBlocks(taiwuVillageLocation.AreaId).ToArray().FindAll(x => x.CurrResources.Get(collectResourceType) > 0 && !DomainManager.Taiwu.TryGetElement_VillagerWorkLocations(x.GetLocation(), out var xx));
             allAreaBlocks.Sort((a, b) => b.CurrResources.Get(collectResourceType) - a.CurrResources.Get(collectResourceType));
 
-            AdaptableLog.Info("总共闲人数量" + DomainManager.Taiwu.GetAllVillagersAvailableForWork(true).Count);
+            _logger.Info("总共闲人数量" + DomainManager.Taiwu.GetAllVillagersAvailableForWork(true).Count);
 
             foreach (var mapBlockData in allAreaBlocks)
             {
@@ -93,7 +97,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                     break;
                 }
             }
-            AdaptableLog.Info("派遣闲人采资源团" + _collectResourceLocations.Count + "人，去采集" + resourceNames[collectResourceType] + "，预计能采集到" + DomainManager.Taiwu.CalcResourceChangeByVillageWork(context)[collectResourceType]);
+            _logger.Info("派遣闲人采资源团" + _collectResourceLocations.Count + "人，去采集" + resourceNames[collectResourceType] + "，预计能采集到" + DomainManager.Taiwu.CalcResourceChangeByVillageWork(context)[collectResourceType]);
         }
 
         public static void DemobilizePeopleToCollectResources(DataContext context)
@@ -102,10 +106,10 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             foreach (var location in _collectResourceLocations)
             {
-                DomainManager.Taiwu.StopVillagerWorkOptional(context, location.AreaId, location.BlockId, 10, true);
+                DomainManager.Taiwu.StopVillagerWorkOptional(context, location.AreaId, location.BlockId, VillagerWorkType.CollectResource, true);
             }
 
-            AdaptableLog.Info("遣散闲人采资源团" + _collectResourceLocations.Count + "人");
+            _logger.Info("遣散闲人采资源团" + _collectResourceLocations.Count + "人");
             _collectResourceLocations.Clear();
         }
     }

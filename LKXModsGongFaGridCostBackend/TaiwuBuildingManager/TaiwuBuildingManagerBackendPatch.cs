@@ -22,12 +22,15 @@ using GameData.Utilities;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NLog;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
 {
     internal class TaiwuBuildingManagerBackendPatch : BaseBackendPatch
     {
+        private static Logger _logger = LogManager.GetLogger("太吾管家");
+
         private static bool _enableMod = false;
 
         // 过月自动拆资源
@@ -351,7 +354,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 if (hadBeard)
                 {
                     DomainManager.Taiwu.GetTaiwu().SetAvatar(newAvatar, context);
-                    AdaptableLog.Info("刮胡子啦");
+                    _logger.Info("刮胡子啦");
                 }
             }
         }
