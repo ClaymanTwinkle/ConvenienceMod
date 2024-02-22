@@ -9,7 +9,6 @@ using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.ManualArchive;
-using ConvenienceFrontend.ModifyCombatSkill;
 using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.Utils;
@@ -52,8 +51,6 @@ namespace ConvenienceFrontend
             new CustomWeaponFrontPatch(),
             // 手动存档
             // new ManualArchiveFrontendPatch(),
-            // 修改功法
-            new ModifyCombatSkillFrontPatch(),
             // roll角色属性
             new QuicklyCreateCharacterFrontend(),
             // 太吾村管家

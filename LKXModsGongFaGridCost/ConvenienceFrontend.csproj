@@ -68,10 +68,6 @@
     <Compile Include="IgnoreReadFinishBook\IgnoreReadFinishBookFrontPatch.cs" />
     <Compile Include="ManualArchive\ManualArchiveFrontendPatch.cs" />
     <Compile Include="ManualArchive\ModMono.cs" />
-    <Compile Include="ModifyCombatSkill\Data\CombatSkillExtraUtils.cs" />
-    <Compile Include="ModifyCombatSkill\Data\CombatSkillItemWrapper.cs" />
-    <Compile Include="ModifyCombatSkill\ModifyCombatSkillFrontPatch.cs" />
-    <Compile Include="ModifyCombatSkill\UI_FusionCombatSkill.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConvenienceFrontend.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataController.cs" />

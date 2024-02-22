@@ -10,7 +10,6 @@ using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
-using ConvenienceBackend.ModifyCombatSkill;
 using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
@@ -55,8 +54,6 @@ namespace ConvenienceBackend
             new CustomWeaponBackendPatch(),
             // 手动存档
             // new ManualArchiveBackendPatch(),
-            // 修改功法
-            new ModifyCombatSkillBackendPatch(),
             // 太吾村管家
             new TaiwuBuildingManagerBackendPatch(),
             // 开局Roll属性
