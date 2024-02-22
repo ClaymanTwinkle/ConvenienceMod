@@ -86,7 +86,6 @@ namespace ConvenienceBackend.CombatStrategy
             }
         }
 
-
         // Token: 0x06000018 RID: 24 RVA: 0x00002858 File Offset: 0x00000A58
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "OnUpdate")]
@@ -253,7 +252,7 @@ namespace ConvenienceBackend.CombatStrategy
             }
             else
             {
-                _logger.Info("CallMethod = " + operation.MethodId);
+                // _logger.Info("CallMethod MethodId=" + operation.MethodId);
                 result = true;
             }
             return result;
@@ -348,8 +347,7 @@ namespace ConvenienceBackend.CombatStrategy
             ValueTuple<byte, byte> distanceRange = instance.GetDistanceRange();
             byte item = distanceRange.Item1;
             byte item2 = distanceRange.Item2;
-            bool flag = selfChar.MoveData.MaxJumpForwardDist > 0;
-            if (flag)
+            if (selfChar.MoveData.MaxJumpForwardDist > 0)
             {
                 if (_settings.TargetDistance > (int)currentDistance)
                 {
@@ -359,19 +357,17 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     int num = (int)(selfChar.MoveData.CanPartlyJump ? (selfChar.GetJumpPreparedDistance() + 10) : selfChar.MoveData.MaxJumpForwardDist);
                     int num2 = Math.Max((int)currentDistance - num, (int)item);
-                    int num3 = _settings.MinJumpPosition;
-                    bool flag3 = !_settings.JumpPassTargetDistance && num3 < _settings.TargetDistance;
-                    if (flag3)
+                    int minJumpPosition = _settings.MinJumpPosition;
+                    if (!_settings.JumpPassTargetDistance && minJumpPosition < _settings.TargetDistance)
                     {
-                        num3 = _settings.TargetDistance;
+                        minJumpPosition = _settings.TargetDistance;
                     }
-                    bool flag4 = !_settings.JumpOutOfAttackRange && num3 < (int)selfChar.GetAttackRange().Outer && currentDistance > selfChar.GetAttackRange().Outer;
-                    if (flag4)
+                    if (!_settings.JumpOutOfAttackRange && minJumpPosition < (int)selfChar.GetAttackRange().Outer && currentDistance > selfChar.GetAttackRange().Outer)
                     {
-                        num3 = (int)selfChar.GetAttackRange().Outer;
+                        minJumpPosition = (int)selfChar.GetAttackRange().Outer;
                     }
                     int num4 = (int)(currentDistance - selfChar.GetJumpPreparedDistance());
-                    bool flag5 = (num3 == (int)item && num4 <= num3) || num2 < num3 || (int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward;
+                    bool flag5 = (minJumpPosition == (int)item && num4 <= minJumpPosition) || num2 < minJumpPosition || (int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward;
                     if (flag5)
                     {
                         instance.SetMoveState(0, true);
@@ -384,8 +380,7 @@ namespace ConvenienceBackend.CombatStrategy
             }
             else
             {
-                bool flag6 = _settings.TargetDistance < (int)currentDistance;
-                if (flag6)
+                if (_settings.TargetDistance < (int)currentDistance)
                 {
                     instance.SetMoveState(_settings.AllowOppositeMoveInJumpingSkill ? (byte)1 : (byte)0, true, true);
                 }
@@ -393,19 +388,17 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     int num5 = (int)(selfChar.MoveData.CanPartlyJump ? (selfChar.GetJumpPreparedDistance() + 10) : selfChar.MoveData.MaxJumpBackwardDist);
                     int num6 = Math.Min((int)currentDistance + num5, (int)item2);
-                    int num7 = _settings.MaxJumpPosition;
-                    bool flag7 = _settings.JumpPassTargetDistance && num7 > _settings.TargetDistance;
-                    if (flag7)
+                    int maxJumpPosition = _settings.MaxJumpPosition;
+                    if (_settings.JumpPassTargetDistance && _settings.MaxJumpPosition > _settings.TargetDistance)
                     {
-                        num7 = _settings.TargetDistance;
+                        maxJumpPosition = _settings.TargetDistance;
                     }
-                    bool flag8 = !_settings.JumpOutOfAttackRange && num7 > (int)selfChar.GetAttackRange().Inner && currentDistance < selfChar.GetAttackRange().Inner;
-                    if (flag8)
+                    if (!_settings.JumpOutOfAttackRange && maxJumpPosition > (int)selfChar.GetAttackRange().Inner && currentDistance < selfChar.GetAttackRange().Inner)
                     {
-                        num7 = (int)selfChar.GetAttackRange().Inner;
+                        maxJumpPosition = (int)selfChar.GetAttackRange().Inner;
                     }
                     int num8 = (int)(currentDistance + selfChar.GetJumpPreparedDistance());
-                    bool flag9 = (num7 == (int)item2 && num8 >= num7) || num6 > num7 || (int)currentDistance > _settings.TargetDistance - _settings.DistanceAllowJumpBackward;
+                    bool flag9 = (maxJumpPosition == (int)item2 && num8 >= maxJumpPosition) || num6 > maxJumpPosition || (int)currentDistance > _settings.TargetDistance - _settings.DistanceAllowJumpBackward;
                     if (flag9)
                     {
                         instance.SetMoveState(0, true);
@@ -540,6 +533,7 @@ namespace ConvenienceBackend.CombatStrategy
                     case (short)StrategyType.ChangeTrick:
                         {
                             if (!selfChar.GetCanChangeTrick()) break;
+                            if (selfChar.StateMachine.GetCurrentState().StateType == CombatCharacterStateType.Attack) break;
                             if (strategy.changeTrickAction == null) break;
                             if (strategy.changeTrickAction.trick == null) break;
                             var trickId = Config.TrickType.Instance[strategy.changeTrickAction.trick]?.TemplateId;
@@ -550,7 +544,7 @@ namespace ConvenienceBackend.CombatStrategy
                             if (strategy.changeTrickAction.body == null) break;
                             var bodyId = Config.BodyPart.Instance[strategy.changeTrickAction.body]?.TemplateId;
                             if (bodyId == null) break;
-
+                            _logger.Info("变招[" + strategy.changeTrickAction.trick + "]" + "击打["+ strategy.changeTrickAction.body + "]");
                             instance.SelectChangeTrick(context, (sbyte)trickId, (sbyte)bodyId, true);
                             execedStrategyList.Add(strategy);
                             break;
