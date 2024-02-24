@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
@@ -384,12 +385,18 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         {
             _startCalcVillagerWorkOnMap = false;
 
+            var taiwu = __instance.GetTaiwu();
+
             for (sbyte i = 0; i < 6; i += 1)
             {
-                var diff = __instance.GetTaiwu().GetResource(i) - _tempResource[i];
+                var origValue = _tempResource[i];
+                var newValue = taiwu.GetResource(i);
+                var diff = newValue - origValue;
                 if (diff > 0)
                 {
                     _logger.Info("采集到" + _resourceNames[i] + diff);
+
+                    DomainManager.World.GetInstantNotificationCollection().AddResourceIncreased(taiwu.GetId(), i, diff);
                 }
             }
         }
