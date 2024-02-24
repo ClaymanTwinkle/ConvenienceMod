@@ -345,8 +345,8 @@ namespace ConvenienceBackend.CombatStrategy
         {
             short currentDistance = instance.GetCurrentDistance();
             ValueTuple<byte, byte> distanceRange = instance.GetDistanceRange();
-            byte item = distanceRange.Item1;
-            byte item2 = distanceRange.Item2;
+            byte min = distanceRange.Item1;
+            byte max = distanceRange.Item2;
             if (selfChar.MoveData.MaxJumpForwardDist > 0)
             {
                 if (_settings.TargetDistance > (int)currentDistance)
@@ -356,7 +356,7 @@ namespace ConvenienceBackend.CombatStrategy
                 else
                 {
                     int num = (int)(selfChar.MoveData.CanPartlyJump ? (selfChar.GetJumpPreparedDistance() + 10) : selfChar.MoveData.MaxJumpForwardDist);
-                    int num2 = Math.Max((int)currentDistance - num, (int)item);
+                    int num2 = Math.Max((int)currentDistance - num, (int)min);
                     int minJumpPosition = _settings.MinJumpPosition;
                     if (!_settings.JumpPassTargetDistance && minJumpPosition < _settings.TargetDistance)
                     {
@@ -367,8 +367,10 @@ namespace ConvenienceBackend.CombatStrategy
                         minJumpPosition = (int)selfChar.GetAttackRange().Outer;
                     }
                     int num4 = (int)(currentDistance - selfChar.GetJumpPreparedDistance());
-                    bool flag5 = (minJumpPosition == (int)item && num4 <= minJumpPosition) || num2 < minJumpPosition || (int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward;
-                    if (flag5)
+                    if ((minJumpPosition == (int)min && num4 <= minJumpPosition) || 
+                        num2 < minJumpPosition || 
+                        (int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward
+                        )
                     {
                         instance.SetMoveState(0, true);
                     }
@@ -386,20 +388,25 @@ namespace ConvenienceBackend.CombatStrategy
                 }
                 else
                 {
-                    int num5 = (int)(selfChar.MoveData.CanPartlyJump ? (selfChar.GetJumpPreparedDistance() + 10) : selfChar.MoveData.MaxJumpBackwardDist);
-                    int num6 = Math.Min((int)currentDistance + num5, (int)item2);
-                    int maxJumpPosition = _settings.MaxJumpPosition;
-                    if (_settings.JumpPassTargetDistance && _settings.MaxJumpPosition > _settings.TargetDistance)
+                    int dist = (int)(selfChar.MoveData.CanPartlyJump ? (selfChar.GetJumpPreparedDistance() + 10) : selfChar.MoveData.MaxJumpBackwardDist);
+                    int expectJumpPosition = Math.Min((int)currentDistance + dist, (int)max); // 预期能跳到的最大位置
+                    int maxJumpPosition = _settings.MaxJumpPosition; // 预期最大能跳到的位置
+                    if (!_settings.JumpPassTargetDistance && _settings.MaxJumpPosition > _settings.TargetDistance)
                     {
+                        // 允许跳跃越过目标位置，但也只是到达目标位置
                         maxJumpPosition = _settings.TargetDistance;
                     }
                     if (!_settings.JumpOutOfAttackRange && maxJumpPosition > (int)selfChar.GetAttackRange().Inner && currentDistance < selfChar.GetAttackRange().Inner)
                     {
+                        // 不允许跳过攻击距离范围
                         maxJumpPosition = (int)selfChar.GetAttackRange().Inner;
                     }
-                    int num8 = (int)(currentDistance + selfChar.GetJumpPreparedDistance());
-                    bool flag9 = (maxJumpPosition == (int)item2 && num8 >= maxJumpPosition) || num6 > maxJumpPosition || (int)currentDistance > _settings.TargetDistance - _settings.DistanceAllowJumpBackward;
-                    if (flag9)
+                    int preparedDistance = (int)(currentDistance + selfChar.GetJumpPreparedDistance()); // 以当前蓄力准备要跳到的位置
+                    if (
+                        (maxJumpPosition == (int)max && preparedDistance >= maxJumpPosition) ||
+                        expectJumpPosition > maxJumpPosition ||  // 预期跳到的位置超过最大距离，则不跳
+                        (int)currentDistance > _settings.TargetDistance - _settings.DistanceAllowJumpBackward 
+                        )
                     {
                         instance.SetMoveState(0, true);
                     }
