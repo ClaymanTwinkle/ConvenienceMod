@@ -15,6 +15,7 @@ using GameData.Domains.Combat;
 using GameData.Domains.Map;
 using GameData.Domains.Taiwu;
 using GameData.Domains.TaiwuEvent;
+using GameData.Domains.TaiwuEvent.EventLog;
 using GameData.Domains.World;
 using GameData.GameDataBridge;
 using GameData.Serializer;
@@ -23,6 +24,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
+using NLog.Fluent;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace ConvenienceBackend.TaiwuBuildingManager
@@ -355,6 +357,39 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 {
                     DomainManager.Taiwu.GetTaiwu().SetAvatar(newAvatar, context);
                     _logger.Info("刮胡子啦");
+                }
+            }
+        }
+
+        private static bool _startCalcVillagerWorkOnMap = false;
+        private static int[] _tempResource = new int[6];
+        private static string[] _resourceNames = new string[6] { "食材", "木材", "金铁", "玉石", "织物", "药材" };
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "CalcVillagerWorkOnMap")]
+        public static void TaiwuDomain_CalcVillagerWorkOnMap_Prefix(TaiwuDomain __instance)
+        {
+            for (sbyte i = 0; i < _tempResource.Length; i += 1)
+            {
+                _tempResource[i] = __instance.GetTaiwu().GetResource(i);
+            }
+
+            _startCalcVillagerWorkOnMap = true;
+        }
+
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TaiwuDomain), "CalcVillagerWorkOnMap")]
+        public static void TaiwuDomain_CalcVillagerWorkOnMap_Postfix(TaiwuDomain __instance)
+        {
+            _startCalcVillagerWorkOnMap = false;
+
+            for (sbyte i = 0; i < 6; i += 1)
+            {
+                var diff = __instance.GetTaiwu().GetResource(i) - _tempResource[i];
+                if (diff > 0)
+                {
+                    _logger.Info("采集到" + _resourceNames[i] + diff);
                 }
             }
         }
