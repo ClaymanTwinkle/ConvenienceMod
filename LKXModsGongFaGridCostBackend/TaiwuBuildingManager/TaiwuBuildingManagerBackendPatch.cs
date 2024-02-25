@@ -362,7 +362,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             }
         }
 
-        private static bool _startCalcVillagerWorkOnMap = false;
         private static int[] _tempResource = new int[6];
         private static string[] _resourceNames = new string[6] { "食材", "木材", "金铁", "玉石", "织物", "药材" };
 
@@ -374,8 +373,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
             {
                 _tempResource[i] = __instance.GetTaiwu().GetResource(i);
             }
-
-            _startCalcVillagerWorkOnMap = true;
         }
 
 
@@ -383,8 +380,6 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         [HarmonyPatch(typeof(TaiwuDomain), "CalcVillagerWorkOnMap")]
         public static void TaiwuDomain_CalcVillagerWorkOnMap_Postfix(TaiwuDomain __instance)
         {
-            _startCalcVillagerWorkOnMap = false;
-
             var taiwu = __instance.GetTaiwu();
 
             for (sbyte i = 0; i < 6; i += 1)
