@@ -47,13 +47,13 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             UI_BuildingArea.print("");
             UI_MapBlockCharList.print("");
             UI_Worldmap.print("");
-            
+
             UI_BuildingManage.print("");
             UI_Reading.print("");
             UI_BuildingBlockList.print("");
             // Events.RaiseAdvanceMonthBegin
             MouseTipMapBlock.print("");
-            
+
             UI_Reading.print("");
             UI_CricketCombat.print("");
             // GameDataBridge.AddMethodCall(Element.GameDataListenerId, 1, 10);
@@ -88,7 +88,8 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             var parent = refers.gameObject.transform;
 
             _openTaiwuBuildingManagerButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(-200, 210), new Vector2(120, 50), 16, "种田管家");
-            _openTaiwuBuildingManagerButton.ClearAndAddListener(delegate () {
+            _openTaiwuBuildingManagerButton.ClearAndAddListener(delegate ()
+            {
                 var element = UI_TaiwuBuildingManager.GetUI();
                 ArgumentBox box = EasyPool.Get<ArgumentBox>();
                 element.SetOnInitArgs(box);
@@ -205,15 +206,27 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             if (!ConvenienceFrontend.Config.GetTypedValue<bool>("Toggle_EnableBuildResource")) return;
 
             Dictionary<EBuildingBlockClass, List<BuildingBlockItem>> _buildingMap = (Dictionary<EBuildingBlockClass, List<BuildingBlockItem>>)Traverse.Create(__instance).Field("_buildingMap").GetValue();
-            Dictionary<short, int> _legaciesBuildingDict = (Dictionary<short, int>)Traverse.Create(__instance).Field("_legaciesBuildingDict").GetValue();
             BuildingBlock.Instance.Iterate(delegate (BuildingBlockItem item)
             {
-                if (item.Class == EBuildingBlockClass.BornResource && item.Type != EBuildingBlockType.UselessResource && _legaciesBuildingDict.ContainsKey(item.TemplateId))
+                if (item.Class == EBuildingBlockClass.BornResource && item.Type != EBuildingBlockType.UselessResource)
                 {
                     _buildingMap[EBuildingBlockClass.Resource].Add(item);
+                    Debug.Log("添加自然资源 " + item.Name);
                 }
                 return true;
             });
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(LocalStringManager), "Get", argumentTypes: new Type[] { typeof(ushort) })]
+        public static void LocalStringManager_Get_Patch(ref string __result)
+        {
+            if (!ConvenienceFrontend.Config.GetTypedValue<bool>("Toggle_EnableBuildResource")) return;
+
+            if (__result.Contains("not an available language id"))
+            {
+                __result = "";
+            }
         }
     }
 }
