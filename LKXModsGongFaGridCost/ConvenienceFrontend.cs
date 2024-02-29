@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using ConvenienceFrontend.AutoBreak;
 using ConvenienceFrontend.CombatSimulator;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CricketCombatOptimize;
@@ -59,7 +60,6 @@ namespace ConvenienceFrontend
             new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
             // new BetterArmorFrontPatch(),
-            
         };
 
         private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
@@ -67,7 +67,9 @@ namespace ConvenienceFrontend
             // 模拟对战
             // new CombatSimulatorFrontPatch(),
             // 蛐蛐战斗优化
-            new CricketCombatOptimizeFrontPatch()
+            new CricketCombatOptimizeFrontPatch(),
+            // 一键突破
+            new AutoBreakFrontPatch()
         };
 
         public override void OnModSettingUpdate()

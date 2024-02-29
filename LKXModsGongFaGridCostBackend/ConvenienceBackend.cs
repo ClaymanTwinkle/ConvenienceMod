@@ -4,6 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using ConvenienceBackend.AutoBreak;
 using ConvenienceBackend.CombatSimulator;
 using ConvenienceBackend.CombatStrategy;
 using ConvenienceBackend.ComparativeArt;
@@ -62,6 +63,7 @@ namespace ConvenienceBackend
             // new BetterArmorBackendPatch(),
             // 志向优化
             new ProfessionOptimizeBackend(),
+
         };
 
         private static string _modIdStr = "1_";
@@ -69,7 +71,9 @@ namespace ConvenienceBackend
         private static readonly List<BaseBackendPatch> extraPatchList = new()
         {
             // 模拟对战
-            new CombatSimulatorBackendPatch(),
+            // new CombatSimulatorBackendPatch(),
+            // 自动突破
+            new AutoBreakBackendPatch(),
         };
 
         public override void Initialize()
@@ -81,6 +85,11 @@ namespace ConvenienceBackend
 
             allPatchList.ForEach((BaseBackendPatch patch) => this.harmony.PatchAll(patch.GetType()));
             allPatchList.ForEach((BaseBackendPatch patch) => patch.Initialize(harmony, ModIdStr));
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseBackendPatch patch) => this.harmony.PatchAll(patch.GetType()));
+                extraPatchList.ForEach((BaseBackendPatch patch) => patch.Initialize(harmony, ModIdStr));
+            }
         }
 
         public override void OnModSettingUpdate()
@@ -90,6 +99,11 @@ namespace ConvenienceBackend
             DomainManager.Mod.GetSetting(ModIdStr, "Toggle_Total", ref bool_Toggle_Total);
 
             allPatchList.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
+
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseBackendPatch patch) => patch.OnModSettingUpdate(ModIdStr));
+            }
         }
 
         public override void Dispose()
@@ -97,10 +111,13 @@ namespace ConvenienceBackend
             AdaptableLog.Info("Dispose");
 
             allPatchList.ForEach((BaseBackendPatch patch) => patch.Dispose());
-            if (harmony != null)
+
+            if (IsLocalTest())
             {
-                harmony.UnpatchSelf();
+                extraPatchList.ForEach((BaseBackendPatch patch) => patch.Dispose());
             }
+
+            harmony?.UnpatchSelf();
             harmony = null;
         }
 
@@ -110,6 +127,11 @@ namespace ConvenienceBackend
             AdaptableLog.Info("OnEnterNewWorld");
 
             allPatchList.ForEach((BaseBackendPatch patch) => patch.OnEnterNewWorld());
+
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseBackendPatch patch) => patch.OnEnterNewWorld());
+            }
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x000021C8 File Offset: 0x000003C8
@@ -118,6 +140,11 @@ namespace ConvenienceBackend
             AdaptableLog.Info("OnLoadedArchiveData");
 
             allPatchList.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
+
+            if (IsLocalTest())
+            {
+                extraPatchList.ForEach((BaseBackendPatch patch) => patch.OnLoadedArchiveData());
+            }
         }
 
         [HarmonyPrefix]
@@ -132,6 +159,10 @@ namespace ConvenienceBackend
                 num += Serializer.Deserialize(argDataPool, num, ref json);
                 Config = JsonConvert.DeserializeObject<Dictionary<string, System.Object>>(json);
                 allPatchList.ForEach((BaseBackendPatch patch) => patch.OnConfigUpdate(Config));
+                if (IsLocalTest())
+                {
+                    extraPatchList.ForEach((BaseBackendPatch patch) => patch.OnConfigUpdate(Config));
+                }
                 __result = -1;
                 return false;
             }
