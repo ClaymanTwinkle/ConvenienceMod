@@ -8,6 +8,7 @@ using ConvenienceBackend.AutoBreak;
 using ConvenienceBackend.CombatSimulator;
 using ConvenienceBackend.CombatStrategy;
 using ConvenienceBackend.ComparativeArt;
+using ConvenienceBackend.CricketCombatOptimize;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
@@ -72,6 +73,8 @@ namespace ConvenienceBackend
         {
             // 模拟对战
             // new CombatSimulatorBackendPatch(),
+            // 促织优化
+            new CricketCombatOptimizeBackendPatch(),
             // 自动突破
             new AutoBreakBackendPatch(),
         };
