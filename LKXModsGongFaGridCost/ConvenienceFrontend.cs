@@ -9,6 +9,7 @@ using ConvenienceFrontend.CricketCombatOptimize;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.IgnoreReadFinishBook;
+using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.TaiwuBuildingManager;
@@ -69,7 +70,9 @@ namespace ConvenienceFrontend
             // 蛐蛐战斗优化
             new CricketCombatOptimizeFrontPatch(),
             // 一键突破
-            new AutoBreakFrontPatch()
+            new AutoBreakFrontPatch(),
+            // 铭刻自己
+            new InscribeCharFrontPatch()
         };
 
         public override void OnModSettingUpdate()
