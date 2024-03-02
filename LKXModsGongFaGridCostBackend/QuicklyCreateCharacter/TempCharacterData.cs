@@ -174,7 +174,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                 for (sbyte b = 0; b < 16; b += 1)
                 {
                     short item = ptr2[b];
-                    scope += item;
+                    scope += (int)(item * 0.3) ; // 打个3折
                 }
             }
 
@@ -189,60 +189,60 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                 }
             }
 
-            HitOrAvoidInts hitValues = this.character.GetHitValues();
-            OuterAndInnerInts penetrations = this.character.GetPenetrations();
-            HitOrAvoidInts avoidValues = this.character.GetAvoidValues();
-            OuterAndInnerInts penetrationResists = this.character.GetPenetrationResists();
-            OuterAndInnerShorts recoveryOfStanceAndBreath = this.character.GetRecoveryOfStanceAndBreath();
-            short moveSpeed = this.character.GetMoveSpeed();
-            short recoveryOfFlaw = this.character.GetRecoveryOfFlaw();
-            short castSpeed = this.character.GetCastSpeed();
-            short recoveryOfBlockedAcupoint = this.character.GetRecoveryOfBlockedAcupoint();
-            short weaponSwitchSpeed = this.character.GetWeaponSwitchSpeed();
-            short attackSpeed = this.character.GetAttackSpeed();
-            short innerRatio = this.character.GetInnerRatio();
-            short recoveryOfQiDisorder = this.character.GetRecoveryOfQiDisorder();
+            //HitOrAvoidInts hitValues = this.character.GetHitValues();
+            //OuterAndInnerInts penetrations = this.character.GetPenetrations();
+            //HitOrAvoidInts avoidValues = this.character.GetAvoidValues();
+            //OuterAndInnerInts penetrationResists = this.character.GetPenetrationResists();
+            //OuterAndInnerShorts recoveryOfStanceAndBreath = this.character.GetRecoveryOfStanceAndBreath();
+            //short moveSpeed = this.character.GetMoveSpeed();
+            //short recoveryOfFlaw = this.character.GetRecoveryOfFlaw();
+            //short castSpeed = this.character.GetCastSpeed();
+            //short recoveryOfBlockedAcupoint = this.character.GetRecoveryOfBlockedAcupoint();
+            //short weaponSwitchSpeed = this.character.GetWeaponSwitchSpeed();
+            //short attackSpeed = this.character.GetAttackSpeed();
+            //short innerRatio = this.character.GetInnerRatio();
+            //short recoveryOfQiDisorder = this.character.GetRecoveryOfQiDisorder();
 
-            // 攻击属性
-            for (sbyte b4 = 0; b4 < 4; b4 += 1)
-            {
-                int item4 = hitValues.Items[b4];
-                scope += item4;
-            }
+            //// 攻击属性
+            //for (sbyte b4 = 0; b4 < 4; b4 += 1)
+            //{
+            //    int item4 = hitValues.Items[b4];
+            //    scope += item4;
+            //}
 
-            // 防御属性
-            for (sbyte b5 = 0; b5 < 4; b5 += 1)
-            {
-                int item5 = avoidValues.Items[b5];
-                scope += item5;
-            }
+            //// 防御属性
+            //for (sbyte b5 = 0; b5 < 4; b5 += 1)
+            //{
+            //    int item5 = avoidValues.Items[b5];
+            //    scope += item5;
+            //}
 
-            scope += penetrations.Outer;
-            scope += penetrations.Inner;
-            scope += penetrationResists.Outer;
-            scope += penetrationResists.Inner;
+            //scope += penetrations.Outer;
+            //scope += penetrations.Inner;
+            //scope += penetrationResists.Outer;
+            //scope += penetrationResists.Inner;
 
-            // 次要属性
-            if (recoveryOfStanceAndBreath.Outer < 100) return 0;
-            scope += (int)recoveryOfStanceAndBreath.Outer;
-            if (recoveryOfStanceAndBreath.Inner < 100) return 0;
-            scope += (int)recoveryOfStanceAndBreath.Inner;
-            if (moveSpeed < 100) return 0;
-            scope += (int)moveSpeed;
-            if (recoveryOfFlaw < 100) return 0;
-            scope += (int)recoveryOfFlaw;
-            if (castSpeed < 100) return 0;
-            scope += (int)castSpeed;
-            if (recoveryOfBlockedAcupoint < 100) return 0;
-            scope += (int)recoveryOfBlockedAcupoint;
-            if (weaponSwitchSpeed < 100) return 0;
-            scope += (int)weaponSwitchSpeed;
-            if (attackSpeed < 100) return 0;
-            scope += (int)attackSpeed;
-            if (innerRatio < 100) return 0;
-            scope += (int)innerRatio;
-            if (recoveryOfQiDisorder < 100) return 0;
-            scope += (int)recoveryOfQiDisorder;
+            //// 次要属性
+            //if (recoveryOfStanceAndBreath.Outer < 100) return 0;
+            //scope += (int)recoveryOfStanceAndBreath.Outer;
+            //if (recoveryOfStanceAndBreath.Inner < 100) return 0;
+            //scope += (int)recoveryOfStanceAndBreath.Inner;
+            //if (moveSpeed < 100) return 0;
+            //scope += (int)moveSpeed;
+            //if (recoveryOfFlaw < 100) return 0;
+            //scope += (int)recoveryOfFlaw;
+            //if (castSpeed < 100) return 0;
+            //scope += (int)castSpeed;
+            //if (recoveryOfBlockedAcupoint < 100) return 0;
+            //scope += (int)recoveryOfBlockedAcupoint;
+            //if (weaponSwitchSpeed < 100) return 0;
+            //scope += (int)weaponSwitchSpeed;
+            //if (attackSpeed < 100) return 0;
+            //scope += (int)attackSpeed;
+            //if (innerRatio < 100) return 0;
+            //scope += (int)innerRatio;
+            //if (recoveryOfQiDisorder < 100) return 0;
+            //scope += (int)recoveryOfQiDisorder;
 
             return scope;
         }

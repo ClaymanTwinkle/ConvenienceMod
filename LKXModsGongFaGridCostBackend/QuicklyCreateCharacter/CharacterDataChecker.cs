@@ -23,23 +23,23 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             // 特性
             if (!CheckFeatureNames(characterData, _config)) return 2;
 
-            // 古冢遗刻-技艺书
-            if (!CheckLifeSkillBookName(characterData, _config)) return 3;
-
             // 古冢遗刻-功法书-总纲
-            if (!CheckCombatSkillGeneralPrinciples(characterData, _config)) return 4;
+            if (!CheckCombatSkillGeneralPrinciples(characterData, _config)) return 3;
 
             // 成长类型
-            if (!CheckQualificationGrowthType(characterData, _config)) return 5;
-
-            // 古冢遗刻-功法书-正逆练
-            if (!CheckCombatSkillDirectAndReverse(characterData, _config)) return 6;
+            if (!CheckQualificationGrowthType(characterData, _config)) return 4;
 
             // 主要属性
-            if (!CheckMainAttributeValue(characterData, _config)) return 7;
+            if (!CheckMainAttributeValue(characterData, _config)) return 5;
 
             // 资质
-            if (!CheckQualificationsValue(characterData, _config)) return 8;
+            if (!CheckQualificationsValue(characterData, _config)) return 6;
+
+            // 古冢遗刻-技艺书
+            if (!CheckLifeSkillBookName(characterData, _config)) return 7;
+
+            // 古冢遗刻-功法书-正逆练
+            if (!CheckCombatSkillDirectAndReverse(characterData, _config)) return 8;
 
             return 100;
         }
@@ -77,12 +77,12 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
 
         private unsafe static bool CheckAllBlueFeatures(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
-            var enableAllBlue = _config.GetTypedValue<bool>("Toggle_FilterEnableAllBlueFeature");
+            var enableAllBlue = RollAttributeConfigReader.EnableAllBlueFeature(_config);
             if (enableAllBlue)
             {
                 foreach (var featureId in characterData.featureIds)
                 {
-                    if (Config.CharacterFeature.Instance[featureId].CandidateGroupId == 1)
+                    if (Config.CharacterFeature.Instance[featureId].Level < 0)
                     {
                         return false;
                     }
@@ -223,7 +223,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
 
         private static bool CheckLifeSkillBookName(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
-            JArray lifeSkillBookTypeJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillBookName") ?? new JArray();
+            JArray lifeSkillBookTypeJArray = RollAttributeConfigReader.GetLifeSkillBookTypes(_config);
             if (lifeSkillBookTypeJArray.Count > 0)
             {
                 if (characterData.itemData != null && characterData.itemData.lifeSkillBook != null)
@@ -253,7 +253,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             if (characterData.itemData != null && characterData.itemData.combatSkillBook != null)
             {
                 // 书名
-                string filterCombatSkillBookName = (_config.GetTypedValue<string>("InputField_FilterCombatSkillBookName") ?? "").Trim();
+                string filterCombatSkillBookName = RollAttributeConfigReader.GetCombatSkillBookName(_config);
                 if (!String.IsNullOrEmpty(filterCombatSkillBookName))
                 {
                     var combatSkillBookName = characterData.itemData.combatSkillBook.GetName();

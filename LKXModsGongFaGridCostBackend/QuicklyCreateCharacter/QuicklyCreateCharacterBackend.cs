@@ -14,7 +14,8 @@ using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
-using Newtonsoft.Json.Linq;
+using GameData.Domains.Item;
+using Redzen.Random;
 
 namespace ConvenienceBackend.QuicklyCreateCharacter
 {
@@ -122,6 +123,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             {
                 if (info.InscribedChar == null)
                 {
+                    // 覆盖roll属性
                     QuicklyCreateCharacterBackend.OverwriteCharacterAttribute(__instance, __result);
                 }
                 else
@@ -192,10 +194,17 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             return new KeyValuePair<bool, string>(isOk, text);
         }
 
-        // Token: 0x0600000A RID: 10 RVA: 0x00002534 File Offset: 0x00000734
+        /// <summary>
+        /// 重新随机创建角色数据
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="charTemplateId"></param>
+        /// <param name="orgMemberId"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public static Character CreateTempCharacter(ProtagonistCreationInfo info, short charTemplateId, short orgMemberId, out Character.ProtagonistFeatureRelatedStatus status)
         {
-            Character character = new Character(charTemplateId);
+            Character character = new(charTemplateId);
             DataContext currentThreadDataContext = DataContextManager.GetCurrentThreadDataContext();
             status = character.OfflineCreateProtagonist(charTemplateId, orgMemberId, info, currentThreadDataContext);
             character.OfflineSetId(-1);
@@ -228,6 +237,90 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             status.ReadCombatSkillTemplateId = QuicklyCreateCharacterBackend.characterData.status.ReadCombatSkillTemplateId;
             status.CombatSkillBookPageTypes = QuicklyCreateCharacterBackend.characterData.status.CombatSkillBookPageTypes;
             status.CombatSkills = QuicklyCreateCharacterBackend.characterData.status.CombatSkills;
+        }
+
+
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Character), "GenerateRandomBasicFeatures")]
+        public static void Character_GenerateRandomBasicFeatures_PrePatch(DataContext context, Dictionary<short, short> featureGroup2Id, bool isProtagonist, ref bool allGoodBasicFeatures)
+        {
+            if (RollAttributeConfigReader.EnableAllBlueFeature(ConvenienceBackend.Config))
+            {
+                if (isProtagonist)
+                {
+                    allGoodBasicFeatures = true;
+                }
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Character), "OfflineApplyProtagonistFeature_SkillBooks")]
+        public static unsafe bool Character_OfflineApplyProtagonistFeature_SkillBooks_PrePatch(Character __instance, DataContext context, ProtagonistCreationInfo info, Character.ProtagonistFeatureRelatedStatus status)
+        {
+            var useOri = true;
+            var combatSkillBookName = RollAttributeConfigReader.GetCombatSkillBookName(ConvenienceBackend.Config);
+
+            if (!String.IsNullOrEmpty(combatSkillBookName))
+            {
+                useOri = false;
+
+                var traverse = Traverse.Create(__instance);
+                var ProtagonistLifeSkillBookIds = traverse.Field<short[]>("ProtagonistLifeSkillBookIds").Value;
+                var ProtagonistCombatSkillBookIds = traverse.Field<short[][]>("ProtagonistCombatSkillBookIds").Value;
+                var _inventory = traverse.Field<Inventory>("_inventory").Value;
+                List<LifeSkillItem> _learnedLifeSkills = traverse.Field<List<LifeSkillItem>>("_learnedLifeSkills").Value;
+                List<short> _learnedCombatSkills = traverse.Field<List<short>>("_learnedCombatSkills").Value;
+                LifeSkillShorts _baseLifeSkillQualifications = traverse.Field<LifeSkillShorts>("_baseLifeSkillQualifications").Value;
+                CombatSkillShorts _baseCombatSkillQualifications = traverse.Field<CombatSkillShorts>("_baseCombatSkillQualifications").Value;
+
+
+                IRandomSource random = context.Random;
+                short num = ProtagonistLifeSkillBookIds[random.Next(ProtagonistLifeSkillBookIds.Length)];
+                ItemKey itemKey = DomainManager.Item.CreateSkillBook(context, num, 5, 0, -1, 50);
+                _inventory.OfflineAdd(itemKey, 1);
+                short lifeSkillTemplateIdFromSkillBook = ItemTemplateHelper.GetLifeSkillTemplateIdFromSkillBook(num);
+                Config.LifeSkillItem lifeSkillItem = Config.LifeSkill.Instance[lifeSkillTemplateIdFromSkillBook];
+                LifeSkillItem item = new LifeSkillItem(lifeSkillTemplateIdFromSkillBook);
+                _learnedLifeSkills.Add(item);
+                status.ReadLifeSkillTemplateId = lifeSkillTemplateIdFromSkillBook;
+                int num2 = 90 + random.Next(10);
+                if (_baseLifeSkillQualifications.Items[lifeSkillItem.Type] < num2)
+                {
+                    _baseLifeSkillQualifications.Items[lifeSkillItem.Type] = (short)num2;
+                }
+
+                sbyte sectOrgTemplateIdByStateTemplateId = MapDomain.GetSectOrgTemplateIdByStateTemplateId(info.TaiwuVillageStateTemplateId);
+                sbyte largeSectIndex = OrganizationDomain.GetLargeSectIndex(sectOrgTemplateIdByStateTemplateId);
+                short[] combatSkillBookIdArray = ProtagonistCombatSkillBookIds[largeSectIndex];
+                short skillBookId = combatSkillBookIdArray[random.Next(combatSkillBookIdArray.Length)];
+                foreach (var itemId in combatSkillBookIdArray)
+                {
+                    Config.SkillBookItem skillBookItem = Config.SkillBook.Instance[itemId];
+                    if (skillBookItem.Name.Contains(combatSkillBookName))
+                    {
+                        skillBookId = itemId;
+                        break;
+                    }
+                }
+                itemKey = DomainManager.Item.CreateSkillBook(context, skillBookId, 5, 0, -1, 50);
+                _inventory.OfflineAdd(itemKey, 1);
+                short combatSkillTemplateIdFromSkillBook = ItemTemplateHelper.GetCombatSkillTemplateIdFromSkillBook(skillBookId);
+                Config.CombatSkillItem combatSkillItem = Config.CombatSkill.Instance[combatSkillTemplateIdFromSkillBook];
+                GameData.Domains.CombatSkill.CombatSkill item2 = new GameData.Domains.CombatSkill.CombatSkill(-1, combatSkillTemplateIdFromSkillBook, 50, 0);
+                status.CombatSkills.Add(item2);
+                _learnedCombatSkills.Add(combatSkillTemplateIdFromSkillBook);
+                status.ReadCombatSkillTemplateId = combatSkillTemplateIdFromSkillBook;
+                GameData.Domains.Item.SkillBook element_SkillBooks = DomainManager.Item.GetElement_SkillBooks(itemKey.Id);
+                status.CombatSkillBookPageTypes = element_SkillBooks.GetPageTypes();
+                int num4 = 90 + random.Next(10);
+                if (_baseCombatSkillQualifications.Items[combatSkillItem.Type] < num4)
+                {
+                    _baseCombatSkillQualifications.Items[combatSkillItem.Type] = (short)num4;
+                }
+            }
+
+            return useOri;
         }
 
         // Token: 0x04000003 RID: 3
