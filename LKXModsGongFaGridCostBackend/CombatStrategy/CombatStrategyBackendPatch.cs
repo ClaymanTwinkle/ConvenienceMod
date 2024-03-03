@@ -831,18 +831,21 @@ namespace ConvenienceBackend.CombatStrategy
                                 CombatStateItem configData = CombatState.Instance[stateId];
                                 if (configData == null) continue;
 
-                                var property = configData.PropertyList.Find(x => x.SpecialEffectDataId == specialEffectDataId);
+                                var property = configData.PropertyList.Find(x => {
+                                    _logger.Info("stateId = " + stateId + ", SpecialEffectDataId = " + x.SpecialEffectDataId);
+                                    return x.SpecialEffectDataId == specialEffectDataId;
+                                });
                                 if (property.SpecialEffectDataId != specialEffectDataId) continue;
 
                                 short power = buff.Value.Item1;
                                 bool reverse = buff.Value.Item2;
                                 int srcCharId = buff.Value.Item3;
 
-                                totalPower = (int)(property.Value * power / 100);
+                                totalPower += (int)(property.Value * power / 100);
                             }
 
+                            totalPower = Math.Abs(totalPower);
                             meetTheConditions = CheckCondition(totalPower, condition);
-
                             break;
                         }
                     case JudgeItem.WugCount:
