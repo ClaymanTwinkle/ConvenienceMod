@@ -91,6 +91,12 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// <summary>
         /// 技能施展次数
         /// </summary>
-        NumOfPrepareSkill
+        NumOfPrepareSkill,
+
+
+        /// <summary>
+        /// 变招数量
+        /// </summary>
+        NumOfChangeTrickCount,
     }
 }

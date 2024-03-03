@@ -891,6 +891,11 @@ namespace ConvenienceBackend.CombatStrategy
                             meetTheConditions = CheckCondition(count, condition);
                         }
                         break;
+                    case JudgeItem.NumOfChangeTrickCount:
+                        {
+                            meetTheConditions = CheckCondition(combatCharacter.GetChangeTrickCount(), condition);
+                        }
+                        break;
                     default:
                         meetTheConditions = false;
                         break;

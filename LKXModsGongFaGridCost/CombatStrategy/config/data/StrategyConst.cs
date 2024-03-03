@@ -63,7 +63,8 @@ namespace ConvenienceFrontend.CombatStrategy
             new StrategyConst.Item("减益效果", true, 1f, 7, false, 0),             // 14
             new StrategyConst.Item("蛊引数", true, 1f, -1, false, 0),              // 15
             new StrategyConst.Item("属性", true, 1f, 8, false, 0),                 // 16
-            new StrategyConst.Item("已施展次数", true, 1f, -1, true, 0)             // 17
+            new StrategyConst.Item("已施展次数", true, 1f, -1, true, 0),             // 17
+            new StrategyConst.Item("变招数量", true, 1f, -1, false, 0),            // 18
         };
 
         // Token: 0x04000031 RID: 49
