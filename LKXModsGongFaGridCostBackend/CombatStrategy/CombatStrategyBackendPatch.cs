@@ -292,7 +292,7 @@ namespace ConvenienceBackend.CombatStrategy
 
             if (_prepareSkillCountMap.ContainsKey(skillId))
             {
-                _prepareSkillCountMap[skillId] = _prepareSkillCountMap[skillId];
+                _prepareSkillCountMap[skillId] = _prepareSkillCountMap[skillId] + 1;
             }
             else
             {
