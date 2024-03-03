@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Config;
 using Config.ConfigCells.Character;
 using GameData.Common;
+using GameData.DomainEvents;
 using GameData.Domains;
 using GameData.Domains.Character.Ai;
 using GameData.Domains.Character.AvatarSystem;
@@ -15,6 +16,7 @@ using GameData.Domains.Taiwu.Profession;
 using GameData.Domains.Taiwu.Profession.SkillsData;
 using GameData.Utilities;
 using HarmonyLib;
+using static GameData.DomainEvents.Events;
 
 namespace ConvenienceBackend.ProfessionOptimize
 {
@@ -25,6 +27,75 @@ namespace ConvenienceBackend.ProfessionOptimize
         public override void OnModSettingUpdate(string modIdStr)
         {
             DomainManager.Mod.GetSetting(modIdStr, "Toggle_ReallocateFeatures", ref _ReallocateFeatures);
+        }
+
+        public override void OnEnterNewWorld()
+        {
+            base.OnEnterNewWorld();
+
+            if (!_ReallocateFeatures) return;
+
+            UnregisterHandlers();
+            RegisterHandlers();
+        }
+
+        public override void OnLoadedArchiveData()
+        {
+            base.OnLoadedArchiveData();
+
+            if (!_ReallocateFeatures) return;
+
+            UnregisterHandlers();
+            RegisterHandlers();
+        }
+
+        private void RegisterHandlers()
+        {
+            Events.RegisterHandler_AdvanceMonthBegin(OnAdvanceMonthBegin);
+            Events.RegisterHandler_AdvanceMonthFinish(OnAdvanceMonthFinish);
+        }
+
+        private void UnregisterHandlers()
+        {
+            Events.UnRegisterHandler_AdvanceMonthBegin(OnAdvanceMonthBegin);
+            Events.UnRegisterHandler_AdvanceMonthFinish(OnAdvanceMonthFinish);
+        }
+
+        private void OnAdvanceMonthBegin(DataContext context)
+        {
+            // 将没执行的志向主动1技能执行掉，防止忘记了
+            var professionList = new List<int> {
+                Profession.DefKey.Savage, // 山人
+                Profession.DefKey.TaoistMonk, // 道长
+                Profession.DefKey.BuddhistMonk, // 高僧
+                Profession.DefKey.Traveler, // 旅人
+                Profession.DefKey.TravelingBuddhistMonk, // 云游僧
+                Profession.DefKey.TravelingTaoistMonk // 云游道
+            };
+            var skillIndex = 0;
+            foreach (var professionId in professionList)
+            {
+                if (DomainManager.Extra.GetTaiwuCurrProfessionId() == professionId && DomainManager.Extra.CanExecuteProfessionSkill(professionId, skillIndex))
+                {
+                    ProfessionData professionData = DomainManager.Extra.GetProfessionData(professionId);
+                    ProfessionSkillItem skillConfig = professionData.GetSkillConfig(skillIndex);
+                    DomainManager.TaiwuEvent.OnEvent_ProfessionSkillClicked(skillConfig.TemplateId);
+                    if (skillConfig.Instant)
+                    {
+                        ProfessionSkillArg professionSkillArg = default;
+                        professionSkillArg.ProfessionId = professionId;
+                        professionSkillArg.SkillId = skillConfig.TemplateId;
+                        professionSkillArg.IsSuccess = true;
+                        ProfessionSkillHandle.OnSkillExecuted(context, ref professionSkillArg);
+                        ProfessionSkillHandle.OnActiveSkillExecuted(context, ref professionSkillArg);
+                    }
+                }
+            }
+        }
+
+        private unsafe void OnAdvanceMonthFinish(DataContext context)
+        { 
+            
         }
 
         /// <summary>
