@@ -187,6 +187,9 @@ namespace ConvenienceBackend.CustomSteal
                     case TryMode.SuccessRateMode:
                         processSuccessRateMode(_robValue, ref __result);
                         return false;
+                    case TryMode.SimulationMode:
+                        GetRobActionPhasePostfix(selfCharId, targetCharId, ref __result);
+                        return false;
                 }
             }
             return true;

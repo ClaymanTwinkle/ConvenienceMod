@@ -445,7 +445,7 @@ namespace ConvenienceBackend.CombatStrategy
                     short mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
                     if (selfChar.GetAffectingMoveSkillId() < 0)
                     {
-                        if ((int)mobilityRecoverPrepareValue >= maxMobility && (int)mobilityValue < _settings.MobilityRecoverCap)
+                        if ((int)mobilityValue < _settings.MobilityRecoverCap)
                         {
                             instance.SetMoveState(0, true);
                         }
