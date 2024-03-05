@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Config;
 using FrameWork;
+using GameData.Domains.Character;
 using GameData.Domains.Item;
 using GameData.Domains.Item.Display;
 using GameData.GameDataBridge;
@@ -32,9 +33,9 @@ namespace ConvenienceFrontend.MergeBookPanel
             }
             MergeAll.RemoveMergedItems(toollist);
             SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall(4, ModMono.MethodIDMergeAllTools, delegate (int offset, RawDataPool dataPool) {
-                itemMenu.SetPrivateField("_needRefresh", true);
-                GameDataBridge.AddMethodCall<int>(itemMenu.Element.GameDataListenerId, 4, 28, characterMenu.CurCharacterId);
-                GameDataBridge.AddMethodCall<int>(itemMenu.Element.GameDataListenerId, 4, 30, characterMenu.CurCharacterId);
+                // itemMenu.SetPrivateField("_needRefresh", true);
+                CharacterDomainHelper.MethodCall.GetAllInventoryItems(itemMenu.Element.GameDataListenerId, characterMenu.CurCharacterId);
+                CharacterDomainHelper.MethodCall.GetAllEquipmentItems(itemMenu.Element.GameDataListenerId, characterMenu.CurCharacterId);
                 MergeAll.isMerging = false;
             });
 
@@ -67,9 +68,9 @@ namespace ConvenienceFrontend.MergeBookPanel
             MergeAll.RemoveMergedItems(booklist);
 
             SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall(4, ModMono.MethodIDMergeAllLifeBooks, delegate (int offset, RawDataPool dataPool) {
-                itemMenu.SetPrivateField("_needRefresh", true);
-                GameDataBridge.AddMethodCall<int>(itemMenu.Element.GameDataListenerId, 4, 28, characterMenu.CurCharacterId);
-                GameDataBridge.AddMethodCall<int>(itemMenu.Element.GameDataListenerId, 4, 30, characterMenu.CurCharacterId);
+                // itemMenu.SetPrivateField("_needRefresh", true);
+                CharacterDomainHelper.MethodCall.GetAllInventoryItems(itemMenu.Element.GameDataListenerId, characterMenu.CurCharacterId);
+                CharacterDomainHelper.MethodCall.GetAllEquipmentItems(itemMenu.Element.GameDataListenerId, characterMenu.CurCharacterId);
                 MergeAll.isMerging = false;
             });
 

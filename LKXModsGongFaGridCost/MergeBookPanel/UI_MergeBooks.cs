@@ -68,7 +68,7 @@ namespace ConvenienceFrontend.MergeBookPanel
             base.AddMono(this.itemHolder, "ItemHolder");
             base.AddMono(this.scrollView, "ScrollView");
             base.AddMono(this.buttonMerge, "MergeButton");
-            this.itemHolder.transform.parent.GetChild(1).gameObject.GetComponent<ItemView>().Names[11] = ItemViewKeyUsingBg;
+            this.itemHolder.transform.parent.GetChild(1).gameObject.GetComponent<ItemView>().Names[12] = ItemViewKeyUsingBg;
             GameLog.LogMessage("OnItemRender");
             this.infinityScroll.OnItemRender = new Action<int, Refers>(this.OnRenderItem);
             GameLog.LogMessage("OnItemRender done");
@@ -471,7 +471,7 @@ namespace ConvenienceFrontend.MergeBookPanel
             }
             UI_CharacterMenu characterMenu = UIElement.CharacterMenu.UiBaseAs<UI_CharacterMenu>();
             this.ShowDialog("合并结果", "合并成功", null);
-            itemMenu.SetPrivateField("_needRefresh", true);
+            // itemMenu.SetPrivateField("_needRefresh", true);
             // GameDataBridge.AddMethodCall<int>(itemMenu.Element.GameDataListenerId, 4, 28, characterMenu.CurCharacterId);
             CharacterDomainHelper.MethodCall.GetAllInventoryItems(itemMenu.Element.GameDataListenerId, characterMenu.CurCharacterId);
             // base.AsynchMethodCall<int>(4, 28, characterMenu.CurCharacterId, delegate (int p0, RawDataPool p1)
@@ -548,7 +548,7 @@ namespace ConvenienceFrontend.MergeBookPanel
             GameDataBridge.AddMethodCall<ItemKey, short, short, byte>(ui_CharacterMenuItems.Element.GameDataListenerId, 4, ModMono.MethodIDTransformBook, this._currMergedBook, this._selectedItems[0].Durability, this._selectedItems[0].MaxDurability, pageType);
             UI_CharacterMenu characterMenu = UIElement.CharacterMenu.UiBaseAs<UI_CharacterMenu>();
             this.ShowDialog("编撰结果", "编撰成功", null);
-            ui_CharacterMenuItems.SetPrivateField("_needRefresh", true);
+            // ui_CharacterMenuItems.SetPrivateField("_needRefresh", true);
             // GameDataBridge.AddMethodCall<int>(ui_CharacterMenuItems.Element.GameDataListenerId, 4, 28, characterMenu.CurCharacterId);
             CharacterDomainHelper.MethodCall.GetAllInventoryItems(ui_CharacterMenuItems.Element.GameDataListenerId, characterMenu.CurCharacterId);
             CharacterDomainHelper.AsyncMethodCall.GetAllInventoryItems(null, characterMenu.CurCharacterId, delegate (int p0, RawDataPool p1) {
@@ -575,7 +575,7 @@ namespace ConvenienceFrontend.MergeBookPanel
                 {
                     book
                 });
-                GameDataBridge.AddMethodCall<int, ItemKey, int>(itemMenu.Element.GameDataListenerId, 6, 19, characterMenu.CurCharacterId, book.Key, 1);
+                GameDataBridge.AddMethodCall<int, ItemKey, int>(itemMenu.Element.GameDataListenerId, 6, ItemDomainHelper.MethodIds.DiscardItem, characterMenu.CurCharacterId, book.Key, 1);
             }
             itemScroll.SetItemList(ref this._inventoryItems, false, null, false, null);
             this.ClearAllPageList();
@@ -674,7 +674,7 @@ namespace ConvenienceFrontend.MergeBookPanel
                     pageView.transform.parent.GetChild(UI_MergeBooks._selectedPages[0]).GetComponent<PageView>().CGet<GameObject>(PageViewKeySelectMark).SetActive(false);
                 }
                 UI_MergeBooks._selectedPages[0] = pageIdx;
-                pageView.CGet<GameObject>(ItemViewKeySelectStatus).SetActive(true);
+                pageView.CGet<GameObject>(PageViewKeySelectMark).SetActive(true);
                 return;
             }
             int subpageIdx = pageIdx % 5 + 1;
@@ -992,7 +992,7 @@ namespace ConvenienceFrontend.MergeBookPanel
         // Token: 0x04000051 RID: 81
         private static readonly int[] _selectedPages = new int[6];
 
-        private static readonly string ItemViewKeyUsingBg = "UsingBg";
+        private static readonly string ItemViewKeyUsingBg = "UsingBgx";
         private static readonly string ItemViewKeySelectStatus = "SelectStatus";
         private static readonly string PageViewKeySelectMark = "SelectMark";
 

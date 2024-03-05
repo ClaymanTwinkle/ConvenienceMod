@@ -387,16 +387,17 @@ namespace ConvenienceBackend.MergeBookPanel
             {
                 num3 = 0;
             }
-            element_SkillBooks.SetPrivateField("_pageTypes", pageType);
-            element_SkillBooks.CallPrivateMethod("SetModifiedAndInvalidateInfluencedCache", new object[]
-            {
-                6,
-                context
-            });
-            if (element_SkillBooks.CollectionHelperData.IsArchive)
-            {
-                *OperationAdder.DynamicObjectCollection_SetFixedField<int>(element_SkillBooks.CollectionHelperData.DomainId, element_SkillBooks.CollectionHelperData.DataId, element_SkillBooks.GetId(), 11U, 1) = pageType;
-            }
+            element_SkillBooks.SetPageTypes(pageType, context);
+            //element_SkillBooks.SetPrivateField("_pageTypes", pageType);
+            //element_SkillBooks.CallPrivateMethod("SetModifiedAndInvalidateInfluencedCache", new object[]
+            //{
+            //    (ushort)5,
+            //    context
+            //});
+            //if (element_SkillBooks.CollectionHelperData.IsArchive)
+            //{
+            //    *OperationAdder.DynamicObjectCollection_SetFixedField<int>(element_SkillBooks.CollectionHelperData.DomainId, element_SkillBooks.CollectionHelperData.DataId, element_SkillBooks.GetId(), 11U, 1) = pageType;
+            //}
             element_SkillBooks.SetPageIncompleteState(num3, context);
         }
 
