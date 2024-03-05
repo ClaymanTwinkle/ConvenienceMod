@@ -12,6 +12,7 @@ using ConvenienceBackend.CricketCombatOptimize;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.ManualArchive;
+using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
@@ -77,6 +78,8 @@ namespace ConvenienceBackend
             new CricketCombatOptimizeBackendPatch(),
             // 自动突破
             new AutoBreakBackendPatch(),
+            // 合并书页
+            new MergeBookPanelBackendPatch(),
         };
 
         public override void Initialize()

@@ -70,6 +70,15 @@
     <Compile Include="InscribeChar\InscribeCharFrontPatch.cs" />
     <Compile Include="ManualArchive\ManualArchiveFrontendPatch.cs" />
     <Compile Include="ManualArchive\ModMono.cs" />
+    <Compile Include="MergeBookPanel\GameLog.cs" />
+    <Compile Include="MergeBookPanel\MergeAll.cs" />
+    <Compile Include="MergeBookPanel\MergeBookPanelFrontPatch.cs" />
+    <Compile Include="MergeBookPanel\ModMono.cs" />
+    <Compile Include="MergeBookPanel\MyMath.cs" />
+    <Compile Include="MergeBookPanel\PageView.cs" />
+    <Compile Include="MergeBookPanel\ReflectionExtensions.cs" />
+    <Compile Include="MergeBookPanel\UI_Library.cs" />
+    <Compile Include="MergeBookPanel\UI_MergeBooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConvenienceFrontend.cs" />
     <Compile Include="QuicklyCreateCharacter\CharacterDataController.cs" />

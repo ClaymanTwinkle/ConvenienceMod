@@ -11,6 +11,7 @@ using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
+using ConvenienceFrontend.MergeBookPanel;
 using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.Utils;
@@ -72,7 +73,9 @@ namespace ConvenienceFrontend
             // 一键突破
             new AutoBreakFrontPatch(),
             // 铭刻自己
-            new InscribeCharFrontPatch()
+            new InscribeCharFrontPatch(),
+            // 合并书页
+            new MergeBookPanelFrontPatch()
         };
 
         public override void OnModSettingUpdate()
