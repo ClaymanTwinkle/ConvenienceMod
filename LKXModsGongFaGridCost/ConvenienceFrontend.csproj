@@ -58,7 +58,7 @@
     <Compile Include="CombatStrategy\TSlider.cs" />
     <Compile Include="CombatStrategy\ui\ConditionSetterPanel.cs" />
     <Compile Include="CombatStrategy\ui\MoveActionSelectPanel.cs" />
-    <Compile Include="CombatStrategy\ui\UIUtils.cs" />
+    <Compile Include="Utils\UIUtils.cs" />
     <Compile Include="CombatStrategy\UI_CombatPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatStrategySetting.cs" />
     <Compile Include="CricketCombatOptimize\CricketCombatOptimizeFrontPatch.cs" />

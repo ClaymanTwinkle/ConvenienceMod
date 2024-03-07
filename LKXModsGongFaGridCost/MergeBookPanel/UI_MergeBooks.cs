@@ -64,10 +64,11 @@ namespace ConvenienceFrontend.MergeBookPanel
         // Token: 0x0600003C RID: 60 RVA: 0x00004E90 File Offset: 0x00003090
         private void Awake()
         {
-            GameLog.LogMessage("OnAwake");
+            GameLog.LogMessage("UI_MergeBooks OnAwake");
             base.AddMono(this.itemHolder, "ItemHolder");
             base.AddMono(this.scrollView, "ScrollView");
             base.AddMono(this.buttonMerge, "MergeButton");
+            base.AddMono(this.toggleSaveUnSelectBook, "SaveUnSelectBook");
             this.itemHolder.transform.parent.GetChild(1).gameObject.GetComponent<ItemView>().Names[12] = ItemViewKeyUsingBg;
             GameLog.LogMessage("OnItemRender");
             this.infinityScroll.OnItemRender = new Action<int, Refers>(this.OnRenderItem);
@@ -87,6 +88,11 @@ namespace ConvenienceFrontend.MergeBookPanel
             {
                 this.OnClickMerge();
             });
+            this.toggleSaveUnSelectBook.onValueChanged.RemoveAllListeners();
+            this.toggleSaveUnSelectBook.onValueChanged.AddListener(delegate (bool val) {
+                MergeBookPanelFrontPatch.EnableGenerateTwoBooks = val;
+            });
+            this.toggleSaveUnSelectBook.transform.parent.gameObject.SetActive(false);
             this.buttonMerge.gameObject.SetActive(false);
             this.buttonTransform.ClearAndAddListener(delegate
             {
@@ -110,9 +116,10 @@ namespace ConvenienceFrontend.MergeBookPanel
             this.skillSubTypeTogGroup.InitPreOnToggle();
             this.skillSubTypeTogGroup.OnActiveToggleChange = delegate (CToggle p0, CToggle p1)
             {
-                GameLog.LogMessage(string.Format("switch to {0}", this.skillSubTypeTogGroup.GetActive().Key));
+                GameLog.LogMessage(string.Format("skillSubTypeTogGroup switch to {0}", this.skillSubTypeTogGroup.GetActive().Key));
                 this.UpdateBookList();
             };
+
             this.skillTypeTogGroup.AllowSwitchOff = false;
             this.skillTypeTogGroup.AllowUncheck = false;
             this.skillTypeTogGroup.AddAllChildToggles();
@@ -121,16 +128,19 @@ namespace ConvenienceFrontend.MergeBookPanel
             {
                 UI_MergeBooks.RefreshSubTypeTog(this.skillSubTypeTogGroup, this.TypeIsCombatSkill);
                 this.skillSubTypeTogGroup.Set(-1, true, true);
-                GameLog.LogMessage(string.Format("switch to {0}", this.skillTypeTogGroup.GetActive().Key));
-                GameLog.LogMessage(string.Format("switch to {0}", this.skillSubTypeTogGroup.GetActive().Key));
+                GameLog.LogMessage(string.Format("skillTypeTogGroup switch to {0}", this.skillTypeTogGroup.GetActive().Key));
+                GameLog.LogMessage(string.Format("skillSubTypeTogGroup switch to {0}", this.skillSubTypeTogGroup.GetActive().Key));
             };
             this.skillTypeTogGroup.Set(0, true, true);
+
             this.operationTypeTogGroup.AllowSwitchOff = false;
             this.operationTypeTogGroup.AllowUncheck = false;
             this.operationTypeTogGroup.AddAllChildToggles();
             this.operationTypeTogGroup.InitPreOnToggle();
             this.operationTypeTogGroup.OnActiveToggleChange = delegate (CToggle togNew, CToggle togOld)
             {
+                this.toggleSaveUnSelectBook.SetIsOnWithoutNotify(MergeBookPanelFrontPatch.EnableGenerateTwoBooks);
+                this.toggleSaveUnSelectBook.transform.parent.gameObject.SetActive(togNew.Key == 0);
                 this.buttonMerge.gameObject.SetActive(togNew.Key == 0);
                 this.buttonTransform.gameObject.SetActive(togNew.Key == 1);
                 this.SetPageList();
@@ -318,6 +328,7 @@ namespace ConvenienceFrontend.MergeBookPanel
             }
             this.bookPageLifeSkill.SetActive(false);
             this.operationTypeTogGroup.gameObject.SetActive(false);
+            this.toggleSaveUnSelectBook.transform.parent.gameObject.SetActive(false);
             this.buttonMerge.gameObject.SetActive(false);
             this.buttonTransform.gameObject.SetActive(false);
         }
@@ -331,6 +342,7 @@ namespace ConvenienceFrontend.MergeBookPanel
             }
             this.bookPageLifeSkill.SetActive(false);
             this.operationTypeTogGroup.gameObject.SetActive(false);
+            this.toggleSaveUnSelectBook.transform.parent.gameObject.SetActive(false);
             this.buttonMerge.gameObject.SetActive(false);
             this.buttonTransform.gameObject.SetActive(false);
         }
@@ -648,6 +660,8 @@ namespace ConvenienceFrontend.MergeBookPanel
                     {
                         this.bookPageLifeSkill.SetActive(true);
                     }
+                    this.toggleSaveUnSelectBook.SetIsOnWithoutNotify(MergeBookPanelFrontPatch.EnableGenerateTwoBooks);
+                    this.toggleSaveUnSelectBook.transform.parent.gameObject.SetActive(true);
                     this.buttonMerge.gameObject.SetActive(true);
                     this.operationTypeTogGroup.gameObject.SetActive(true);
                     this.operationTypeTogGroup.Set(0, true, true);
@@ -928,6 +942,8 @@ namespace ConvenienceFrontend.MergeBookPanel
 
         // Token: 0x0400003B RID: 59
         public GameObject bookPageLifeSkill;
+
+        public CToggle toggleSaveUnSelectBook;
 
         // Token: 0x0400003C RID: 60
         public CButton buttonMerge;

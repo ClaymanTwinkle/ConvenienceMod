@@ -62,6 +62,8 @@ namespace ConvenienceFrontend
             new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
             // new BetterArmorFrontPatch(),
+            // 合并书页
+            new MergeBookPanelFrontPatch(),
         };
 
         private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
@@ -74,8 +76,6 @@ namespace ConvenienceFrontend
             new AutoBreakFrontPatch(),
             // 铭刻自己
             new InscribeCharFrontPatch(),
-            // 合并书页
-            new MergeBookPanelFrontPatch()
         };
 
         public override void OnModSettingUpdate()

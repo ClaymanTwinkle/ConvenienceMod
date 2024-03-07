@@ -15,6 +15,8 @@ namespace ConvenienceFrontend.MergeBookPanel
     {
         public ModMono mono;
 
+        public static bool EnableMergeBook;
+
         // Token: 0x04000004 RID: 4
         public static bool EnableOutlineTranform;
 
@@ -40,14 +42,18 @@ namespace ConvenienceFrontend.MergeBookPanel
         {
             ModManager.GetSetting(modIdStr, "EnableOutlineTranform", ref EnableOutlineTranform);
             ModManager.GetSetting(modIdStr, "EnableAllPagesTranform", ref EnableAllPagesTranform);
-            ModManager.GetSetting(modIdStr, "EnableGenerateTwoBooks", ref EnableGenerateTwoBooks);
-            ModManager.SaveModSettings();
+            // ModManager.GetSetting(modIdStr, "EnableGenerateTwoBooks", ref EnableGenerateTwoBooks);
+            // ModManager.SaveModSettings();
         }
 
         public override void Initialize(Harmony harmony, string modIdStr)
         {
             base.Initialize(harmony, modIdStr);
-            this.mono = new GameObject("MergeBookPanel").AddComponent<ModMono>();
+            ModManager.GetSetting(modIdStr, "Toggle_MergeBook", ref EnableMergeBook);
+            if (EnableMergeBook) 
+            {
+                this.mono = new GameObject("MergeBookPanel").AddComponent<ModMono>();
+            }
         }
 
         public override void Dispose()
@@ -63,6 +69,8 @@ namespace ConvenienceFrontend.MergeBookPanel
         [HarmonyPatch(typeof(UI_CharacterMenu), "OnTabToggleChanged")]
         public static void OnTabToggleChanged_Patch(CToggle newTog, UI_CharacterMenu __instance)
         {
+            if (!EnableMergeBook) return;
+
             GameLog.LogMessage("OnTabToggleChanged");
             if (!__instance.AllSubPages[newTog.Key].gameObject.activeSelf || __instance.CurCharacterId != SingletonObject.getInstance<BasicGameData>().TaiwuCharId)
             {
@@ -112,8 +120,10 @@ namespace ConvenienceFrontend.MergeBookPanel
         [HarmonyPatch(typeof(UI_CharacterMenuItems), "OnSwitchToSubpage")]
         public static void OnSwitchToSubpage_Items_Patch(int subPageIndex)
         {
+            if (!EnableMergeBook) return;
+
             GameLog.LogMessage("OnSwitchToSubpage");
-            ModMono.MergeBooks.gameObject.SetActive(subPageIndex == 3);
+            ModMono.MergeBooks?.gameObject?.SetActive(subPageIndex == 3);
         }
 
         // Token: 0x06000028 RID: 40 RVA: 0x0000487F File Offset: 0x00002A7F
@@ -121,6 +131,8 @@ namespace ConvenienceFrontend.MergeBookPanel
         [HarmonyPatch(typeof(UI_CharacterMenuItems), "CanSubpageShow")]
         public static bool CanSubpageShow_Patch(int subPageIndex, ref bool __result, UI_CharacterMenuItems __instance, int ____taiwuCharId)
         {
+            if (!EnableMergeBook) return true;
+
             GameLog.LogMessage("CanSubpageShow");
             if (subPageIndex == 3)
             {
@@ -139,6 +151,8 @@ namespace ConvenienceFrontend.MergeBookPanel
         [HarmonyPatch(typeof(UI_CharacterMenuItems), "OnCurrentCharacterChange")]
         public static void OnCurrentCharacterChange_Items_Patch(int prevCharacterId, UI_CharacterMenuItems __instance, int ____taiwuCharId)
         {
+            if (!EnableMergeBook) return;
+
             GameLog.LogMessage("OnCurrentCharacterChange");
             UI_CharacterMenu charcterMenu = __instance.CharacterMenu;
             CToggleGroup subTogGroup = charcterMenu.CGet<CToggleGroup>("SubTogGroup");

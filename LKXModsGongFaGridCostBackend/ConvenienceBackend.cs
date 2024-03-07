@@ -65,7 +65,8 @@ namespace ConvenienceBackend
             // new BetterArmorBackendPatch(),
             // 志向优化
             new ProfessionOptimizeBackend(),
-
+            // 合并书页
+            new MergeBookPanelBackendPatch(),
         };
 
         private static string _modIdStr = "1_";
@@ -78,8 +79,7 @@ namespace ConvenienceBackend
             new CricketCombatOptimizeBackendPatch(),
             // 自动突破
             new AutoBreakBackendPatch(),
-            // 合并书页
-            new MergeBookPanelBackendPatch(),
+
         };
 
         public override void Initialize()

@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine;
+using ConvenienceFrontend.CombatStrategy;
 
 namespace ConvenienceFrontend.MergeBookPanel
 {
@@ -381,15 +382,21 @@ namespace ConvenienceFrontend.MergeBookPanel
                 pageView4.Names = refers4.Names;
                 pageView4.AddMono(pageHolder.GetChild(l).Find("Lock").gameObject, "Lock");
             }
+
             ModMono.MergeBooks.buttonMerge = UnityEngine.Object.Instantiate<GameObject>(ModMono.buttonPrefab, ModMono.MergeBooks.transform, false).GetComponent<CButton>();
             ModMono.MergeBooks.buttonMerge.name = "MergeButton";
             ModMono.MergeBooks.buttonMerge.transform.localPosition = new Vector3(712f, -770f, 0f);
             ModMono.MergeBooks.buttonMerge.GetComponent<RectTransform>().sizeDelta = new Vector2(110f, 46f);
+            
             ModMono.MergeBooks.buttonTransform = UnityEngine.Object.Instantiate<GameObject>(ModMono.buttonPrefab, ModMono.MergeBooks.transform, false).GetComponent<CButton>();
             ModMono.MergeBooks.buttonTransform.name = "TransformButton";
             ModMono.MergeBooks.buttonTransform.transform.localPosition = new Vector3(712f, -770f, 0f);
             ModMono.MergeBooks.buttonTransform.GetComponent<RectTransform>().sizeDelta = new Vector2(110f, 46f);
             ModMono.MergeBooks.buttonTransform.transform.Find("Label").GetComponent<TextMeshProUGUI>().text = "编撰";
+
+            ModMono.MergeBooks.toggleSaveUnSelectBook = UIUtils.CreateToggle(ModMono.MergeBooks.transform, "SaveUnSelectBook", "保留未选");
+            ModMono.MergeBooks.toggleSaveUnSelectBook.transform.parent.localPosition = new Vector3(420f, -800f, 0f);
+
             ModMono.MergeBooks.buttonSplit = UnityEngine.Object.Instantiate<GameObject>(ModMono.buttonPrefab, ModMono.MergeBooks.transform, false).GetComponent<CButton>();
             ModMono.MergeBooks.buttonSplit.name = "SplitButton";
             ModMono.MergeBooks.buttonSplit.transform.localPosition = new Vector3(475f, -770f, 0f);
