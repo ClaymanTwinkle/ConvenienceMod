@@ -7,11 +7,14 @@ using GameData.Common;
 using GameData.Domains.Taiwu;
 using GameData.Domains.TaiwuEvent.EventOption;
 using HarmonyLib;
+using NLog;
 
 namespace ConvenienceBackend.CricketCombatOptimize
 {
     internal class CricketCombatOptimizeBackendPatch : BaseBackendPatch
     {
+        private static Logger _logger = LogManager.GetLogger("蛐蛐优化");
+
         public override void OnModSettingUpdate(string modIdStr)
         {
         }
@@ -27,7 +30,11 @@ namespace ConvenienceBackend.CricketCombatOptimize
                 return false;
             }
 
+            // _logger.Info("MonthCooldownCount " + arg0);
+
             return true;
         }
+
+
     }
 }

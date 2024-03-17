@@ -107,6 +107,26 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             }
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_NewGame), "FaceViewAwake")]
+        public static void UI_NewGame_FaceViewAwake_PostPatch(UI_NewGame __instance)
+        {
+            if (!ConvenienceFrontend.IsLocalTest()) return;
+            Refers faceViewRefers = __instance.CGet<Refers>("FaceView");
+            CSlider cSlider = faceViewRefers.CGet<CSlider>("AgeSlider");
+            cSlider.minValue = 6f;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_NewGame), "InscriptionViewAwake")]
+        public static void UI_NewGame_InscriptionViewAwake_PostPatch(UI_NewGame __instance)
+        {
+            if (!ConvenienceFrontend.IsLocalTest()) return;
+            Refers refers = __instance.CGet<Refers>("InscriptionView");
+            CSlider cSlider = refers.CGet<CSlider>("AgeSlider");
+            cSlider.minValue = 6f;
+        }
+
         // Token: 0x06000007 RID: 7 RVA: 0x000022A4 File Offset: 0x000004A4
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_NewGame), "SetUseInscribedCharacter")]

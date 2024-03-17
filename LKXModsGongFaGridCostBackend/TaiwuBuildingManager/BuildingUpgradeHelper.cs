@@ -31,6 +31,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             Action<BuildingBlockKey> action = x => {
                 BuildingBlockData buildingBlockData = DomainManager.Building.GetElement_BuildingBlocks(x);
+                if (IgnoreBuilding(buildingBlockData.TemplateId)) return;
                 var wokers = WorkerSelector.SelectWorkersByPropertyValue(buildingBlockData.TemplateId, BuildingOperationType.Upgrade);
                 if (wokers.Any(x => x > -1))
                 {
@@ -47,6 +48,11 @@ namespace ConvenienceBackend.TaiwuBuildingManager
 
             // 优先main building
             BuildingFinder.FindBuildingsByType(taiwuVillageLocation, buildingAreaData, EBuildingBlockType.MainBuilding).ForEach(action);
+        }
+
+        private static bool IgnoreBuilding(short templateId)
+        {
+            return BuildingBlock.DefKey.ChickenCoop == templateId;
         }
     }
 }

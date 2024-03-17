@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using ConvenienceFrontend.AutoBreak;
+using ConvenienceFrontend.Bandit;
+using ConvenienceFrontend.BatchMakeItem;
 using ConvenienceFrontend.CombatSimulator;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CricketCombatOptimize;
@@ -76,6 +78,10 @@ namespace ConvenienceFrontend
             new AutoBreakFrontPatch(),
             // 铭刻自己
             new InscribeCharFrontPatch(),
+            // 土匪
+            new BanditFrontPatch(),
+            // 批量制作物品
+            new BatchMakeItemFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

@@ -13,6 +13,9 @@ using FrameWork.ModSystem;
 using FrameWork;
 using UnityEngine;
 using GameData.Domains.Item.Display;
+using DG.Tweening;
+using GameData.Utilities;
+using Spine.Unity;
 
 namespace ConvenienceFrontend.CricketCombatOptimize
 {
@@ -85,8 +88,9 @@ namespace ConvenienceFrontend.CricketCombatOptimize
                 list.Add(canUseCricket);
             }
 
-            list.Sort((x, y) => {
-                
+            list.Sort((x, y) =>
+            {
+
                 var result = ItemTemplateHelper.GetCricketGrade(y.CricketColorId, y.CricketPartId) - ItemTemplateHelper.GetCricketGrade(x.CricketColorId, x.CricketPartId);
                 if (result == 0) return y.Durability - x.Durability;
                 return result;
@@ -165,6 +169,62 @@ namespace ConvenienceFrontend.CricketCombatOptimize
                 {
                     traverse.Method("OnClick", button).GetValue();
                 }
+            }
+        }
+
+        private static bool _isInCricketCombat = false;
+        private static GEvent.Callback onConfirmQuitGameStateCallback = null;
+
+        /// <summary>
+        /// 促织战斗开始动画加速
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="____wagerTypeTogGroup"></param>
+        /// <returns></returns>
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "OnEnable")]
+        public static bool UI_CricketCombat_OnEnable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
+        {
+            _isInCricketCombat = true;
+            __instance.Element.ShowAfterRefresh();
+            onConfirmQuitGameStateCallback = (ArgumentBox argBox) =>
+            {
+                Traverse.Create(__instance).Method("OnConfirmQuitGameState", argBox).GetValue();
+            };
+            GEvent.Add(EEvents.OnConfirmQuitGameState, onConfirmQuitGameStateCallback);
+            CanvasGroup canvasGroup = __instance.CGet<CanvasGroup>("StartAnim");
+            canvasGroup.DOFade(1f, 0.2f);
+            canvasGroup.DOFade(0f, 0.2f).SetDelay(0.3f).OnComplete(delegate
+            {
+                ____wagerTypeTogGroup.Set(0, value: true, forceRaiseEvent: true);
+            });
+            CImage startBG = __instance.CGet<CImage>("StartBG");
+            startBG.DOFade(1f, 0f).OnStart(delegate
+            {
+                startBG.raycastTarget = true;
+            });
+            startBG.DOFade(0f, 0.2f).SetDelay(0.3f).OnComplete(delegate
+            {
+                startBG.raycastTarget = false;
+            });
+            canvasGroup.GetComponentsInChildren<SkeletonGraphic>().ForEach(delegate (int i, SkeletonGraphic graphic)
+            {
+                graphic.AnimationState.SetAnimation(0, "animation", false);
+                return false;
+            });
+
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "OnDisable")]
+        public static void UI_CricketCombat_OnDisable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
+        {
+            _isInCricketCombat = false;
+            if (onConfirmQuitGameStateCallback != null)
+            {
+                GEvent.Remove(EEvents.OnConfirmQuitGameState, onConfirmQuitGameStateCallback);
+                onConfirmQuitGameStateCallback = null;
             }
         }
     }
