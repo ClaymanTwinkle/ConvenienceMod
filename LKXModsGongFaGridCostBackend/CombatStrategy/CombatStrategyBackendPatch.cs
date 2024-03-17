@@ -663,6 +663,10 @@ namespace ConvenienceBackend.CombatStrategy
                             {
                                 value = (int)(Config.CombatSkill.Instance[combatCharacter.GetPreparingSkillId()].EquipType - 1);
                             }
+                            else if (combatCharacter.NeedUseSkillId >= 0)
+                            {
+                                value = (int)(Config.CombatSkill.Instance[combatCharacter.NeedUseSkillId].EquipType - 1);
+                            }
                             meetTheConditions = (condition.value == value && condition.judge == Judgement.Equals) || (condition.value != value && condition.judge != Judgement.Equals);
                         }
                         else
