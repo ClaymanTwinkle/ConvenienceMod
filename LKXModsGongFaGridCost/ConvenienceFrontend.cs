@@ -66,6 +66,8 @@ namespace ConvenienceFrontend
             // new BetterArmorFrontPatch(),
             // 合并书页
             new MergeBookPanelFrontPatch(),
+            // 批量制作物品
+            new BatchMakeItemFrontPatch(),
         };
 
         private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
@@ -79,9 +81,7 @@ namespace ConvenienceFrontend
             // 铭刻自己
             new InscribeCharFrontPatch(),
             // 土匪
-            new BanditFrontPatch(),
-            // 批量制作物品
-            new BatchMakeItemFrontPatch(),
+            new BanditFrontPatch()
         };
 
         public override void OnModSettingUpdate()

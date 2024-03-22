@@ -42,14 +42,26 @@ namespace ConvenienceFrontend.BatchMakeItem
         {
             _batchMakeItemList = new List<ItemDisplayData>();
 
+            UI_Make_OnSwitchBuildingMake_Pro(__instance, ____curLifeSkillType, ____buttonConfirm);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_Make), "OnSwitchBuildingMake")]
+        public static void UI_Make_OnSwitchBuildingMake_Pro(UI_Make __instance, sbyte ____curLifeSkillType, CButton ____buttonConfirm)
+        {
             if (SingletonObject.getInstance<TutorialChapterModel>().InGuiding || ____curLifeSkillType != LifeSkillType.Cooking)
             {
-                _batchMakeItemToggle?.gameObject?.SetActive(false);
+                if (_batchMakeItemToggle != null)
+                {
+                    _batchMakeItemToggle.isOn = false;
+                    _batchMakeItemToggle.transform.parent.gameObject.SetActive(false);
+                }
                 return;
             }
 
             if (_batchMakeItemToggle == null)
             {
+                if (____buttonConfirm == null) return;
                 _batchMakeItemToggle = UIUtils.CreateToggle(____buttonConfirm.transform.parent, "BatchMakeItemToggle", "批量制作");
                 var localPosition = ____buttonConfirm.transform.localPosition;
                 _batchMakeItemToggle.transform.parent.localPosition = new Vector3(localPosition.x + 170f, localPosition.y - 35, localPosition.z);
@@ -60,10 +72,9 @@ namespace ConvenienceFrontend.BatchMakeItem
             }
             else
             {
-                _batchMakeItemToggle.gameObject.SetActive(true);
+                _batchMakeItemToggle.transform.parent.gameObject.SetActive(true);
                 _batchMakeItemToggle.isOn = false;
             }
-
         }
 
         [HarmonyPrefix]
