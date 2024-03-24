@@ -17,6 +17,7 @@ using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
 using ConvenienceBackend.TaiwuBuildingManager;
+using ConvenienceBackend.TongdaoCombat;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Character;
@@ -79,6 +80,8 @@ namespace ConvenienceBackend
             new CricketCombatOptimizeBackendPatch(),
             // 自动突破
             new AutoBreakBackendPatch(),
+            // 同道战斗
+            new TongdaoCombatBackendPatch(),
 
         };
 

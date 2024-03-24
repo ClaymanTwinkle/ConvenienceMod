@@ -15,7 +15,9 @@ using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.MergeBookPanel;
 using ConvenienceFrontend.QuicklyCreateCharacter;
+using ConvenienceFrontend.ShopShortcut;
 using ConvenienceFrontend.TaiwuBuildingManager;
+using ConvenienceFrontend.TongdaoComabt;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
 using GameData.GameDataBridge;
@@ -81,7 +83,11 @@ namespace ConvenienceFrontend
             // 铭刻自己
             new InscribeCharFrontPatch(),
             // 土匪
-            new BanditFrontPatch()
+            new BanditFrontPatch(),
+            // 商店快捷操作
+            new ShopShortcutFrontPatch(),
+            // 同道战斗
+            new TongdaoFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

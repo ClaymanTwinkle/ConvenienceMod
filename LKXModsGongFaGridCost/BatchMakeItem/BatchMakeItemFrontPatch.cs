@@ -40,7 +40,6 @@ namespace ConvenienceFrontend.BatchMakeItem
         [HarmonyPatch(typeof(UI_Make), "OnInit")]
         public static void UI_Make_OnInit_Pro(UI_Make __instance, sbyte ____curLifeSkillType, CButton ____buttonConfirm)
         {
-            _batchMakeItemList = new List<ItemDisplayData>();
 
             UI_Make_OnSwitchBuildingMake_Pro(__instance, ____curLifeSkillType, ____buttonConfirm);
         }
@@ -49,6 +48,8 @@ namespace ConvenienceFrontend.BatchMakeItem
         [HarmonyPatch(typeof(UI_Make), "OnSwitchBuildingMake")]
         public static void UI_Make_OnSwitchBuildingMake_Pro(UI_Make __instance, sbyte ____curLifeSkillType, CButton ____buttonConfirm)
         {
+            _batchMakeItemList = new List<ItemDisplayData>();
+
             if (SingletonObject.getInstance<TutorialChapterModel>().InGuiding || ____curLifeSkillType != LifeSkillType.Cooking)
             {
                 if (_batchMakeItemToggle != null)
@@ -72,8 +73,8 @@ namespace ConvenienceFrontend.BatchMakeItem
             }
             else
             {
-                _batchMakeItemToggle.transform.parent.gameObject.SetActive(true);
                 _batchMakeItemToggle.isOn = false;
+                _batchMakeItemToggle.transform.parent.gameObject.SetActive(true);
             }
         }
 
@@ -81,6 +82,8 @@ namespace ConvenienceFrontend.BatchMakeItem
         [HarmonyPatch(typeof(UI_Make), "ConfirmMake")]
         public static bool UI_Make_ConfirmMake_Prefix(UI_Make __instance)
         {
+            if (_batchMakeItemToggle == null) return true;
+            if (!_batchMakeItemToggle.transform.parent.gameObject.active) return true;
             if (!_batchMakeItem) return true;
 
             var traverse = Traverse.Create(__instance);
