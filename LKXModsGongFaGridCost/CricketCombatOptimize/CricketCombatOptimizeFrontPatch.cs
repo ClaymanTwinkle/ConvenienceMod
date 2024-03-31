@@ -105,6 +105,48 @@ namespace ConvenienceFrontend.CricketCombatOptimize
         }
 
         /// <summary>
+        /// 跳过开头动画
+        /// </summary>
+        /// <param name="visible"></param>
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "RandomFirstMove")]
+        public static bool UI_CricketCombat_RandomFirstMove_Prefix(UI_CricketCombat __instance)
+        {
+            CricketView firstMoveJudger = __instance.CGet<CricketView>("FirstMoveJudger");
+            firstMoveJudger.gameObject.SetActive(value: false);
+
+            __instance.CGet<RectTransform>("BattleInfo").gameObject.SetActive(value: true);
+            var traverse = Traverse.Create(__instance);
+            bool _selfFirstMove = traverse.Field<bool>("_selfFirstMove").Value;
+            traverse.Method("CheckCanStartBattle").GetValue();
+            if (_selfFirstMove)
+            {
+                traverse.Method("ShowCombatStateInfo", LocalStringManager.Get(1520), -1f, 5f).GetValue();
+                SingletonObject.getInstance<YieldHelper>().DelaySecondsDo(0.5f, delegate
+                {
+                    ItemDomainHelper.MethodCall.GetWagerValueRange(__instance.Element.GameDataListenerId);
+                });
+            }
+            else
+            {
+                traverse.Method("ShowCombatStateInfo", LocalStringManager.Get(1521), -1f, 5f).GetValue();
+                SingletonObject.getInstance<YieldHelper>().DelaySecondsDo(0.5f, delegate
+                {
+                    traverse.Method("ShowCombatStateInfo", LocalStringManager.Get(1523), -1f, 5f).GetValue();
+                    __instance.CGet<Refers>("EnemyInfos").CGet<GameObject>("WagerState").SetActive(value: true);
+                    __instance.CGet<Refers>("EnemyInfos").CGet<TextMeshProUGUI>("WagerStateLabel").text = LocalStringManager.Get(1524);
+                    SingletonObject.getInstance<YieldHelper>().DelaySecondsDo(1f, delegate
+                    {
+                        ItemDomainHelper.MethodCall.CalcEnemyWager(__instance.Element.GameDataListenerId);
+                    });
+                });
+            }
+
+
+            return false;
+        }
+
+        /// <summary>
         /// 对方的蛐蛐都可见
         /// </summary>
         /// <param name="visible"></param>

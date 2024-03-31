@@ -41,23 +41,12 @@ namespace ConvenienceFrontend.TongdaoComabt
                 ____combatSkillOrderPlans = _tempCombatSkillOrderPlans;
                 _tempCombatSkillOrderPlans = null;
             }
-            // ProcessCombatTeam(short combatConfigId, int[] enemyTeam, out int[] selfTeam)
-            // UpdateAssistSkillList
-            // OnRenderProactiveSkill
-            foreach (short skillId in ____proactiveSkillList)
-            {
-                if (skillId > 0)
-                {
-                    Debug.Log(Config.CombatSkill.Instance[skillId].Name);
-                }
-            }
-            // 	private void OnRenderProactiveSkill(CombatSkillDisplayData skillData, CombatSkillView skillView)
         }
 
 
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_Combat), "OnRenderProactiveSkill")]
+        // [HarmonyPostfix]
+        // [HarmonyPatch(typeof(UI_Combat), "OnRenderProactiveSkill")]
         public static void UI_Combat_OnRenderProactiveSkill_Postfix(CombatSkillDisplayData skillData, CombatSkillView skillView)
         {
             Debug.Log("OnRenderProactiveSkill skillData = " + skillData.TemplateId);
@@ -91,7 +80,7 @@ namespace ConvenienceFrontend.TongdaoComabt
             for (var i = 0; i < _switchButton.Length; i++)
             {
                 if (_switchButton[i] != null && _switchButton[i].gameObject != null) continue;
-                _switchButton[i] = GameObjectCreationUtils.UGUICreateCButton(_selfTeammateHolder.parent, new Vector2(position.x - 100, position.y + 140 - (110 * i)), new Vector2(120, 50), 14, "同道替战");
+                _switchButton[i] = GameObjectCreationUtils.UGUICreateCButton(_selfTeammateHolder.parent, new Vector2(position.x - 100, position.y + 140 - (110 * i)), new Vector2(120, 50), 14, "同道代打");
 
                 var index = i;
                 _switchButton[i].ClearAndAddListener(delegate {
