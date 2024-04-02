@@ -80,7 +80,7 @@ namespace ConvenienceBackend.ProfessionOptimize
                     ProfessionData professionData = DomainManager.Extra.GetProfessionData(professionId);
                     ProfessionSkillItem skillConfig = professionData.GetSkillConfig(skillIndex);
                     DomainManager.TaiwuEvent.OnEvent_ProfessionSkillClicked(skillConfig.TemplateId);
-                    if (skillConfig.Instant)
+                    if (skillConfig.Instant && professionData.Seniority < 10000)
                     {
                         ProfessionSkillArg professionSkillArg = default;
                         professionSkillArg.ProfessionId = professionId;
@@ -189,6 +189,7 @@ namespace ConvenienceBackend.ProfessionOptimize
             list.Sort((x, y) => {
                 var yFeature = CharacterFeature.Instance[y];
                 var xFeature = CharacterFeature.Instance[x];
+                if (yFeature.Level != xFeature.Level) return yFeature.Level - xFeature.Level;
                 Func<FeatureMedals, int> selector = a =>
                 {
                     if (a.Values != null)
