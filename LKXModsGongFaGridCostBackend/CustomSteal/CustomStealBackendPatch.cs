@@ -12,6 +12,7 @@ using GameData.Domains.Item;
 using GameData.Domains.LifeRecord;
 using GameData.Domains.Map;
 using GameData.Domains.SpecialEffect.LegendaryBook.NpcEffect;
+using GameData.Domains.Taiwu.LifeSkillCombat.Status;
 using GameData.Domains.TaiwuEvent;
 using GameData.Domains.TaiwuEvent.EventHelper;
 using GameData.GameDataBridge;
@@ -199,46 +200,42 @@ namespace ConvenienceBackend.CustomSteal
         [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase")]
         public static void GetRobActionPhasePostfix(int selfCharId, int targetCharId, ref sbyte __result)
         {
-            if (selfCharId != DomainManager.Taiwu.GetTaiwuCharId() || _robMode != TryMode.SimulationMode) 
+            GameData.Domains.Character.Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
+            GameData.Domains.Character.Character character = DomainManager.Character.GetElement_Objects(targetCharId);
+            IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
+            OrganizationInfo organizationInfo = character.GetOrganizationInfo();
+            if (organizationInfo.SettlementId >= 0 && Config.Organization.Instance[organizationInfo.OrgTemplateId].IsCivilian && DomainManager.Character.HasGuard(targetCharId, character))
             {
-                stealLogger.Info("selfCharId != DomainManager.Taiwu.GetTaiwuCharId() || _robMode != TryMode.SimulationMode第" + (_retryCount + 1) + "次抢夺结果为：" + __result);
-                _retryCount = 0;
-                return;
+                sbyte fameType = character.GetFameType();
+                bool isHeretic = ((fameType == -2) ? random.NextBool() : (fameType < 3));
+                Location location = DomainManager.Organization.GetSettlement(organizationInfo.SettlementId).GetLocation();
+                sbyte stateTemplateIdByAreaId = DomainManager.Map.GetStateTemplateIdByAreaId(location.AreaId);
+                character = DomainManager.Character.GetPregeneratedCityTownGuard(stateTemplateIdByAreaId, isHeretic, organizationInfo.Grade);
             }
+            int value = _robValue;
 
-            if (__result >= 5)
+            stealLogger.Info("======================");
+            stealLogger.Info(string.Concat(new string[]
             {
-                stealLogger.Info("第" + (_retryCount + 1) + "次抢夺结果为：" + __result);
-                _retryCount = 0;
-                return;
-            }
-
-            if (_retryCount > _robValue)
-            {
-                _retryCount = 0;
-                return;
-            }
-
-            if (_retryCount == 0)
-            {
-                stealLogger.Info("======================");
-                stealLogger.Info(string.Concat(new string[]
-                {
                 "准备开始抢夺",
                 "，模拟抢夺次数为：",
-                _robValue.ToString(),
-                    "次"
-                }));
-            }
-
-            _retryCount++;
-            stealLogger.Info("第" + _retryCount + "次抢夺结果为：" + __result);
-
-            sbyte newResult = EventHelper.GetRobActionPhase(selfCharId, targetCharId);
-            if (newResult > __result)
+                value.ToString(),
+                "次"
+            }));
+            sbyte b = 0;
+            for (int i = 1; i < value; i++)
             {
-                __result = newResult;
+                int robActionPhase = element_Objects.GetRobActionPhase(random, character);
+                stealLogger.Info("第" + i.ToString() + "次抢夺结果为：" + _resultDesc[robActionPhase]);
+                b = (sbyte)Math.Max(b, robActionPhase);
+                if (b >= 5)
+                {
+                    break;
+                }
             }
+            stealLogger.Info("结束抢夺，最终结果为：" + _resultDesc[b]);
+            stealLogger.Info("======================");
+            __result = b;
         }
 
         /// <summary>
@@ -467,14 +464,14 @@ namespace ConvenienceBackend.CustomSteal
             for (int i = 1; i < value; i++)
             {
                 int stealActionPhase = element_Objects.GetStealActionPhase(random, character);
-                stealLogger.Info("第" + i.ToString() + "次偷窃结果为：" + stealResultDesc[stealActionPhase]);
+                stealLogger.Info("第" + i.ToString() + "次偷窃结果为：" + _resultDesc[stealActionPhase]);
                 b = (sbyte)Math.Max(b, stealActionPhase);
                 if (b >= 5)
                 {
                     break;
                 }
             }
-            stealLogger.Info("结束偷窃，最终结果为：" + stealResultDesc[b]);
+            stealLogger.Info("结束偷窃，最终结果为：" + _resultDesc[b]);
             stealLogger.Info("======================");
             __result = b;
         }
@@ -511,14 +508,14 @@ namespace ConvenienceBackend.CustomSteal
             for (int i = 1; i < value; i++)
             {
                 int stealActionPhase = element_Objects.GetStealCombatSkillActionPhase(random, character, type, grade);
-                stealLogger.Info("第" + i.ToString() + "次偷窃结果为：" + stealResultDesc[stealActionPhase]);
+                stealLogger.Info("第" + i.ToString() + "次偷窃结果为：" + _resultDesc[stealActionPhase]);
                 b = (sbyte)Math.Max(b, stealActionPhase);
                 if (b >= 5)
                 {
                     break;
                 }
             }
-            stealLogger.Info("结束偷窃，最终结果为：" + stealResultDesc[b]);
+            stealLogger.Info("结束偷窃，最终结果为：" + _resultDesc[b]);
             stealLogger.Info("======================");
             __result = b;
         }
@@ -554,14 +551,14 @@ namespace ConvenienceBackend.CustomSteal
             for (int i = 1; i < value; i++)
             {
                 int plotHarmActionPhase = element_Objects.GetPlotHarmActionPhase(random, character);
-                stealLogger.Info("第" + i.ToString() + "次暗害结果为：" + stealResultDesc[plotHarmActionPhase]);
+                stealLogger.Info("第" + i.ToString() + "次暗害结果为：" + _resultDesc[plotHarmActionPhase]);
                 b = (sbyte)Math.Max(b, plotHarmActionPhase);
                 if (b >= 5)
                 {
                     break;
                 }
             }
-            stealLogger.Info("结束暗害，最终结果为：" + stealResultDesc[b]);
+            stealLogger.Info("结束暗害，最终结果为：" + _resultDesc[b]);
             stealLogger.Info("======================");
             __result = b;
         }
@@ -570,7 +567,7 @@ namespace ConvenienceBackend.CustomSteal
         private static Logger stealLogger = LogManager.GetLogger("便利性模组合集");
 
         // Token: 0x04000002 RID: 2
-        private static string[] stealResultDesc = new string[]
+        private static string[] _resultDesc = new string[]
         {
             "失败-[0]寻物阶段失败",
             "失败-[1]藏匿阶段失败",
