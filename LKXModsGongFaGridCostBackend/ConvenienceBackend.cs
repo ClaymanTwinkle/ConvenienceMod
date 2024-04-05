@@ -16,6 +16,7 @@ using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
+using ConvenienceBackend.QuickStart;
 using ConvenienceBackend.TaiwuBuildingManager;
 using ConvenienceBackend.TongdaoCombat;
 using GameData.Common;
@@ -82,7 +83,8 @@ namespace ConvenienceBackend
             new AutoBreakBackendPatch(),
             // 同道战斗
             new TongdaoCombatBackendPatch(),
-
+            // 简易开局
+            new QuickStartBackendPatch()
         };
 
         public override void Initialize()

@@ -50,7 +50,6 @@ namespace ConvenienceBackend.CustomSteal
         /// </summary>
         private static int _robValue;
         private static TryMode _robMode = TryMode.SimulationMode;
-        private static int _retryCount = 0;
 
         private static TryMode[] _modeList = new TryMode[]
         {

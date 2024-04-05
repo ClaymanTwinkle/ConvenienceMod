@@ -14,34 +14,55 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
     {
         public unsafe static int CheckCharacterDataScore(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
+            var res = 0;
+
             // 古冢遗刻-功法书-书名
-            if (!CheckCombatSkillBookName(characterData, _config)) return 0;
+            if (CheckCombatSkillBookName(characterData, _config))
+            {
+                res++;
+            }
 
             // 全蓝特性
-            if (!CheckAllBlueFeatures(characterData, _config)) return 1;
+            if (CheckAllBlueFeatures(characterData, _config))
+            {
+                res++;
+            }
 
             // 特性
-            if (!CheckFeatureNames(characterData, _config)) return 2;
+            res += CheckFeatureNames(characterData, _config).Item2;
 
             // 古冢遗刻-功法书-总纲
-            if (!CheckCombatSkillGeneralPrinciples(characterData, _config)) return 3;
+            if (CheckCombatSkillGeneralPrinciples(characterData, _config))
+            {
+                res++;
+            }
 
             // 成长类型
-            if (!CheckQualificationGrowthType(characterData, _config)) return 4;
+            res += CheckQualificationGrowthType(characterData, _config).Item2;
+
 
             // 主要属性
-            if (!CheckMainAttributeValue(characterData, _config)) return 5;
+            res += CheckMainAttributeValue(characterData, _config).Item2;
 
-            // 资质
-            if (!CheckQualificationsValue(characterData, _config)) return 6;
+            // 武学资质
+            res += CheckCombatSkillQualificationsValue(characterData, _config).Item2;
+
+            // 技艺资质
+            res += CheckLifeSkillQualificationsValue(characterData, _config).Item2;
 
             // 古冢遗刻-技艺书
-            if (!CheckLifeSkillBookName(characterData, _config)) return 7;
+            if (CheckLifeSkillBookName(characterData, _config))
+            {
+                res++;
+            }
 
             // 古冢遗刻-功法书-正逆练
-            if (!CheckCombatSkillDirectAndReverse(characterData, _config)) return 8;
+            if (CheckCombatSkillDirectAndReverse(characterData, _config))
+            {
+                res++;
+            }
 
-            return 100;
+            return res;
         }
 
         public unsafe static bool CheckCharacterDataValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
@@ -50,16 +71,19 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             if (!CheckAllBlueFeatures(characterData, _config)) return false;
 
             // 特性
-            if (!CheckFeatureNames(characterData, _config)) return false;
+            if (!CheckFeatureNames(characterData, _config).Item1) return false;
 
             // 成长类型
-            if (!CheckQualificationGrowthType(characterData, _config)) return false;
+            if (!CheckQualificationGrowthType(characterData, _config).Item1) return false;
 
-            // 资质
-            if (!CheckQualificationsValue(characterData, _config)) return false;
+            // 武学资质
+            if (!CheckCombatSkillQualificationsValue(characterData, _config).Item1) return false;
 
             // 主要属性
-            if (!CheckMainAttributeValue(characterData, _config)) return false;
+            if (!CheckMainAttributeValue(characterData, _config).Item1) return false;
+
+            // 技艺资质
+            if (!CheckLifeSkillQualificationsValue(characterData, _config).Item1) return false;
 
             // 古冢遗刻-技艺书
             if (!CheckLifeSkillBookName(characterData, _config)) return false;
@@ -91,22 +115,25 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             return true;
         }
 
-        private unsafe static bool CheckFeatureNames(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        private unsafe static (bool, int) CheckFeatureNames(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
             string[] filterFeatureList = (_config.GetTypedValue<string>("InputField_FilterAllFeatures") ?? "").Split(' ');
+            var res = filterFeatureList.Length;
             if (filterFeatureList.Length > 0)
             {
                 var featureNameList = characterData.featureIds.ConvertAll<string>(x => Config.CharacterFeature.Instance[x].Name);
                 foreach (var featureName in filterFeatureList)
                 {
-                    if (featureName.Trim().Length > 0 && !featureNameList.Contains(featureName)) { return false; }
+                    if (featureName.Trim().Length > 0 && !featureNameList.Contains(featureName)) { res --; }
                 }
             }
-            return true;
+            return (res == filterFeatureList.Length, res);
         }
 
-        private unsafe static bool CheckQualificationGrowthType(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        private unsafe static (bool, int) CheckQualificationGrowthType(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
+            var res = 14 + 16;
+
             // 技艺成长
             JArray lifeSkillGrowthTypeJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationGrowthType") ?? new JArray();
             if (lifeSkillGrowthTypeJArray.Count > 0)
@@ -117,7 +144,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                     {
                         if (item)
                         {
-                            return false;
+                            res -= 16;
                         }
                     }
                 }
@@ -134,38 +161,17 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                     {
                         if (item)
                         {
-                            return false;
+                            res -= 14;
                         }
                     }
                 }
             }
-            return true;
+            return (res == 30, res);
         }
 
-        private unsafe static bool CheckQualificationsValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        private unsafe static (bool, int) CheckCombatSkillQualificationsValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
-            // 技艺资质
-            JArray lifeSkillQualificationsTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationsTypes") ?? new JArray();
-            if (lifeSkillQualificationsTypesJArray.Count > 0)
-            {
-                var lifeSkillQualificationsValue = (float)_config.GetTypedValue<Double>("SliderBar_LifeSkillQualificationsValue");
-
-                fixed (short* ptr = characterData.lifeSkillQualifications_ForDisplay.Items)
-                {
-                    short* ptr2 = ptr;
-                    for (sbyte i = 0; i < 16; i += 1)
-                    {
-                        if ((bool)lifeSkillQualificationsTypesJArray[i])
-                        {
-                            short item = ptr2[i];
-                            if (item < lifeSkillQualificationsValue)
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
+            var res = 14;
 
             //功法资质
             JArray combatSkillQualificationsTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterCombatSkillQualificationsTypes") ?? new JArray();
@@ -184,18 +190,105 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                             short item2 = ptr4[b2];
                             if (item2 < combatSkillQualificationsValue)
                             {
-                                return false;
+                                res--;
                             }
                         }
                     }
                 }
             }
 
-            return true;
+            return (res == 14, res);
         }
 
-        private unsafe static bool CheckMainAttributeValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        public static (bool, int, int) CheckCombatSkillQualificationsValue(Config.OrganizationMemberItem organizationMemberItem, Dictionary<string, System.Object> _config)
         {
+            var max = 0;
+            var res = 0;
+            var weight = 0;
+
+            //功法资质
+            JArray combatSkillQualificationsTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterCombatSkillQualificationsTypes") ?? new JArray();
+            if (combatSkillQualificationsTypesJArray.Count > 0)
+            {
+                for (sbyte b2 = 0; b2 < 14; b2 += 1)
+                {
+                    if ((bool)combatSkillQualificationsTypesJArray[b2])
+                    {
+                        max++;
+
+                        if (organizationMemberItem.CombatSkillsAdjust[b2] > 0)
+                        {
+                            res++;
+                            weight += organizationMemberItem.CombatSkillsAdjust[b2];
+                        }
+                    }
+                }
+            }
+
+            return (res == max, res, weight);
+        }
+
+        private unsafe static (bool, int) CheckLifeSkillQualificationsValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        {
+            var res = 16;
+
+            // 技艺资质
+            JArray lifeSkillQualificationsTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationsTypes") ?? new JArray();
+            if (lifeSkillQualificationsTypesJArray.Count > 0)
+            {
+                var lifeSkillQualificationsValue = (float)_config.GetTypedValue<Double>("SliderBar_LifeSkillQualificationsValue");
+
+                fixed (short* ptr = characterData.lifeSkillQualifications_ForDisplay.Items)
+                {
+                    short* ptr2 = ptr;
+                    for (sbyte i = 0; i < 16; i += 1)
+                    {
+                        if ((bool)lifeSkillQualificationsTypesJArray[i])
+                        {
+                            short item = ptr2[i];
+                            if (item < lifeSkillQualificationsValue)
+                            {
+                                res--;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (res == 16, res);
+        }
+
+        public static (bool, int, int) CheckLifeSkillQualificationsValue(Config.OrganizationMemberItem organizationMemberItem, Dictionary<string, System.Object> _config)
+        {
+            var max = 0;
+            var res = 0;
+            var weight = 0;
+
+            // 技艺资质
+            JArray lifeSkillQualificationsTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterLifeSkillQualificationsTypes") ?? new JArray();
+            if (lifeSkillQualificationsTypesJArray.Count > 0)
+            {
+                for (sbyte i = 0; i < 16; i += 1)
+                {
+                    if ((bool)lifeSkillQualificationsTypesJArray[i])
+                    {
+                        max++;
+                        if (organizationMemberItem.LifeSkillsAdjust[i] > 0)
+                        {
+                            res++;
+                            weight += organizationMemberItem.LifeSkillsAdjust[i];
+                        }
+                    }
+                }
+            }
+
+            return (res == max, res, weight);
+        }
+
+        private unsafe static (bool, int) CheckMainAttributeValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        {
+            var res = 6;
+
             JArray mainAttributeTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterMainAttributeTypes") ?? new JArray();
             if (mainAttributeTypesJArray.Count > 0)
             {
@@ -212,13 +305,39 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                             short item3 = ptr6[b3];
                             if (item3 < minMainAttributeValue)
                             {
-                                return false;
+                                res--;
                             }
                         }
                     }
                 }
             }
-            return true;
+            return (res == 6, res);
+        }
+
+        public static (bool, int, int) CheckMainAttributeValue(Config.OrganizationMemberItem organizationMemberItem, Dictionary<string, System.Object> _config)
+        {
+            var max = 0;
+            var res = 0;
+            var weight = 0;
+
+            JArray mainAttributeTypesJArray = (JArray)_config.GetTypedValue<JArray>("ToggleGroup_FilterMainAttributeTypes") ?? new JArray();
+            if (mainAttributeTypesJArray.Count > 0)
+            {
+                for (sbyte b3 = 0; b3 < 6; b3 += 1)
+                {
+                    if ((bool)mainAttributeTypesJArray[b3])
+                    {
+                        max++;
+
+                        if (organizationMemberItem.MainAttributesAdjust[b3] > 0)
+                        {
+                            res++;
+                            weight += organizationMemberItem.MainAttributesAdjust[b3];
+                        }
+                    }
+                }
+            }
+            return (max == res, res, weight);
         }
 
         private static bool CheckLifeSkillBookName(TempCharacterData characterData, Dictionary<string, System.Object> _config)

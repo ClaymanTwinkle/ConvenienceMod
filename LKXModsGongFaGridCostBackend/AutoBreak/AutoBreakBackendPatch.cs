@@ -27,7 +27,7 @@ namespace ConvenienceBackend.AutoBreak
         [HarmonyPatch(typeof(TaiwuDomain), "InitSkillBreakPlate")]
         public static void Taiwu_Init_PostPatch(DataContext context, GameData.Domains.Taiwu.SkillBreakPlate plate, short skillId, TaiwuDomain __instance)
         {
-            if (!_isAutoBreak) return;
+            // if (!_isAutoBreak) return;
 
             var totalStepCount = plate.TotalStepCount;
             var pageIndex = CombatSkillStateHelper.GetNormalPageInternalIndex(1, 4);
