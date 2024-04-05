@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using ConvenienceFrontend.AutoBreak;
 using ConvenienceFrontend.Bandit;
 using ConvenienceFrontend.BatchMakeItem;
+using ConvenienceFrontend.BetterReading;
 using ConvenienceFrontend.CombatSimulator;
 using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CricketCombatOptimize;
@@ -88,6 +89,8 @@ namespace ConvenienceFrontend
             new ShopShortcutFrontPatch(),
             // 同道战斗
             new TongdaoFrontPatch(),
+            // 更好的读书
+            new BetterReadingFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

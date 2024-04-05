@@ -269,5 +269,15 @@ namespace ConvenienceFrontend.CricketCombatOptimize
                 onConfirmQuitGameStateCallback = null;
             }
         }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Sequence), "DoAppendInterval")]
+        public static void Sequence_AppendInterval_Prefix(ref float interval)
+        {
+            if (_isInCricketCombat)
+            {
+                interval /= 10;
+            }
+        }
     }
 }

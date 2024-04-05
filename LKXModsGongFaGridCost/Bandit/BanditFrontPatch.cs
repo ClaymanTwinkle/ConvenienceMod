@@ -34,8 +34,15 @@ namespace ConvenienceFrontend.Bandit
             if (displayingEventData == null) return;
             var eventGuid = displayingEventData.EventGuid;
 
+            if (eventGuid.Equals("f3495f3e-4d0c-4b70-8872-eedd1a4b2b3a") && !displayingEventData.EventContent.Contains("杀得大败，只得悻悻离去"))
+            {
+                eventGuid = "";
+                return;
+            }
+
             switch (eventGuid)
             {
+                case "f3495f3e-4d0c-4b70-8872-eedd1a4b2b3a":
                 case "aee604fc-c0b8-468e-bf51-8665e2844c00":
                 case "ad16ffb4-63fa-4282-b67c-c784beecdf0c":
                 case "ed52b469-6369-40be-8090-6f18d4cc431c":
@@ -74,7 +81,7 @@ namespace ConvenienceFrontend.Bandit
                             CharacterDomainHelper.MethodCall.AddKidnappedCharacter(taiwuCharId, charData.CharacterId, ropeItemKey);
 
                             var info = displayingEventData.EventOptionInfos.Find((EventOptionInfo x) => {
-                                return x.OptionContent.Contains("任其离开");
+                                return x.OptionContent.Contains("任其离开") || x.OptionContent.Contains("如此便好");
                             });
                             Traverse.Create(__instance).Method("SelectOption", new object[]
                             {

@@ -38,6 +38,7 @@
     <Compile Include="Bandit\BanditFrontPatch.cs" />
     <Compile Include="BaseFrontPatch.cs" />
     <Compile Include="BatchMakeItem\BatchMakeItemFrontPatch.cs" />
+    <Compile Include="BetterReading\BetterReadingFrontPatch.cs" />
     <Compile Include="CombatSimulator\CombatSimulatorFrontPatch.cs" />
     <Compile Include="CombatStrategy\BackendSettings.cs" />
     <Compile Include="CombatStrategy\BaseTypeContractResolver.cs" />
