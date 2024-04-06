@@ -366,12 +366,26 @@ namespace ConvenienceBackend.CombatStrategy
                     {
                         minJumpPosition = (int)selfChar.GetAttackRange().Outer;
                     }
-                    int num4 = (int)(currentDistance - selfChar.GetJumpPreparedDistance());
-                    if ((minJumpPosition == (int)min && num4 <= minJumpPosition) || 
+                    int preparedDistance = (int)(currentDistance - selfChar.GetJumpPreparedDistance()); // 以当前蓄力准备要跳到的位置
+                    if ((minJumpPosition == (int)min && minJumpPosition>0 && preparedDistance <= minJumpPosition) || 
                         num2 < minJumpPosition || 
                         (int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward
                         )
                     {
+                        //if ((minJumpPosition == (int)min && num4 <= minJumpPosition))
+                        //{
+                        //    _logger.Info("停止移动因为minJumpPosition == (int)min && num4 <= minJumpPosition, minJumpPosition="+ minJumpPosition+", min="+min+ ", num4="+ num4);
+                        //}
+                        //else if (num2 < minJumpPosition)
+                        //{
+                        //    _logger.Info("停止移动因为num2 < minJumpPosition, minJumpPosition=" + minJumpPosition + ", num2=" + num2);
+
+                        //}
+                        //else
+                        //{
+                        //    _logger.Info("停止移动因为(int)currentDistance < _settings.TargetDistance + _settings.DistanceAllowJumpForward, currentDistance=" + currentDistance + ", _settings.TargetDistance=" + _settings.TargetDistance + ", _settings.DistanceAllowJumpForward="+ _settings.DistanceAllowJumpForward);
+                        //}
+
                         instance.SetMoveState(0, true);
                     }
                     else

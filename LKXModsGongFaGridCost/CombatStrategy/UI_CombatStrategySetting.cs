@@ -131,8 +131,8 @@ namespace ConvenienceFrontend.CombatStrategy
             Transform parent2 = UIUtils.CreateRow(transform);
             base.AddMono(UIUtils.CreateToggle(parent2, "JumpPassTargetDistance", "允许", "禁止", null, "跳过目标距离"), "JumpPassTargetDistance");
             base.AddMono(UIUtils.CreateToggle(parent2, "JumpOutOfAttackRange", "允许", "禁止", null, "跳出攻击范围"), "JumpOutOfAttackRange");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MinJumpPosition", 20, 120, 10, "f1", "如果向前跳跃落点会越过", "距离，则停止跳跃蓄力"), "MinJumpPosition");
-            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MaxJumpPosition", 20, 120, 10, "f1", "如果向后跳跃落点会越过", "距离，则停止跳跃蓄力"), "MaxJumpPosition");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MinJumpPosition", 0, 120, 10, "f1", "如果向前跳跃落点会越过", "距离，则停止跳跃蓄力"), "MinJumpPosition");
+            base.AddMono(UIUtils.CreateSliderBar(UIUtils.CreateRow(transform), "MaxJumpPosition", 0, 120, 10, "f1", "如果向后跳跃落点会越过", "距离，则停止跳跃蓄力"), "MaxJumpPosition");
             CToggle ctoggle = UIUtils.CreateToggle(UIUtils.CreateRow(transform), "AllowOppositeMoveInJumpingSkill", "允许", "禁止", null, "向跳跃方向的相反方向移动");
             base.AddMono(ctoggle, "AllowOppositeMoveInJumpingSkill");
         }
