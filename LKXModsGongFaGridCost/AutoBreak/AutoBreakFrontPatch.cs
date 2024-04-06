@@ -46,12 +46,6 @@ namespace ConvenienceFrontend.AutoBreak
             _autoBreakButton.ClearAndAddListener(delegate ()
             {
                 var traverse = Traverse.Create(__instance);
-                var DaysInCurrMonth = 30 - SingletonObject.getInstance<BasicGameData>().DaysInCurrMonth;
-                if (DaysInCurrMonth < 10)
-                {
-                    UIUtils.ShowTips("本月天数不足", "自动突破需要消耗10天，本月天数（"+ DaysInCurrMonth + "）不足，不能自动突破");
-                    return;
-                }
                 var _skillId = traverse.Field<short>("_skillId").Value;
                 CombatSkillDisplayData skillData = SingletonObject.getInstance<CombatSkillModel>().Get(SingletonObject.getInstance<BasicGameData>().TaiwuCharId, _skillId);
                 var _currentExp = traverse.Field<int>("_currentExp").Value;

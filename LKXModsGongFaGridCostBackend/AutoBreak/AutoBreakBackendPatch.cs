@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using ConvenienceBackend.MergeBookPanel;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.CombatSkill;
@@ -12,11 +13,14 @@ using GameData.Domains.Taiwu;
 using GameData.GameDataBridge;
 using GameData.Utilities;
 using HarmonyLib;
+using NLog;
 
 namespace ConvenienceBackend.AutoBreak
 {
     internal class AutoBreakBackendPatch : BaseBackendPatch
     {
+        private static Logger _logger = LogManager.GetLogger("自动突破");
+
         private static bool _isAutoBreak = false;
 
         public override void OnModSettingUpdate(string modIdStr)
@@ -149,12 +153,6 @@ namespace ConvenienceBackend.AutoBreak
             }
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(TaiwuDomain), "AutoBreakOut")]
-        public static void Taiwu_AutoBreakOute_PrePatch(TaiwuDomain __instance, DataContext context, short skillTemplateId, ushort selectedPages, ref SkillBreakBonusCollection __result)
-        {
-            _isAutoBreak = true;
-        }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(TaiwuDomain), "AutoBreakOut")]
@@ -163,24 +161,26 @@ namespace ConvenienceBackend.AutoBreak
             _isAutoBreak = false;
         }
 
-        //[HarmonyPrefix]
-        //[HarmonyPatch(typeof(TaiwuDomain), "AutoBreakOut")]
-        //public static bool Taiwu_AutoBreakOute_PostPatch(TaiwuDomain __instance, DataContext context, short skillTemplateId, ushort selectedPages, ref SkillBreakBonusCollection __result)
-        //{
-        //    var plate = __instance.GetElement_SkillBreakPlateDict(skillTemplateId);
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "AutoBreakOut")]
+        public static bool Taiwu_AutoBreakOute_PrePatch(TaiwuDomain __instance, DataContext context, short skillTemplateId, ushort selectedPages, Dictionary<short, SkillBreakBonusCollection> ____skillBreakBonusDict, ref SkillBreakBonusCollection __result)
+        {
+            _isAutoBreak = true;
 
-        //    var traverse = Traverse.Create(__instance);
-        //    traverse.Method("AutoBreak_Init", context, plate, skillTemplateId, null).GetValue();
-        //    GameData.Domains.Character.Character taiwu = DomainManager.Taiwu.GetTaiwu();
-        //    int newUnderstandingNeedExp = DomainManager.CombatSkill.GetNewUnderstandingNeedExp(taiwu.GetId(), skillTemplateId);
-        //    taiwu.ChangeExp(context, -newUnderstandingNeedExp);
-        //    DomainManager.World.AdvanceDaysInMonth(context, 10);
-
-        //    Dictionary<short, SkillBreakBonusCollection> _skillBreakBonusDict = traverse.Field<Dictionary<short, SkillBreakBonusCollection>>("_skillBreakBonusDict").Value;
-
-        //    __result = _skillBreakBonusDict[skillTemplateId];
-
-        //    return false;
-        //}
+            var traverse = Traverse.Create(__instance);
+            GameData.Domains.Taiwu.SkillBreakPlate plate;
+            do
+            {
+                traverse.Method("RemoveElement_SkillBreakPlateDict", skillTemplateId, context).GetValue();
+                plate = __instance.EnterSkillBreakPlate(context, skillTemplateId, selectedPages);
+            }
+            while (!__instance.CallPrivateMethod<bool>("AutoBreak_Init", context, plate, skillTemplateId, null));
+            GameData.Domains.Character.Character taiwu = __instance.GetTaiwu();
+            int newUnderstandingNeedExp = DomainManager.CombatSkill.GetNewUnderstandingNeedExp(taiwu.GetId(), skillTemplateId);
+            _logger.Info("自动突破消耗历练 " + newUnderstandingNeedExp);
+            taiwu.ChangeExp(context, -newUnderstandingNeedExp);
+            __result = ____skillBreakBonusDict[skillTemplateId];
+            return false;
+        }
     }
 }
