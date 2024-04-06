@@ -41,7 +41,7 @@ namespace ConvenienceFrontend.CombatStrategy
         public bool JumpOutOfAttackRange = true;
 
         // Token: 0x0400001C RID: 28
-        public int MinJumpPosition = 20;
+        public int MinJumpPosition = 0;
 
         // Token: 0x0400001D RID: 29
         public int MaxJumpPosition = 120;
