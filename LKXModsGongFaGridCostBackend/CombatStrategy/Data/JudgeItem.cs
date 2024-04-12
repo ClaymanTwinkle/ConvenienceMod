@@ -98,5 +98,10 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// 变招数量
         /// </summary>
         NumOfChangeTrickCount,
+
+        /// <summary>
+        /// 是否有装备技能
+        /// </summary>
+        EquippingSkill,
     }
 }

@@ -914,6 +914,25 @@ namespace ConvenienceBackend.CombatStrategy
                             meetTheConditions = CheckCondition(combatCharacter.GetChangeTrickCount(), condition);
                         }
                         break;
+                    case JudgeItem.EquippingSkill:
+                        {
+                            var skillId = (short)condition.subType;
+                            CombatSkillData skillData = SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), skillId);
+
+                            if (condition.value == 0 && skillData != null)
+                            {
+                                meetTheConditions = true;
+                            }
+                            else if (condition.value == 1 && skillData == null)
+                            {
+                                meetTheConditions = true;
+                            }
+                            else
+                            {
+                                meetTheConditions = false;
+                            }
+                        }
+                        break;
                     default:
                         meetTheConditions = false;
                         break;

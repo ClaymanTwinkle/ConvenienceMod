@@ -88,7 +88,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 stringBuilder.Append(StrategyConst.SatisfiedorDissatisfied[value]).Append(' ');
             }
-            else if (judgeItem == JudgeItem.AffectingSkill)
+            else if (judgeItem == JudgeItem.AffectingSkill || judgeItem == JudgeItem.EquippingSkill)
             {
                 stringBuilder.Append(StrategyConst.YesOrNo[value]).Append(' ');
             }
