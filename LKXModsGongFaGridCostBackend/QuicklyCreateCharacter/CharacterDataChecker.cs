@@ -12,8 +12,9 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
 {
     internal class CharacterDataChecker
     {
-        public unsafe static int CheckCharacterDataScore(TempCharacterData characterData, Dictionary<string, System.Object> _config)
+        public unsafe static (bool, int) CheckCharacterDataScore(TempCharacterData characterData, Dictionary<string, System.Object> _config)
         {
+            var isOk = true;
             var res = 0;
 
             // 古冢遗刻-功法书-书名
@@ -21,39 +22,65 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             {
                 res++;
             }
+            else 
+            {
+                isOk = false;
+            }
 
             // 全蓝特性
             if (CheckAllBlueFeatures(characterData, _config))
             {
                 res++;
             }
+            else
+            {
+                isOk = false;
+            }
 
             // 特性
-            res += CheckFeatureNames(characterData, _config).Item2;
+            var checkFeatureNames = CheckFeatureNames(characterData, _config);
+            res += checkFeatureNames.Item2;
+            isOk &= checkFeatureNames.Item1;
 
             // 古冢遗刻-功法书-总纲
             if (CheckCombatSkillGeneralPrinciples(characterData, _config))
             {
                 res++;
             }
+            else
+            {
+                isOk = false;
+            }
 
             // 成长类型
-            res += CheckQualificationGrowthType(characterData, _config).Item2;
+            var checkQualificationGrowthType = CheckQualificationGrowthType(characterData, _config);
+            res += checkQualificationGrowthType.Item2;
+            isOk &= checkQualificationGrowthType.Item1;
 
 
             // 主要属性
-            res += CheckMainAttributeValue(characterData, _config).Item2;
+            var checkMainAttributeValue = CheckMainAttributeValue(characterData, _config);
+            res += checkMainAttributeValue.Item2;
+            isOk &= checkMainAttributeValue.Item1;
 
             // 武学资质
-            res += CheckCombatSkillQualificationsValue(characterData, _config).Item2;
+            var checkCombatSkillQualificationsValue = CheckCombatSkillQualificationsValue(characterData, _config);
+            res += checkCombatSkillQualificationsValue.Item2;
+            isOk &= checkCombatSkillQualificationsValue.Item1;
 
             // 技艺资质
-            res += CheckLifeSkillQualificationsValue(characterData, _config).Item2;
+            var checkLifeSkillQualificationsValue = CheckLifeSkillQualificationsValue(characterData, _config);
+            res += checkLifeSkillQualificationsValue.Item2;
+            isOk &= checkLifeSkillQualificationsValue.Item1;
 
             // 古冢遗刻-技艺书
             if (CheckLifeSkillBookName(characterData, _config))
             {
                 res++;
+            }
+            else
+            {
+                isOk = false;
             }
 
             // 古冢遗刻-功法书-正逆练
@@ -61,8 +88,12 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             {
                 res++;
             }
+            else
+            {
+                isOk = false;
+            }
 
-            return res;
+            return (isOk, res);
         }
 
         public unsafe static bool CheckCharacterDataValue(TempCharacterData characterData, Dictionary<string, System.Object> _config)

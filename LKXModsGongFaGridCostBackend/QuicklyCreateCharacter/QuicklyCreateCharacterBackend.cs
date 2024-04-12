@@ -199,15 +199,14 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             // 返回结果
             var characterData = new TempCharacterData(character, statusValue, lifeSkillQualificationGrowthType, combatSkillQualificationGrowthType, featureIds, lifeSkill__ForOverwrite, combatSkill_ForOverwrite, baseMainAttributes, lifeSkill__ForDisplay, combatSkill_ForDisplay, maxMainAttributes, itemDataValue);
 
-            var matchScore = CharacterDataChecker.CheckCharacterDataScore(characterData, ConvenienceBackend.Config);
-            var isOk = matchScore == 100;
+            var (isOk, matchScore) = CharacterDataChecker.CheckCharacterDataScore(characterData, ConvenienceBackend.Config);
             if ( QuicklyCreateCharacterBackend.characterData == null || !_keepGoodResult || isOk)
             {
                 QuicklyCreateCharacterBackend.characterData = characterData;
             }
             else if (_keepGoodResult)
             {
-                var currentMatchScore = CharacterDataChecker.CheckCharacterDataScore(QuicklyCreateCharacterBackend.characterData, ConvenienceBackend.Config);
+                var currentMatchScore = CharacterDataChecker.CheckCharacterDataScore(QuicklyCreateCharacterBackend.characterData, ConvenienceBackend.Config).Item2;
 
                 if (matchScore == currentMatchScore &&
                     characterData.CalcScope() > QuicklyCreateCharacterBackend.characterData.CalcScope())
