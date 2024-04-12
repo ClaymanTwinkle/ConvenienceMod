@@ -103,5 +103,11 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// 是否有装备技能
         /// </summary>
         EquippingSkill,
+
+
+        /// <summary>
+        /// 正逆练
+        /// </summary>
+        DirectionSkill,
     }
 }

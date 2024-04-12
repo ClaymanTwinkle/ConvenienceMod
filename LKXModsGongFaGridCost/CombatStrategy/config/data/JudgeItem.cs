@@ -110,6 +110,12 @@ namespace ConvenienceFrontend.CombatStrategy
         /// <summary>
         /// 是否有装备技能
         /// </summary>
-        EquippingSkill
+        EquippingSkill,
+
+
+        /// <summary>
+        /// 正逆练
+        /// </summary>
+        DirectionSkill,
     }
 }

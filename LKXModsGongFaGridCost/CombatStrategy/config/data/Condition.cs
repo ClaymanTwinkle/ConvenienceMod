@@ -74,7 +74,7 @@ namespace ConvenienceFrontend.CombatStrategy
                 }
             }
             stringBuilder.Append(uiItem.Name).Append(' ');
-            
+
             // value
             if (judgeItem == JudgeItem.WeaponType)
             {
@@ -91,6 +91,10 @@ namespace ConvenienceFrontend.CombatStrategy
             else if (judgeItem == JudgeItem.AffectingSkill || judgeItem == JudgeItem.EquippingSkill)
             {
                 stringBuilder.Append(StrategyConst.YesOrNo[value]).Append(' ');
+            }
+            else if (judgeItem == JudgeItem.DirectionSkill)
+            {
+                stringBuilder.Append(StrategyConst.SkillDirection[value]).Append(' ');
             }
             else if (judgeItem == JudgeItem.CurrentTrick)
             {

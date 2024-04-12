@@ -933,6 +933,14 @@ namespace ConvenienceBackend.CombatStrategy
                             }
                         }
                         break;
+                    case JudgeItem.DirectionSkill:
+                        {
+                            var skillId = (short)condition.subType;
+                            GameData.Domains.CombatSkill.CombatSkill skill = SkillUtils.GetCombatSkill(selfChar.GetId(), skillId);
+
+                            meetTheConditions = condition.value == skill.GetDirection();
+                        }
+                        break;
                     default:
                         meetTheConditions = false;
                         break;

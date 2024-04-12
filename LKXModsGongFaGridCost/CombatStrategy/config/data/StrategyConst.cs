@@ -66,6 +66,7 @@ namespace ConvenienceFrontend.CombatStrategy
             new StrategyConst.Item("已施展次数", true, 1f, -1, true, 0),             // 17
             new StrategyConst.Item("变招数量", true, 1f, -1, false, 0),            // 18
             new StrategyConst.Item("装备功法", false, 1f, 5, true, -1),            // 19
+            new StrategyConst.Item("功法突破状态", false, 1f, 9, true, -1),         // 20
         };
 
         // Token: 0x04000031 RID: 49
@@ -88,6 +89,11 @@ namespace ConvenienceFrontend.CombatStrategy
             "否"
         };
 
+        public static readonly string[] SkillDirection = new string[]
+        {
+            "正练",
+            "逆练"
+        };
 
         // Token: 0x04000033 RID: 51
         public static readonly string[] SkillTypeOptions = new string[]
@@ -268,7 +274,8 @@ namespace ConvenienceFrontend.CombatStrategy
             YesOrNo,                         // 5
             SatisfiedorDissatisfied,         // 6
             GetSpecialEffectNameList().ToArray(),  // 7
-            CharacterAttribute
+            CharacterAttribute, // 8
+            SkillDirection,     // 9
         };
 
         // Token: 0x02000014 RID: 20
