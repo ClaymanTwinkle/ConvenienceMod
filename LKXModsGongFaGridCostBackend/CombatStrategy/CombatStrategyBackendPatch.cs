@@ -565,6 +565,7 @@ namespace ConvenienceBackend.CombatStrategy
                             if (strategy.changeTrickAction.body == null) break;
                             var bodyId = Config.BodyPart.Instance[strategy.changeTrickAction.body]?.TemplateId;
                             if (bodyId == null) break;
+                            if (selfChar.GetChangeTrickAttack()) break;
                             _logger.Info("变招[" + strategy.changeTrickAction.trick + "]" + "击打["+ strategy.changeTrickAction.body + "]");
                             instance.SelectChangeTrick(context, (sbyte)trickId, (sbyte)bodyId, true);
                             execedStrategyList.Add(strategy);
