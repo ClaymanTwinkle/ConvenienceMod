@@ -27,7 +27,7 @@ namespace ConvenienceFrontend
         {
             GEvent.Remove(EEvents.OnGameResourceReady, OnGameResourceReady);
 
-            // SingletonObject.getInstance<GlobalSettings>().Resolution = new Vector2Int(2560, 1440);
+            SingletonObject.getInstance<GlobalSettings>().Resolution = new Vector2Int(2560, 1440);
         }
     }
 }

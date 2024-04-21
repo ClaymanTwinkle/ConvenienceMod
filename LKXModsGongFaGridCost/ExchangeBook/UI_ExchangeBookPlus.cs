@@ -546,6 +546,7 @@ namespace ConvenienceFrontend.ExchangeBook
             if (flag)
             {
                 ItemDisplayData data = itemView.Data;
+                data.ItemSourceType = ItemSourceType.Inventory.ToSbyte();
                 this._exchangeList.Add(data);
                 this._currItems.Remove(data);
                 this.UpdateShopDisplay();
@@ -658,9 +659,11 @@ namespace ConvenienceFrontend.ExchangeBook
                     EventActorData eventActorData = new EventActorData();
                     eventActorData.AvatarData = new AvatarData();
                     TaiwuEventDomainHelper.MethodCall.StartNewDialog(this._taiwuId, characterId, "换书", "换书", eventActorData, eventActorData);
-                    MerchantDomainHelper.MethodCall.ExchangeBook(characterId, boughtItems, new List<ItemDisplayData>(), num, arg);
+                    MerchantDomainHelper.MethodCall.GetTradeBookDisplayData(-1, characterId, !_isCombatSkill);
+                    MerchantDomainHelper.MethodCall.ExchangeBook(characterId, boughtItems, null, num, arg);
+                    MerchantDomainHelper.MethodCall.FinishBookTrade(characterId, !_isCombatSkill);
                     num2 = 0;
-                    boughtItems.Clear();
+                    boughtItems = new List<ItemDisplayData>();
                 }
             }
             this._exchangeList.Clear();
@@ -696,7 +699,7 @@ namespace ConvenienceFrontend.ExchangeBook
                     this._npcItems.Add(this._npcDatas[index].CharacterId, list);
                     foreach (ItemDisplayData itemDisplayData in list)
                     {
-                        bool flag = SkillBook.Instance[itemDisplayData.Key.TemplateId].ItemSubType == 1000;
+                        bool flag = SkillBook.Instance[itemDisplayData.Key.TemplateId].ItemSubType == ItemSubType.LifeSkillBook;
                         if (flag)
                         {
                             itemDisplayData.SpecialArg = index;
@@ -731,7 +734,7 @@ namespace ConvenienceFrontend.ExchangeBook
                 }
                 else
                 {
-                    num2 = totalBooks + list.Count((ItemDisplayData data) => SkillBook.Instance[data.Key.TemplateId].ItemSubType == 1000);
+                    num2 = totalBooks + list.Count((ItemDisplayData data) => SkillBook.Instance[data.Key.TemplateId].ItemSubType == ItemSubType.LifeSkillBook);
                 }
                 totalBooks = num2;
             }

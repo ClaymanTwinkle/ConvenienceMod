@@ -4,7 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GameData.Common;
+using GameData.Domains;
 using GameData.Domains.Global;
+using GameData.Domains.Item;
+using GameData.Domains.Item.Display;
+using GameData.Domains.Merchant;
 using GameData.Domains.Taiwu;
 using GameData.GameDataBridge;
 using GameData.Utilities;
@@ -29,6 +33,19 @@ namespace ConvenienceBackend.QuickStart
             }
 
             return true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(MerchantDomain), "ExchangeBook")]
+        public static void MerchantDomain_ExchangeBook_Postfix(MerchantDomain __instance, DataContext context, int npcId, List<ItemDisplayData> boughtItems, List<ItemDisplayData> soldItems, int selfAuthority, int npcAuthority)
+        {
+            foreach (ItemDisplayData itemData in boughtItems)
+            {
+                ItemKey itemKey = itemData.Key;
+                ItemBase item = DomainManager.Item.GetBaseItem(itemKey);
+                
+                AdaptableLog.Info("MerchantDomain_ExchangeBook_Prefix : " + item.GetName() + ", ownerId=" + item.Owner.OwnerId + ", ItemSourceType=" + itemData.ItemSourceType);
+            }
         }
     }
 }
