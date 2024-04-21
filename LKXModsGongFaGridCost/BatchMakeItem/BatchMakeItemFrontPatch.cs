@@ -152,7 +152,7 @@ namespace ConvenienceFrontend.BatchMakeItem
                 TaiwuEventDomainHelper.MethodCall.OnCollectedMakingSystemItem(buildingBlockKey, _blockData.TemplateId, showingGetItem: true);
                 ArgumentBox argumentBox = EasyPool.Get<ArgumentBox>();
                 argumentBox.SetObject("DisplayData", _batchMakeItemList);
-                argumentBox.Set("Title", LocalStringManager.Get(2725));
+                argumentBox.Set("Title", LocalStringManager.Get(2813));
                 argumentBox.Set("InWareHouse", !traverse.Field<bool>("_isSettlement").Value);
                 UIElement.GetItem.SetOnInitArgs(argumentBox);
                 UIManager.Instance.ShowUI(UIElement.GetItem);

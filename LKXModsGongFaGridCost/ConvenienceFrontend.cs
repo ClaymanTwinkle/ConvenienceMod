@@ -11,6 +11,7 @@ using ConvenienceFrontend.CombatStrategy;
 using ConvenienceFrontend.CricketCombatOptimize;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
+using ConvenienceFrontend.ExchangeBook;
 using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
@@ -91,6 +92,10 @@ namespace ConvenienceFrontend
             new TongdaoFrontPatch(),
             // 更好的读书
             new BetterReadingFrontPatch(),
+            // 重置分辨率
+            new ResetResolutionFrontPatch(),
+            // 门派换书
+            new ExchangeBookFrontPatch()
         };
 
         public override void OnModSettingUpdate()

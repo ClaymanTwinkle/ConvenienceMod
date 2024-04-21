@@ -40,6 +40,7 @@
     <Compile Include="BatchMakeItem\BatchMakeItemFrontPatch.cs" />
     <Compile Include="BetterReading\BetterReadingFrontPatch.cs" />
     <Compile Include="CombatSimulator\CombatSimulatorFrontPatch.cs" />
+    <Compile Include="CombatSkillSpecialBreakOptimize\CombatSkillSpecialBreakOptimizeFrontPatch.cs" />
     <Compile Include="CombatStrategy\BackendSettings.cs" />
     <Compile Include="CombatStrategy\BaseTypeContractResolver.cs" />
     <Compile Include="CombatStrategy\config\data\AutoMoveAction.cs" />
@@ -61,6 +62,10 @@
     <Compile Include="CombatStrategy\TSlider.cs" />
     <Compile Include="CombatStrategy\ui\ConditionSetterPanel.cs" />
     <Compile Include="CombatStrategy\ui\MoveActionSelectPanel.cs" />
+    <Compile Include="ExchangeBook\ExchangeBookFrontPatch.cs" />
+    <Compile Include="ExchangeBook\UIBuilder.cs" />
+    <Compile Include="ExchangeBook\UI_ExchangeBookPlus.cs" />
+    <Compile Include="ResetResolutionFrontPatch.cs" />
     <Compile Include="ShopShortcut\ShopShortcutFrontPatch.cs" />
     <Compile Include="TongdaoComabt\TongdaoFrontPatch.cs" />
     <Compile Include="Utils\UIUtils.cs" />
