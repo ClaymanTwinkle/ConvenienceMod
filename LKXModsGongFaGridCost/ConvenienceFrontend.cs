@@ -20,6 +20,7 @@ using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.ShopShortcut;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.TongdaoComabt;
+using ConvenienceFrontend.TongdaoEquipCombatSkill;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
 using GameData.GameDataBridge;
@@ -95,7 +96,9 @@ namespace ConvenienceFrontend
             // 重置分辨率
             new ResetResolutionFrontPatch(),
             // 门派换书
-            new ExchangeBookFrontPatch()
+            new ExchangeBookFrontPatch(),
+            // 同道换功法
+            new TongDaoEquipCombatSkillFrontPatch(),
         };
 
         public override void OnModSettingUpdate()
