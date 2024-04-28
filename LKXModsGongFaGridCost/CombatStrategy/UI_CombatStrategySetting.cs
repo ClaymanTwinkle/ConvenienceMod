@@ -397,10 +397,7 @@ namespace ConvenienceFrontend.CombatStrategy
             _allActiveSkillItemList.Clear();
             foreach (CombatSkillItem combatSkillItem in CombatSkill.Instance)
             {
-                if (combatSkillItem.EquipType != CombatSkillEquipType.Assist)
-                {
-                    _allActiveSkillItemList.Add(combatSkillItem);
-                }
+                _allActiveSkillItemList.Add(combatSkillItem);
             }
             this._selectSkillArgBox.Set("ShowCombatSkill", true);
             this._selectSkillArgBox.Set("ShowLifeSkill", false);
@@ -689,6 +686,14 @@ namespace ConvenienceFrontend.CombatStrategy
                     LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
                 }),
+                new UI_PopupMenu.BtnData("<color=green>复制策略</color>", true, delegate ()
+                {
+                    var copyStrategy = (Strategy)strategy.CreateDeepCopy();
+                    CombatStrategyMod.Strategies.Add(copyStrategy);
+                    Transform newTransform = CreateOrTakeStrategyPanel(CombatStrategyMod.Strategies.Count-1);
+                    this.RenderStrategy(newTransform.transform, copyStrategy);
+                    LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
+                }),
                 new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
                 {
                     CombatStrategyMod.Strategies.Remove(strategy);
@@ -827,7 +832,7 @@ namespace ConvenienceFrontend.CombatStrategy
             Action<int, Action<sbyte, short>> showSkillSelectUI = delegate (int value, Action< sbyte, short>  onSelect) {
                 ShowSkillSelectUI(
                 (short)condition.value,
-                        ((JudgeItem)value == JudgeItem.AffectingSkill ? _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Attack) : _allActiveSkillItemList).ConvertAll(x => x.TemplateId),
+                        ((JudgeItem)value == JudgeItem.AffectingSkill ? _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Attack && x.EquipType != CombatSkillEquipType.Assist) : _allActiveSkillItemList).ConvertAll(x => x.TemplateId),
                         onSelect
                     );
             };

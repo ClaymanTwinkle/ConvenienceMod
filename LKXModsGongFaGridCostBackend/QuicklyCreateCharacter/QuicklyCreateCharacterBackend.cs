@@ -146,34 +146,37 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
             short memberId = OrganizationDomain.GetMemberId(sectOrgTemplateIdByStateTemplateId, 8);
             var list = new List<(short, int, int)>();
 
-            foreach (var item in Config.Organization.Instance)
+            if (ConvenienceBackend.IsLocalTest())
             {
-                Config.OrganizationMemberItem organizationMemberItem = Config.OrganizationMember.Instance[item.Members[8]];
-                var mainAttr = CharacterDataChecker.CheckMainAttributeValue(organizationMemberItem, ConvenienceBackend.Config);
-                var combatSkillQua = CharacterDataChecker.CheckCombatSkillQualificationsValue(organizationMemberItem, ConvenienceBackend.Config);
-                var lifSkillQua = CharacterDataChecker.CheckLifeSkillQualificationsValue(organizationMemberItem, ConvenienceBackend.Config);
+                foreach (var item in Config.Organization.Instance)
+                {
+                    Config.OrganizationMemberItem organizationMemberItem = Config.OrganizationMember.Instance[item.Members[8]];
+                    var mainAttr = CharacterDataChecker.CheckMainAttributeValue(organizationMemberItem, ConvenienceBackend.Config);
+                    var combatSkillQua = CharacterDataChecker.CheckCombatSkillQualificationsValue(organizationMemberItem, ConvenienceBackend.Config);
+                    var lifSkillQua = CharacterDataChecker.CheckLifeSkillQualificationsValue(organizationMemberItem, ConvenienceBackend.Config);
 
-                list.Add
-                (
+                    list.Add
                     (
-                    item.Members[8],
-                    mainAttr.Item2 + combatSkillQua.Item2 + lifSkillQua.Item2,
-                    mainAttr.Item3 + combatSkillQua.Item3 + lifSkillQua.Item3
-                    )
-                );
-            }
-            list.Sort((x, y) => { 
-                var res = y.Item2 - x.Item2;
-                if (res == 0)
-                { 
-                    return y.Item3 - x.Item3;
+                        (
+                        item.Members[8],
+                        mainAttr.Item2 + combatSkillQua.Item2 + lifSkillQua.Item2,
+                        mainAttr.Item3 + combatSkillQua.Item3 + lifSkillQua.Item3
+                        )
+                    );
                 }
+                list.Sort((x, y) => {
+                    var res = y.Item2 - x.Item2;
+                    if (res == 0)
+                    {
+                        return y.Item3 - x.Item3;
+                    }
 
-                return res;
-            });
-            if (list.First().Item2 > 0)
-            {
-                memberId = list.First().Item1;
+                    return res;
+                });
+                if (list.First().Item2 > 0)
+                {
+                    memberId = list.First().Item1;
+                }
             }
 
             sbyte gender = info.Gender;

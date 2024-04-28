@@ -716,7 +716,7 @@ namespace ConvenienceBackend.CombatStrategy
                         {
                             foreach (KeyValuePair<SkillEffectKey, short> kvp in effectDict)
                             {
-                                _logger.Info("有功法效果: " + kvp.Key.SkillId + " " + kvp.Value);
+                                // _logger.Info("有功法效果: " + kvp.Key.SkillId + " " + kvp.Value);
                                 if (kvp.Key.SkillId == condition.subType)
                                 {
                                     findSkill = true;
@@ -851,7 +851,7 @@ namespace ConvenienceBackend.CombatStrategy
                                 if (configData == null) continue;
 
                                 var property = configData.PropertyList.Find(x => {
-                                    _logger.Info("stateId = " + stateId + ", SpecialEffectDataId = " + x.SpecialEffectDataId);
+                                    // _logger.Info("stateId = " + stateId + ", SpecialEffectDataId = " + x.SpecialEffectDataId);
                                     return x.SpecialEffectDataId == specialEffectDataId;
                                 });
                                 if (property.SpecialEffectDataId != specialEffectDataId) continue;
