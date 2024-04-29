@@ -278,13 +278,12 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
 
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(Character), "GenerateRandomBasicFeatures")]
-        public static void Character_GenerateRandomBasicFeatures_PrePatch(DataContext context, Dictionary<short, short> featureGroup2Id, bool isProtagonist, ref bool allGoodBasicFeatures)
+        [HarmonyPatch(typeof(CharacterCreation), "GenerateRandomBasicFeatures")]
+        public static void CharacterCreation_GenerateRandomBasicFeatures_PrePatch(ref FeatureCreationContext context)
         {
-            AdaptableLog.Info("ROll 角色 GenerateRandomBasicFeatures " + isProtagonist);
-            if (isProtagonist && RollAttributeConfigReader.EnableAllBlueFeature(ConvenienceBackend.Config))
+            if (context.IsProtagonist && RollAttributeConfigReader.EnableAllBlueFeature(ConvenienceBackend.Config))
             {
-                allGoodBasicFeatures = true;
+                context.AllGoodBasicFeature = true;
             }
         }
 
