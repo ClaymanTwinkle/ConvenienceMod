@@ -17,6 +17,7 @@ using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.MergeBookPanel;
 using ConvenienceFrontend.QuicklyCreateCharacter;
+using ConvenienceFrontend.SettingsOpt;
 using ConvenienceFrontend.ShopShortcut;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.TongdaoComabt;
@@ -73,6 +74,8 @@ namespace ConvenienceFrontend
             new MergeBookPanelFrontPatch(),
             // 批量制作物品
             new BatchMakeItemFrontPatch(),
+            // 修改存档数量
+            new SettingsOptFrontPatch(),
         };
 
         private static readonly List<BaseFrontPatch> extraPatchList = new List<BaseFrontPatch>()
