@@ -61,6 +61,7 @@
     <Compile Include="CombatStrategy\config\data\TeammateCommandAction.cs" />
     <Compile Include="CombatStrategy\TSlider.cs" />
     <Compile Include="CombatStrategy\ui\ConditionSetterPanel.cs" />
+    <Compile Include="CombatStrategy\ui\item\JudgeItemUIConfig.cs" />
     <Compile Include="CombatStrategy\ui\MoveActionSelectPanel.cs" />
     <Compile Include="ExchangeBook\ExchangeBookFrontPatch.cs" />
     <Compile Include="ExchangeBook\UIBuilder.cs" />

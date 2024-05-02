@@ -1,6 +1,7 @@
 ﻿using System;
 using GameData.Domains.Global;
 using GameData.Domains.Taiwu;
+using GameData.Domains.TaiwuEvent;
 using HarmonyLib;
 
 namespace ConvenienceBackend.QuickStart
@@ -22,6 +23,27 @@ namespace ConvenienceBackend.QuickStart
             }
 
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuEvent), "ToDisplayData")]
+        public static void TaiwuEvent_ToDisplayData_Prefix(TaiwuEvent __instance)
+        {
+            if ("a9d0bcd8-e378-4ee9-96a6-1e5b9db17371".Equals(__instance.EventGuid))
+            {
+                var eventOptions = __instance.EventConfig.EventOptions;
+                if (eventOptions != null)
+                {
+                    for (int i = 0; i < eventOptions.Length; i++)
+                    {
+                        if (eventOptions[i].OptionContent.Contains("交换藏书"))
+                        {
+                            eventOptions[i].OnOptionVisibleCheck = new Func<bool>(delegate () { return true; });
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 }

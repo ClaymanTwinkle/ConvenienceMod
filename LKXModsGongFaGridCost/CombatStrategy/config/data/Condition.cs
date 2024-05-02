@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using ConvenienceFrontend.CombatStrategy.ui.item;
 using UnityEngine;
 
 namespace ConvenienceFrontend.CombatStrategy
@@ -35,7 +36,7 @@ namespace ConvenienceFrontend.CombatStrategy
         public string GetShowDesc()
         {
             JudgeItem judgeItem = item;
-            StrategyConst.Item uiItem = judgeItem != JudgeItem.None ? StrategyConst.ItemOptions[(int)judgeItem] : default;
+            JudgeItemUIConfig uiItem = judgeItem != JudgeItem.None ? StrategyConst.ItemOptions[(int)judgeItem] : default;
 
             StringBuilder stringBuilder = new StringBuilder();
             if (judgeItem > JudgeItem.Distance)

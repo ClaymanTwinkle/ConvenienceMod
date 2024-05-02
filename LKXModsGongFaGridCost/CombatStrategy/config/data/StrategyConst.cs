@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Config;
+using ConvenienceFrontend.CombatStrategy.ui.item;
 using TaiwuModdingLib.Core.Utils;
 using UnityEngine;
 
@@ -44,29 +45,29 @@ namespace ConvenienceFrontend.CombatStrategy
         }
 
         // Token: 0x04000032 RID: 50
-        public static readonly StrategyConst.Item[] ItemOptions = new StrategyConst.Item[]
+        public static readonly JudgeItemUIConfig[] ItemOptions = new JudgeItemUIConfig[]
         {
-            new StrategyConst.Item("距离", true, 10f, -1, false, 0),              // 0
-            new StrategyConst.Item("脚力", true, 10f, -1, false, 0),              // 1  
-            new StrategyConst.Item("装备", false, 1f, 0, false, -1),               // 2
-            new StrategyConst.Item("正在施展", false, 1f, 1, false, 1),           // 3
-            new StrategyConst.Item("身法值", true, 10f, -1, false, 0),            // 4
-            new StrategyConst.Item("式的数量", true, 1f, 2, false, 0),            // 5
-            new StrategyConst.Item("功法效果层数", true, 1f, -1, true, 0),         // 6
-            new StrategyConst.Item("架势", true, 1f, -1, false, 0),               // 7
-            new StrategyConst.Item("提气", true, 1f, -1, false, 0),               // 8
-            new StrategyConst.Item("当前式", false, 1f, 3, false, -1),              // 9
-            new StrategyConst.Item("战败标记", true, 1f, 4, false, 0),             // 10
-            new StrategyConst.Item("施展条件", false, 1f, 6, true, -1),             // 11
-            new StrategyConst.Item("运功中", false, 1f, 5, true, -1),               // 12
-            new StrategyConst.Item("增益效果", true, 1f, 7, false, 0),             // 13
-            new StrategyConst.Item("减益效果", true, 1f, 7, false, 0),             // 14
-            new StrategyConst.Item("蛊引数", true, 1f, -1, false, 0),              // 15
-            new StrategyConst.Item("属性", true, 1f, 8, false, 0),                 // 16
-            new StrategyConst.Item("已施展次数", true, 1f, -1, true, 0),             // 17
-            new StrategyConst.Item("变招数量", true, 1f, -1, false, 0),            // 18
-            new StrategyConst.Item("装备功法", false, 1f, 5, true, -1),            // 19
-            new StrategyConst.Item("功法突破状态", false, 1f, 9, true, -1),         // 20
+            new JudgeItemUIConfig("距离", true, 10f, -1, false, 0),              // 0
+            new JudgeItemUIConfig("脚力", true, 10f, -1, false, 0),              // 1  
+            new JudgeItemUIConfig("装备", false, 1f, 0, false, -1),               // 2
+            new JudgeItemUIConfig("正在施展", false, 1f, 1, false, 1),           // 3
+            new JudgeItemUIConfig("身法值", true, 10f, -1, false, 0),            // 4
+            new JudgeItemUIConfig("式的数量", true, 1f, 2, false, 0),            // 5
+            new JudgeItemUIConfig("功法效果层数", true, 1f, -1, true, 0),         // 6
+            new JudgeItemUIConfig("架势", true, 1f, -1, false, 0),               // 7
+            new JudgeItemUIConfig("提气", true, 1f, -1, false, 0),               // 8
+            new JudgeItemUIConfig("当前式", false, 1f, 3, false, -1),              // 9
+            new JudgeItemUIConfig("战败标记", true, 1f, 4, false, 0),             // 10
+            new JudgeItemUIConfig("施展条件", false, 1f, 6, true, -1),             // 11
+            new JudgeItemUIConfig("运功中", false, 1f, 5, true, -1),               // 12
+            new JudgeItemUIConfig("增益效果", true, 1f, 7, false, 0),             // 13
+            new JudgeItemUIConfig("减益效果", true, 1f, 7, false, 0),             // 14
+            new JudgeItemUIConfig("蛊引数", true, 1f, -1, false, 0),              // 15
+            new JudgeItemUIConfig("属性", true, 1f, 8, false, 0),                 // 16
+            new JudgeItemUIConfig("已施展次数", true, 1f, -1, true, 0),             // 17
+            new JudgeItemUIConfig("变招数量", true, 1f, -1, false, 0),            // 18
+            new JudgeItemUIConfig("装备功法", false, 1f, 5, true, -1),            // 19
+            new JudgeItemUIConfig("功法突破状态", false, 1f, 9, true, -1),         // 20
         };
 
         // Token: 0x04000031 RID: 49
@@ -278,30 +279,5 @@ namespace ConvenienceFrontend.CombatStrategy
             SkillDirection,     // 9
         };
 
-        // Token: 0x02000014 RID: 20
-        public struct Item
-        {
-            public Item(string name, bool showNumSetter, float multiplyer, int optionIndex, bool showSelectSkillBtn = false, int judgementIndex = -1)
-            {
-                this.Name = name;
-                this.ShowNumSetter = showNumSetter;
-                this.Multiplyer = multiplyer;
-                this.OptionIndex = optionIndex;
-                this.ShowSelectSkillBtn = showSelectSkillBtn;
-                this.judgementIndex = judgementIndex;
-            }
-
-            public string Name;
-
-            public bool ShowNumSetter;
-
-            public float Multiplyer;
-
-            public int OptionIndex;
-
-            public bool ShowSelectSkillBtn;
-
-            public int judgementIndex;
-        }
     }
 }

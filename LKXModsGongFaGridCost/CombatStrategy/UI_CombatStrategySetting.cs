@@ -8,6 +8,7 @@ using Config;
 using ConvenienceFrontend.CombatStrategy.config;
 using ConvenienceFrontend.CombatStrategy.config.data;
 using ConvenienceFrontend.CombatStrategy.ui;
+using ConvenienceFrontend.CombatStrategy.ui.item;
 using ConvenienceFrontend.Utils;
 using DG.Tweening;
 using FrameWork;
@@ -811,7 +812,9 @@ namespace ConvenienceFrontend.CombatStrategy
         {
             if (condition.IsComplete())
             {
-                refers.CGet<TextMeshProUGUI>("DropDownLabel").text = Extentions.SetColor(condition.GetShowDesc(), new Color(0.9725f, 0.902f, 0.7569f));
+                JudgeItem judgeItem = condition.item;
+                JudgeItemUIConfig uiItem = judgeItem != JudgeItem.None ? StrategyConst.ItemOptions[(int)judgeItem] : default;
+                refers.CGet<TextMeshProUGUI>("DropDownLabel").text = Extentions.SetColor(uiItem.GetShowDesc(condition), new Color(0.9725f, 0.902f, 0.7569f));
             }
             else
             {
