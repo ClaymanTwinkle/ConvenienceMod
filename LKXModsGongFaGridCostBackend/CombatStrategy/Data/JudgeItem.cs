@@ -109,5 +109,20 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// 正逆练
         /// </summary>
         DirectionSkill,
+
+        /// <summary>
+        /// 技能封禁状态
+        /// </summary>
+        SkillBanState,
+
+        /// <summary>
+        /// 技能施展进度
+        /// </summary>
+        SkillProgress,
+
+        /// <summary>
+        /// 技能熟练度
+        /// </summary>
+        SkillProficiency,
     }
 }

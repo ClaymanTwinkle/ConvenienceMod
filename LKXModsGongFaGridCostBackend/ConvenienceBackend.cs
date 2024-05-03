@@ -11,6 +11,7 @@ using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CricketCombatOptimize;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
+using ConvenienceBackend.Gigolos;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.NotNTR;
@@ -84,7 +85,9 @@ namespace ConvenienceBackend
             // 同道战斗
             new TongdaoCombatBackendPatch(),
             // 简易开局
-            new QuickStartBackendPatch()
+            new QuickStartBackendPatch(),
+
+            new GigolosBackendPatch(),
         };
 
         public override void Initialize()

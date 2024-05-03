@@ -239,7 +239,7 @@ namespace ConvenienceFrontend.CombatStrategy.ui.item
             {
                 stringBuilder.Append(StrategyConst.SatisfiedorDissatisfied[condition.value]).Append(' ');
             }
-            else if (judgeItem == JudgeItem.AffectingSkill || judgeItem == JudgeItem.EquippingSkill)
+            else if (judgeItem == JudgeItem.AffectingSkill || judgeItem == JudgeItem.EquippingSkill || judgeItem == JudgeItem.SkillBanState)
             {
                 stringBuilder.Append(StrategyConst.YesOrNo[condition.value]).Append(' ');
             }

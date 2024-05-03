@@ -743,7 +743,7 @@ namespace ConvenienceBackend.CombatStrategy
                         var weaponTricks = combatCharacter.GetWeaponTricks();
                         var currentTrickIndex = combatCharacter.GetWeaponTrickIndex();
                         var trick = weaponTricks[currentTrickIndex];
-                        _logger.Info("weaponTricks = "+trick + ", condition.value = " + condition.value);
+                        _logger.Info("weaponTricks = " + trick + ", condition.value = " + condition.value);
                         if (trick == condition.value && condition.judge == Judgement.Equals)
                         {
                             meetTheConditions = true;
@@ -830,7 +830,7 @@ namespace ConvenienceBackend.CombatStrategy
                             {
                                 meetTheConditions = true;
                             }
-                            else 
+                            else
                             {
                                 meetTheConditions = false;
                             }
@@ -893,7 +893,7 @@ namespace ConvenienceBackend.CombatStrategy
                             else if (subType == 11)
                             {
                                 // 内息
-                                meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetDisorderOfQi()/10, condition);
+                                meetTheConditions = CheckCondition(combatCharacter.GetCharacter().GetDisorderOfQi() / 10, condition);
                             }
                         }
                         break;
@@ -940,6 +940,44 @@ namespace ConvenienceBackend.CombatStrategy
                             GameData.Domains.CombatSkill.CombatSkill skill = SkillUtils.GetCombatSkill(selfChar.GetId(), skillId);
 
                             meetTheConditions = condition.value == skill.GetDirection();
+                        }
+                        break;
+                    case JudgeItem.SkillBanState:
+                        {
+                            var skillId = (short)condition.subType;
+
+                            if (combatCharacter.GetBannedSkillIds().Contains(skillId))
+                            {
+                                meetTheConditions = condition.value == 0;
+                            }
+                            else
+                            {
+                                meetTheConditions = condition.value == 1;
+                            }
+                        }
+                        break;
+                    case JudgeItem.SkillProgress:
+                        {
+                            var skillId = (short)condition.subType;
+
+                            var skillIdNotEquals = combatCharacter.GetPreparingSkillId() != skillId;
+
+                            if (condition.value <= 0)
+                            {
+                                // 判断技能不在施展就可以了
+                                meetTheConditions = skillIdNotEquals;
+                            }
+                            else if (!skillIdNotEquals)
+                            {
+                                meetTheConditions = CheckCondition(combatCharacter.GetSkillPreparePercent(), condition);
+                            }
+                        }
+                        break;
+                    case JudgeItem.SkillProficiency:
+                        {
+                            var skillId = (short)condition.subType;
+                            GameData.Domains.CombatSkill.CombatSkill skill = SkillUtils.GetCombatSkill(selfChar.GetId(), skillId);
+                            meetTheConditions = CheckCondition(skill.GetPracticeLevel(), condition);
                         }
                         break;
                     default:

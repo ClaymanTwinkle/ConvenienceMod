@@ -68,6 +68,9 @@ namespace ConvenienceFrontend.CombatStrategy
             new JudgeItemUIConfig("变招数量", true, 1f, -1, false, 0),            // 18
             new JudgeItemUIConfig("装备功法", false, 1f, 5, true, -1),            // 19
             new JudgeItemUIConfig("功法突破状态", false, 1f, 9, true, -1),         // 20
+            new JudgeItemUIConfig("封禁状态", false, 1f, 5, true, -1),           // 21
+            new JudgeItemUIConfig("施展进度", true, 1f, -1, true, 0),          // 22
+            new JudgeItemUIConfig("修习程度", true, 1f, -1, true, 0),            // 23
         };
 
         // Token: 0x04000031 RID: 49

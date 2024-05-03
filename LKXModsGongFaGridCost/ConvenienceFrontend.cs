@@ -12,6 +12,7 @@ using ConvenienceFrontend.CricketCombatOptimize;
 using ConvenienceFrontend.CustomSteal;
 using ConvenienceFrontend.CustomWeapon;
 using ConvenienceFrontend.ExchangeBook;
+using ConvenienceFrontend.FastTaiwu;
 using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
@@ -102,6 +103,8 @@ namespace ConvenienceFrontend
             new ExchangeBookFrontPatch(),
             // 同道换功法
             new TongDaoEquipCombatSkillFrontPatch(),
+            // 太吾加速
+            new FastTaiwuFrontPatch(),
         };
 
         public override void OnModSettingUpdate()
