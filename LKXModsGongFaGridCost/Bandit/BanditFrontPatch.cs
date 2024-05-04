@@ -80,7 +80,8 @@ namespace ConvenienceFrontend.Bandit
                         {
                             CharacterDomainHelper.MethodCall.AddKidnappedCharacter(taiwuCharId, charData.CharacterId, ropeItemKey);
 
-                            var info = displayingEventData.EventOptionInfos.Find((EventOptionInfo x) => {
+                            var info = displayingEventData.EventOptionInfos.Find((EventOptionInfo x) =>
+                            {
                                 return x.OptionContent.Contains("任其离开") || x.OptionContent.Contains("如此便好");
                             });
                             Traverse.Create(__instance).Method("SelectOption", new object[]
@@ -99,7 +100,22 @@ namespace ConvenienceFrontend.Bandit
                         _kidnapButton = null;
                     }
                     break;
-                
+
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_EventWindow), "RefreshInputPanel")]
+        public static void RefreshInputPanel_Postfix(UI_EventWindow __instance)
+        {
+            var model = SingletonObject.getInstance<EventModel>();
+            int[] range = model.DisplayingEventData.ExtraData.InputRequestData.NumberRange;
+            if (range == null) return;
+
+            TMP_InputField inputField = __instance.CGet<TMP_InputField>("InputField");
+            if (model.DisplayingEventData.ExtraData.InputRequestData.InputDataType == EventInputDataType.IntegerNumber)
+            { 
+                inputField.text = range[1].ToString();
             }
         }
     }
