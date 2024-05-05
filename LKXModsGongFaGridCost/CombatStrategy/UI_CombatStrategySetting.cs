@@ -94,6 +94,7 @@ namespace ConvenienceFrontend.CombatStrategy
             UIUtils.CreateVerticalAutoSizeLayoutGroup(gameObject2).spacing = 15f;
 
             this.BuildAICombat(content);
+            this.BuildAIPractice(content);
             this.BuildStrategyProgramme(content);
             this.BuildSkillStrategy(content);
             this.BuildMoveSettings(content);
@@ -107,6 +108,13 @@ namespace ConvenienceFrontend.CombatStrategy
             if (!ConvenienceFrontend.IsLocalTest()) return;
             Transform transform = UIUtils.CreateSettingPanel(parent, "AICombat", "AI设置").transform;
             base.AddMono(UIUtils.CreateToggle(transform, "UseAICombat", "AI代打", "注意：优先会使用AI代打，战斗策略将不会生效"), "UseAICombat");
+        }
+
+        private void BuildAIPractice(Transform parent)
+        {
+            if (!ConvenienceFrontend.IsLocalTest()) return;
+            Transform transform = UIUtils.CreateSettingPanel(parent, "AIPractice", "AI设置").transform;
+            base.AddMono(UIUtils.CreateToggle(transform, "UseAIPractice", "功法练习", "注意：优先会使用功法练习，战斗策略将不会生效"), "UseAIPractice");
         }
 
         private void BuildMoveSettings(Transform parent)

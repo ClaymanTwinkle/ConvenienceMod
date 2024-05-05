@@ -117,6 +117,11 @@ namespace ConvenienceBackend.CombatStrategy
             //    return;
             //}
 
+            if (_settings.UseAIPractice)
+            {
+                if (AIPracticeManager.HandleCombatUpdate(__instance, context, combatCharacter)) return;
+            }
+
             List<Strategy> execStrategy = new List<Strategy>();
 
             // 自动执行策略

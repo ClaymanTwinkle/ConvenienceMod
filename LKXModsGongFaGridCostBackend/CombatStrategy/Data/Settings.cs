@@ -12,6 +12,8 @@ namespace ConvenienceBackend.CombatStrategy.Data
 
         public bool UseAICombat { get; set; }
 
+        public bool UseAIPractice { get; set; }
+
         public bool AutoMove { get; set; }
 
         public int TargetDistance { get; set; }

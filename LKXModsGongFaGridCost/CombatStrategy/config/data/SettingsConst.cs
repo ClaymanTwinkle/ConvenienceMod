@@ -19,7 +19,8 @@ namespace ConvenienceFrontend.CombatStrategy
             "IgnoreRange",
             "AutoCastSkill",
             "ShowAutoAttackTips",
-            "UseAICombat"
+            "UseAICombat",
+            "UseAIPractice",
         };
 
         // Token: 0x04000011 RID: 17
