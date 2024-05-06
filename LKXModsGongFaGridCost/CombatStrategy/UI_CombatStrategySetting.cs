@@ -635,7 +635,7 @@ namespace ConvenienceFrontend.CombatStrategy
             this.RenderStrategySkillText(strategy, skillRefers);
             var btnList = new List<UI_PopupMenu.BtnData>
             {
-                new UI_PopupMenu.BtnData("选择功法", true, new Action(() =>
+                new UI_PopupMenu.BtnData("施展功法", true, new Action(() =>
                 {
                     if (!ConvenienceFrontend.IsInGame())
                     {
@@ -683,6 +683,30 @@ namespace ConvenienceFrontend.CombatStrategy
                     strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
                     strategy.SetAction(new NormalAttackAction());
                     this.RenderStrategySkillText(strategy, skillRefers);
+                })),
+                new UI_PopupMenu.BtnData("打断功法", true, new Action(() =>
+                {
+                    if (!ConvenienceFrontend.IsInGame())
+                    {
+                        UIUtils.ShowTips("提示", "请进入游戏中使用");
+                        return;
+                    }
+
+                    var _onSelected = new Action<sbyte, short>((sbyte type, short skillId) =>
+                    {
+                        if (type == 1)
+                        {
+                            Debug.Log("选中功法" + skillId);
+                            strategy.type = (short)StrategyConst.StrategyType.InterruptSkill;
+                            strategy.SetAction(skillId);
+                            this.RenderStrategySkillText(strategy, skillRefers);
+                        }
+                        else
+                        {
+                            // cancel
+                        }
+                    });
+                    ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Neigong && x.EquipType != CombatSkillEquipType.Assist).ConvertAll(x => x.TemplateId), _onSelected);
                 })),
                 new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
                 {
@@ -788,7 +812,18 @@ namespace ConvenienceFrontend.CombatStrategy
                     else
                     {
                         CombatSkillItem combatSkillItem = CombatSkill.Instance[strategy.skillId];
-                        label.text = Extentions.SetGradeColor(combatSkillItem.Name, (int)combatSkillItem.Grade);
+                        label.text = "施展" + Extentions.SetGradeColor(combatSkillItem.Name, (int)combatSkillItem.Grade);
+                    }
+                    break;
+                case (short)StrategyConst.StrategyType.InterruptSkill:
+                    if (strategy.skillId < 0)
+                    {
+                        label.text = Extentions.SetColor("未选择策略..", Color.gray);
+                    }
+                    else
+                    {
+                        CombatSkillItem combatSkillItem = CombatSkill.Instance[strategy.skillId];
+                        label.text = "打断" + Extentions.SetGradeColor(combatSkillItem.Name, (int)combatSkillItem.Grade);
                     }
                     break;
                 case (short)StrategyConst.StrategyType.ChangeTrick:

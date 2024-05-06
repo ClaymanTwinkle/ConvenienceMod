@@ -19,7 +19,8 @@ namespace ConvenienceFrontend.CombatStrategy
             switch ((StrategyConst.StrategyType)type)
             {
                 case StrategyConst.StrategyType.ReleaseSkill:
-                    if(this.skillId < 0) return false;
+                case StrategyConst.StrategyType.InterruptSkill:
+                    if (this.skillId < 0) return false;
                     break;
                 case StrategyConst.StrategyType.ChangeTrick:
                     if (changeTrickAction ==null) return false;

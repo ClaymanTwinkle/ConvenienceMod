@@ -36,5 +36,10 @@ namespace ConvenienceBackend.CombatStrategy.Data
         /// 普通攻击
         /// </summary>
         NormalAttack = 5,
+
+        /// <summary>
+        /// 打断功法
+        /// </summary>
+        InterruptSkill = 6,
     }
 }

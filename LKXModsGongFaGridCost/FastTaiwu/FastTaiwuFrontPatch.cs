@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using ConvenienceFrontend.CombatStrategy;
 using DG.Tweening;
 using FrameWork;
@@ -20,6 +21,8 @@ namespace ConvenienceFrontend.FastTaiwu
     internal class FastTaiwuFrontPatch : BaseFrontPatch
     {
         private static CToggle _markAutoSelectCToggle = null;
+
+        private static bool AllowAccelerate => UIElement.CricketCombat.Ready || UIElement.CombatResult.Ready || UIElement.CricketCombatResult.Ready;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -157,16 +160,6 @@ namespace ConvenienceFrontend.FastTaiwu
             }
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(Sequence), "DoAppendInterval")]
-        public static void Sequence_AppendInterval_Prefix(ref float interval)
-        {
-            if (_isInCricketCombat)
-            {
-                interval /= 10;
-            }
-        }
-
         /// <summary>
         /// 对话UI动画
         /// </summary>
@@ -267,6 +260,50 @@ namespace ConvenienceFrontend.FastTaiwu
         public static void UI_EventWindow_SelectOption_Postfix(UI_EventWindow __instance, EventOptionInfo optionInfo)
         {
             _isSelectOption = false;
+        }
+
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_CombatResult), "Update")]
+        public static void UI_CombatResult_Update_Postfix(UI_CombatResult __instance)
+        {
+            __instance.QuickHide();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_CombatResult), "OnInit")]
+        public static void UI_CombatResult_OnInit_Postfix(UI_CombatResult __instance)
+        {
+            UIElement element = __instance.Element;
+            SkeletonGraphic resultAni = __instance.CGet<SkeletonGraphic>("ResultAni");
+            CanvasGroup mainWindow = __instance.CGet<CanvasGroup>("MainWindow");
+            CanvasGroup btnCanvas = __instance.CGet<CButton>("Close").GetComponent<CanvasGroup>();
+
+            element.OnShowed = (Action)Delegate.Combine(element.OnShowed, new Action(delegate () {
+                resultAni.DOComplete(true);
+                mainWindow.DOComplete(true);
+                btnCanvas.DOComplete(true);
+            }));
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Sequence), "DoAppendInterval")]
+        public static void Sequence_AppendInterval_Prefix(ref float interval)
+        {
+            if (AllowAccelerate)
+            {
+                interval /= 10;
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Sequence), "DoPrependInterval")]
+        public static void Sequence_DoPrependInterval_Prefix(ref float interval)
+        {
+            if (AllowAccelerate)
+            {
+                interval /= 10;
+            }
         }
     }
 }

@@ -42,6 +42,11 @@ namespace ConvenienceFrontend.CombatStrategy
             /// 普通攻击
             /// </summary>
             NormalAttack = 5,
+
+            /// <summary>
+            /// 打断功法
+            /// </summary>
+            InterruptSkill = 6,
         }
 
         // Token: 0x04000032 RID: 50

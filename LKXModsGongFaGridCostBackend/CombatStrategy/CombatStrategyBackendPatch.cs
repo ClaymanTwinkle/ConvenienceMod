@@ -639,6 +639,28 @@ namespace ConvenienceBackend.CombatStrategy
                             execedStrategyList.Add(strategy);
                             break;
                         }
+                    case (short)StrategyType.InterruptSkill:
+                        {
+                            // 打断功法
+                            var skillId = strategy.skillId;
+                            var skillItem = Config.CombatSkill.Instance[skillId];
+
+                            CombatSkillData skillData = SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), skillId);
+
+                            // 无装备该功法
+                            if (skillData == null) break;
+
+                            if (selfChar.GetPreparingSkillId() == skillId)
+                            {
+                                instance.InterruptSkillManual(context, true);
+                            }
+                            else if (selfChar.GetAffectingDefendSkillId() == skillId)
+                            {
+                                instance.ClearAffectingDefenseSkillManual(context, true);
+                            }
+
+                            break;
+                        }
                     default:
                         break;
                 }

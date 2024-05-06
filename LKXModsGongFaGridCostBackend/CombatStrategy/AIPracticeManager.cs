@@ -50,32 +50,23 @@ namespace ConvenienceBackend.CombatStrategy
                 OptCharacterHelper.CastCombatSkill(instance, context, selfChar, attackSkillId);
             }
 
-            // 自动移动
-            // 如果有轻灵功法就往后走
-            if (agileSkillId >= 0 && selfChar.GetSkillMobility() > 0)
+            // 自动移动，移动到攻击距离内
+            var selfAttackRange = selfChar.GetAttackRange();
+            short moveOuter = selfAttackRange.Outer;
+            short moveInner = selfAttackRange.Inner;
+            short currentDistance = instance.GetCurrentDistance();
+            short targetDistance = (short)((moveInner - moveOuter) / 2 + moveOuter);
+            if (currentDistance == targetDistance)
             {
-                instance.SetMoveState(MoveState.Backward, true, true);
-            }
-            else if (defenseSkillId >= 0 || attackSkillId >= 0)
-            {
-                // 移动到攻击距离内
-                var selfAttackRange = selfChar.GetAttackRange();
-                short moveOuter = selfAttackRange.Outer;
-                short moveInner = selfAttackRange.Inner;
-                short currentDistance = instance.GetCurrentDistance();
-                short targetDistance = (short)((moveInner - moveOuter) / 2 + moveOuter);
-                if (currentDistance == targetDistance)
-                {
-                    instance.SetMoveState(0, true);
+                instance.SetMoveState(0, true);
 
-                    return false;
-                }
-                else
-                {
-                    // 需要移动
-                    var moveState = currentDistance > targetDistance ? (byte)MoveState.Forward : (byte)MoveState.Backward;
-                    instance.SetMoveState(moveState, true, true);
-                }
+                return false;
+            }
+            else
+            {
+                // 需要移动
+                var moveState = currentDistance > targetDistance ? (byte)MoveState.Forward : (byte)MoveState.Backward;
+                instance.SetMoveState(moveState, true, true);
             }
 
             // 自动攻击
