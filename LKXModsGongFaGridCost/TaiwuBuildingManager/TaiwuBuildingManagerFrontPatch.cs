@@ -41,7 +41,6 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             {
                 _openTaiwuBuildingManagerButton.gameObject.SetActive(_enableMod);
             }
-
             UI_CharacterMenu.print("");
             UI_Bottom.print("");
             UI_AdvanceConfirm.print("");

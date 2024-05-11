@@ -14,6 +14,7 @@ using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.Gigolos;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.MergeBookPanel;
+using ConvenienceBackend.MoreGoods;
 using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
@@ -88,6 +89,9 @@ namespace ConvenienceBackend
             new QuickStartBackendPatch(),
 
             new GigolosBackendPatch(),
+
+            // 更多工具卖
+            new MoreGoodsBackendPatch(),
         };
 
         public override void Initialize()

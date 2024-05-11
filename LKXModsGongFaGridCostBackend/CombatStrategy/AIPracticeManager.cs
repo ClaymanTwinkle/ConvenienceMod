@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ConvenienceBackend.CombatStrategy.AI;
 using ConvenienceBackend.CombatStrategy.Opt;
+using ConvenienceBackend.CombatStrategy.Utils;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.Combat;
@@ -51,23 +52,27 @@ namespace ConvenienceBackend.CombatStrategy
             }
 
             // 自动移动，移动到攻击距离内
-            var selfAttackRange = selfChar.GetAttackRange();
-            short moveOuter = selfAttackRange.Outer;
-            short moveInner = selfAttackRange.Inner;
-            short currentDistance = instance.GetCurrentDistance();
-            short targetDistance = (short)((moveInner - moveOuter) / 2 + moveOuter);
-            if (currentDistance == targetDistance)
+            if (defenseSkillId >= 0 || attackSkillId >= 0)
             {
-                instance.SetMoveState(0, true);
+                var selfAttackRange = selfChar.GetAttackRange();
+                short moveOuter = selfAttackRange.Outer;
+                short moveInner = selfAttackRange.Inner;
+                short currentDistance = instance.GetCurrentDistance();
+                short targetDistance = (short)((moveInner - moveOuter) / 2 + moveOuter);
+                if (currentDistance == targetDistance)
+                {
+                    instance.SetMoveState(0, true);
 
-                return false;
+                    return false;
+                }
+                else
+                {
+                    // 需要移动
+                    var moveState = currentDistance > targetDistance ? (byte)MoveState.Forward : (byte)MoveState.Backward;
+                    instance.SetMoveState(moveState, true, true);
+                }
             }
-            else
-            {
-                // 需要移动
-                var moveState = currentDistance > targetDistance ? (byte)MoveState.Forward : (byte)MoveState.Backward;
-                instance.SetMoveState(moveState, true, true);
-            }
+
 
             // 自动攻击
             if (defenseSkillId >= 0 || attackSkillId >= 0)
@@ -86,8 +91,14 @@ namespace ConvenienceBackend.CombatStrategy
 
         private static short FindMoveSkillId(CombatDomain instance, DataContext context, CombatCharacter selfChar)
         {
-            var combatSkill = selfChar.GetEquippedCombatSkills().
-                FindAll(x => Utils.SkillUtils.IsAgile(x)).ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).FirstOrDefault( x => x.GetPracticeLevel() < 100);
+            var combatSkillList = selfChar.GetEquippedCombatSkills().
+                FindAll(x => Utils.SkillUtils.IsAgile(x)).
+                ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).
+                FindAll( x => x.GetPracticeLevel() < 100);
+
+            combatSkillList.Sort((x, y) => SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), x.GetId().SkillTemplateId).GetCanUse() ? -1 : 1);
+
+            var combatSkill = combatSkillList.FirstOrDefault();
 
             if (combatSkill == null) return -1;
 
@@ -96,8 +107,14 @@ namespace ConvenienceBackend.CombatStrategy
 
         private static short FindDefenseSkillId(CombatDomain instance, DataContext context, CombatCharacter selfChar)
         {
-            var combatSkill = selfChar.GetEquippedCombatSkills().
-                FindAll(x => Utils.SkillUtils.IsDefense(x)).ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).FirstOrDefault(x => x.GetPracticeLevel() < 100);
+            var combatSkillList = selfChar.GetEquippedCombatSkills().
+                FindAll(x => Utils.SkillUtils.IsDefense(x)).
+                ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).
+                FindAll(x => x.GetPracticeLevel() < 100);
+
+            combatSkillList.Sort((x, y) => SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), x.GetId().SkillTemplateId).GetCanUse() ? -1 : 1);
+
+            var combatSkill = combatSkillList.FirstOrDefault();
 
             if (combatSkill == null) return -1;
 
@@ -106,8 +123,14 @@ namespace ConvenienceBackend.CombatStrategy
 
         private static short FindAttackSkillId(CombatDomain instance, DataContext context, CombatCharacter selfChar)
         {
-            var combatSkill = selfChar.GetEquippedCombatSkills().
-                FindAll(x => Utils.SkillUtils.IsAttack(x)).ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).FirstOrDefault(x => x.GetPracticeLevel() < 100);
+            var combatSkillList = selfChar.GetEquippedCombatSkills().
+                FindAll(x => Utils.SkillUtils.IsAttack(x)).
+                ConvertAll(x => DomainManager.CombatSkill.GetElement_CombatSkills(new CombatSkillKey(selfChar.GetId(), x))).
+                FindAll(x => x.GetPracticeLevel() < 100);
+
+            combatSkillList.Sort((x, y) => SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), x.GetId().SkillTemplateId).GetCanUse() ? -1 : 1);
+
+            var combatSkill = combatSkillList.FirstOrDefault();
 
             if (combatSkill == null) return -1;
 

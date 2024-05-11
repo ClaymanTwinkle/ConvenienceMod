@@ -26,8 +26,16 @@ namespace ConvenienceFrontend
         private void OnGameResourceReady(ArgumentBox argBox)
         {
             GEvent.Remove(EEvents.OnGameResourceReady, OnGameResourceReady);
-
-            SingletonObject.getInstance<GlobalSettings>().Resolution = new Vector2Int(2560, 1440);
+            var resolutionList = Screen.resolutions.ToList();
+            resolutionList.Sort((x, y) => {
+                if (x.width != y.width) 
+                {
+                    return y.width - x.width;
+                }
+                return y.height - x.height;
+            });
+            var maxResolution = resolutionList.FirstOrDefault();
+            SingletonObject.getInstance<GlobalSettings>().Resolution = new Vector2Int(maxResolution.width, maxResolution.height);
         }
     }
 }
