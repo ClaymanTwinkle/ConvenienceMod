@@ -38,7 +38,7 @@ namespace ConvenienceFrontend.FastTaiwu
         [HarmonyPatch(typeof(UI_AdventureInfo), "SetCarrierAnimation")]
         public static void UI_AdventureInfo_SetCarrierAnimation_Prefix(UI_AdventureInfo __instance, ref sbyte ____curCarrierTravelTimeReduction)
         {
-            ____curCarrierTravelTimeReduction = SByte.MaxValue;
+            // ____curCarrierTravelTimeReduction = SByte.MaxValue;
         }
 
         /// <summary>
@@ -262,14 +262,6 @@ namespace ConvenienceFrontend.FastTaiwu
             _isSelectOption = false;
         }
 
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_CombatResult), "Update")]
-        public static void UI_CombatResult_Update_Postfix(UI_CombatResult __instance)
-        {
-            __instance.QuickHide();
-        }
-
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UI_CombatResult), "OnInit")]
         public static void UI_CombatResult_OnInit_Postfix(UI_CombatResult __instance)
@@ -283,8 +275,23 @@ namespace ConvenienceFrontend.FastTaiwu
                 resultAni.DOComplete(true);
                 mainWindow.DOComplete(true);
                 btnCanvas.DOComplete(true);
+                __instance.QuickHide();
             }));
         }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_CricketCombatResult), "Refresh")]
+        public static void UI_CricketCombatResult_Refresh_Postfix(UI_CricketCombatResult __instance)
+        {
+            CanvasGroup canvasGroup = __instance.CGet<CanvasGroup>("MainWindow");
+            CButton closeBtn = __instance.CGet<CButton>("Close");
+            CanvasGroup component3 = closeBtn.GetComponent<CanvasGroup>();
+            canvasGroup.DOComplete(true);
+            component3.DOComplete(true);
+
+            __instance.QuickHide();
+        }
+
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Sequence), "DoAppendInterval")]

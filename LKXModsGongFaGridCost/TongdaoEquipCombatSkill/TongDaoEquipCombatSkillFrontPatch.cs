@@ -228,7 +228,7 @@ namespace ConvenienceFrontend.TongdaoEquipCombatSkill
 
         private static bool DisablePatch(UI_CharacterMenuEquipCombatSkill __instance) 
         {
-            return !__instance.CharacterMenu.IsTaiwuTeam || __instance.CharacterMenu.CurCharacterId == SingletonObject.getInstance<BasicGameData>().TaiwuCharId;
+            return !__instance.CharacterMenu.IsTaiwuTeam || __instance.CharacterMenu.CurCharacterId == SingletonObject.getInstance<BasicGameData>().TaiwuCharId || __instance.CharacterMenu.CurCharacterId == -1;
         }
     }
 }

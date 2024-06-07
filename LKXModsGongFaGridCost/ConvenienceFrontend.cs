@@ -17,6 +17,7 @@ using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.MergeBookPanel;
+using ConvenienceFrontend.ProfessionOptimize;
 using ConvenienceFrontend.QuicklyCreateCharacter;
 using ConvenienceFrontend.SettingsOpt;
 using ConvenienceFrontend.ShopShortcut;
@@ -105,6 +106,8 @@ namespace ConvenienceFrontend
             new TongDaoEquipCombatSkillFrontPatch(),
             // 太吾加速
             new FastTaiwuFrontPatch(),
+            // 志向优化
+            new ProfessionOptimizeFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

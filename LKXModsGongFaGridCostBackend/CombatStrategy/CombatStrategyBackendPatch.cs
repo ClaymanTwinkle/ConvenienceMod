@@ -470,7 +470,7 @@ namespace ConvenienceBackend.CombatStrategy
                         }
                         else
                         {
-                            if ((int)mobilityValue > (isMoveForward ? _settings.MobilityAllowForward : _settings.MobilityAllowBackward))
+                            if ((int)mobilityValue >= (isMoveForward ? _settings.MobilityAllowForward : _settings.MobilityAllowBackward))
                             {
                                 instance.SetMoveState(moveState, true, true);
                             }
