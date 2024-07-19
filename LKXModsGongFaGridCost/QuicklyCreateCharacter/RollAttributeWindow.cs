@@ -329,6 +329,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
         private void SetFeatureIdValue()
         {
             this.characterFeatureScroll.ResetToEmpty();
+            this.characterFeatureScroll.CharacterId = SingletonObject.getInstance<BasicGameData>().TaiwuCharId;
             bool flag = this.characterDataController.characterDataShortDict.ContainsKey(CharacterDataType.FeatureIds);
             if (flag)
             {

@@ -84,10 +84,10 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
                 return;
             }
 
-            Refers refers = __instance.CGet<Refers>("Minimap");
+            Refers refers = __instance.CGet<Refers>("MapBlockInfo");
             var parent = refers.gameObject.transform;
 
-            _openTaiwuBuildingManagerButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(-200, 210), new Vector2(120, 50), 16, "种田管家");
+            _openTaiwuBuildingManagerButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(600, 210), new Vector2(120, 50), 16, "种田管家");
             _openTaiwuBuildingManagerButton.ClearAndAddListener(delegate ()
             {
                 var element = UI_TaiwuBuildingManager.GetUI();

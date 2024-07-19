@@ -103,7 +103,7 @@ namespace ConvenienceFrontend
             // 门派换书
             new ExchangeBookFrontPatch(),
             // 同道换功法
-            new TongDaoEquipCombatSkillFrontPatch(),
+            // new TongDaoEquipCombatSkillFrontPatch(),
             // 太吾加速
             new FastTaiwuFrontPatch(),
             // 志向优化

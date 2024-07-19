@@ -30,18 +30,6 @@ namespace ConvenienceFrontend.FastTaiwu
         }
 
         /// <summary>
-        /// 奇遇加速
-        /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="____curCarrierTravelTimeReduction"></param>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_AdventureInfo), "SetCarrierAnimation")]
-        public static void UI_AdventureInfo_SetCarrierAnimation_Prefix(UI_AdventureInfo __instance, ref sbyte ____curCarrierTravelTimeReduction)
-        {
-            // ____curCarrierTravelTimeReduction = SByte.MaxValue;
-        }
-
-        /// <summary>
         /// 跳过斗蛐蛐开头动画
         /// </summary>
         /// <param name="visible"></param>
@@ -299,7 +287,7 @@ namespace ConvenienceFrontend.FastTaiwu
         {
             if (AllowAccelerate)
             {
-                interval /= 10;
+                interval /= 5;
             }
         }
 
@@ -309,7 +297,7 @@ namespace ConvenienceFrontend.FastTaiwu
         {
             if (AllowAccelerate)
             {
-                interval /= 10;
+                interval /= 5;
             }
         }
     }

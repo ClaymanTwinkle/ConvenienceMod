@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CharacterMenu;
 using FrameWork;
 using FrameWork.ModSystem;
 using GameData.Domains.Item;
@@ -40,7 +41,7 @@ namespace ConvenienceFrontend.CustomWeapon
             var parentTransform = itemView.transform.parent;
             CScrollRect scrollRect = ____itemScroll.GetComponent<CScrollRect>();
 
-            btnList.Add(new UI_PopupMenu.BtnData("调整招式", true, delegate
+            btnList.Add(new UI_PopupMenu.BtnData("调整招式", true, EItemMenuDisplayOrder.Tool, delegate
             {
                 int _listenerId = -1;
                 void OnNotifyGameData(List<NotificationWrapper> notifications)

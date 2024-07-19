@@ -658,7 +658,7 @@ namespace ConvenienceFrontend.ExchangeBook
                     int arg = this._authorities[characterId] + num2;
                     EventActorData eventActorData = new EventActorData();
                     eventActorData.AvatarData = new AvatarData();
-                    TaiwuEventDomainHelper.MethodCall.StartNewDialog(this._taiwuId, characterId, "换书", "换书", eventActorData, eventActorData);
+                    TaiwuEventDomainHelper.MethodCall.StartNewDialog(this._taiwuId, characterId, "换书", "换书", eventActorData, eventActorData, "A", "B");
                     MerchantDomainHelper.MethodCall.GetTradeBookDisplayData(-1, characterId, !_isCombatSkill);
                     MerchantDomainHelper.MethodCall.ExchangeBook(characterId, boughtItems, null, num, arg);
                     MerchantDomainHelper.MethodCall.FinishBookTrade(characterId, !_isCombatSkill);

@@ -33,7 +33,7 @@ namespace ConvenienceFrontend.QuicklyCreateCharacter
             {
                 UI_RollFilter.element = new UIElement
                 {
-                    Id = -1
+                    // Id = -1
                 };
                 Traverse.Create(UI_RollFilter.element).Field("_path").SetValue("UI_RollFilter");
 

@@ -40,16 +40,16 @@ namespace ConvenienceBackend.CombatStrategy
         }
 
         // Token: 0x0600001D RID: 29 RVA: 0x00002E98 File Offset: 0x00001098
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CombatCharacter), "InitTeammateCommand")]
-        public static void CombatCharacter_InitTeammateCommand_Postfix(DataContext context, CombatCharacter __instance)
-        {
-            if (IsEnable()) return;
-            if (!__instance.IsAlly) return;
-            _logger.Info("CombatCharacter::InitTeammateCommand");
-            var currTeammateCommands = __instance.GetCurrTeammateCommands();
-            _logger.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
-        }
+        //[HarmonyPostfix]
+        //[HarmonyPatch(typeof(CombatCharacter), "InitTeammateCommand")]
+        //public static void CombatCharacter_InitTeammateCommand_Postfix(DataContext context, CombatCharacter __instance)
+        //{
+        //    if (IsEnable()) return;
+        //    if (!__instance.IsAlly) return;
+        //    _logger.Info("CombatCharacter::InitTeammateCommand");
+        //    var currTeammateCommands = __instance.GetCurrTeammateCommands();
+        //    _logger.Info("角色[" + __instance.GetId() + "]有" + String.Join(",", currTeammateCommands));
+        //}
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CombatDomain), "SetPlayerAutoCombat")]
@@ -648,15 +648,20 @@ namespace ConvenienceBackend.CombatStrategy
                             CombatSkillData skillData = SkillUtils.GetCombatSkillData(instance, selfChar.GetId(), skillId);
 
                             // 无装备该功法
-                            if (skillData == null) break;
+                            if (skillData == null) 
+                            {
+                                break;
+                            }
 
                             if (selfChar.GetPreparingSkillId() == skillId)
                             {
                                 instance.InterruptSkillManual(context, true);
+                                _logger.Info("打断功法[" + skillItem.Name + "]");
                             }
                             else if (selfChar.GetAffectingDefendSkillId() == skillId)
                             {
                                 instance.ClearAffectingDefenseSkillManual(context, true);
+                                _logger.Info("打断功法[" + skillItem.Name + "]");
                             }
 
                             break;

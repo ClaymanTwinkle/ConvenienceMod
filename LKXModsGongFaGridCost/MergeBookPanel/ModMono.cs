@@ -245,7 +245,7 @@ namespace ConvenienceFrontend.MergeBookPanel
         {
             ModMono.MergeBooks.Element = new UIElement
             {
-                Id = ModMono.elementID
+                // Id = ModMono.elementID
             };
             ModMono.MergeBooks.Element.SetPrivateField("_path", "UI_MergeBooks");
             RectTransform listBack = UnityEngine.Object.Instantiate<GameObject>(ModMono.listBackPrefab, ModMono.MergeBooks.transform).GetComponent<RectTransform>();

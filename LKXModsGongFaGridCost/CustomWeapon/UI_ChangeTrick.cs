@@ -33,7 +33,7 @@ namespace ConvenienceFrontend.CustomWeapon
             {
                 UI_ChangeTrick.element = new UIElement
                 {
-                    Id = -1
+                    // Id = -1
                 };
                 Traverse.Create(UI_ChangeTrick.element).Field("_path").SetValue("UI_Change_Trick");
 

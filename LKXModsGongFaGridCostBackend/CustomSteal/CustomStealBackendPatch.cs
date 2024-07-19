@@ -111,8 +111,8 @@ namespace ConvenienceBackend.CustomSteal
         /// <returns></returns>
         // Token: 0x06000001 RID: 1 RVA: 0x00002048 File Offset: 0x00000248
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(EventHelper), "GetStealActionPhase")]
-        public static bool GetStealActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
+        [HarmonyPatch(typeof(EventHelper), "GetStealActionPhase", argumentTypes: new Type[] { typeof(GameData.Domains.Character.Character), typeof(GameData.Domains.Character.Character), typeof(int) })]
+        public static bool GetStealActionPhasePrefix(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, int alertFactor, ref sbyte __result)
         {
             switch (_stealMode)
             {
@@ -120,7 +120,7 @@ namespace ConvenienceBackend.CustomSteal
                     processSuccessRateMode(_stealValue, ref __result);
                     return false;
                 case TryMode.SimulationMode:
-                    processStealItemSimulationMode(selfCharId, targetCharId, ref __result);
+                    processStealItemSimulationMode(selfChar, targetChar, alertFactor, ref __result);
                     return false;
             }
             return true;
@@ -134,8 +134,8 @@ namespace ConvenienceBackend.CustomSteal
         /// <param name="__result"></param>
         /// <returns></returns>
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(EventHelper), "GetScamActionPhase")]
-        public static bool GetScamActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
+        [HarmonyPatch(typeof(EventHelper), "GetScamActionPhase", argumentTypes: new Type[] { typeof(GameData.Domains.Character.Character), typeof(GameData.Domains.Character.Character), typeof(int) })]
+        public static bool GetScamActionPhasePrefix(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, int alertFactor, ref sbyte __result)
         {
             switch (_scamMode)
             {
@@ -143,74 +143,51 @@ namespace ConvenienceBackend.CustomSteal
                     processSuccessRateMode(_scamValue, ref __result);
                     return false;
                 case TryMode.SimulationMode:
-                    processScamSimulationMode(selfCharId, targetCharId, ref __result);
+                    processScamSimulationMode(selfChar, targetChar, alertFactor, ref __result);
                     return false;
             }
             return true;
         }
 
 
-        /// <summary>
-        /// 偷窃功法
-        /// </summary>
-        /// <param name="selfCharId"></param>
-        /// <param name="targetCharId"></param>
-        /// <param name="combatSkillTemplateId"></param>
-        /// <param name="__result"></param>
-        /// <returns></returns>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(EventHelper), "GetStealCombatSkillActionPhase")]
-        public static bool GetStealCombatSkillActionPhasePrefix(int selfCharId, int targetCharId, short combatSkillTemplateId, ref sbyte __result)
-        {
-            if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId()) 
-            {
-                switch (_stealMode) {
-                    case TryMode.SuccessRateMode:
-                        processSuccessRateMode(_stealValue, ref __result);
-                        return false;
-                    case TryMode.SimulationMode:
-                        processStealCombatSkillSimulationMode(selfCharId, targetCharId, combatSkillTemplateId, ref __result);
-                        return false;
-                }
-            }
-            return true;
-        }
+        ///// <summary>
+        ///// 偷窃功法
+        ///// </summary>
+        ///// <param name="selfCharId"></param>
+        ///// <param name="targetCharId"></param>
+        ///// <param name="combatSkillTemplateId"></param>
+        ///// <param name="__result"></param>
+        ///// <returns></returns>
+        //[HarmonyPrefix]
+        //[HarmonyPatch(typeof(EventHelper), "GetStealCombatSkillActionPhase")]
+        //public static bool GetStealCombatSkillActionPhasePrefix(int selfCharId, int targetCharId, short combatSkillTemplateId, ref sbyte __result)
+        //{
+        //    if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId()) 
+        //    {
+        //        switch (_stealMode) {
+        //            case TryMode.SuccessRateMode:
+        //                processSuccessRateMode(_stealValue, ref __result);
+        //                return false;
+        //            case TryMode.SimulationMode:
+        //                processStealCombatSkillSimulationMode(selfCharId, targetCharId, combatSkillTemplateId, ref __result);
+        //                return false;
+        //        }
+        //    }
+        //    return true;
+        //}
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase")]
-        public static bool GetRobActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
+        [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase", argumentTypes: new Type[] { typeof(GameData.Domains.Character.Character), typeof(GameData.Domains.Character.Character), typeof(int) })]
+        public static bool GetRobActionPhasePostfix(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, int alertFactor, ref sbyte __result)
         {
-            if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId())
-            {
-                switch (_robMode)
-                {
-                    case TryMode.SuccessRateMode:
-                        processSuccessRateMode(_robValue, ref __result);
-                        return false;
-                    case TryMode.SimulationMode:
-                        GetRobActionPhasePostfix(selfCharId, targetCharId, ref __result);
-                        return false;
-                }
-            }
-            return true;
-        }
+            if (selfChar.GetId() != DomainManager.Taiwu.GetTaiwuCharId() || _robMode == TryMode.NoModifyMode) return true;
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(EventHelper), "GetRobActionPhase")]
-        public static void GetRobActionPhasePostfix(int selfCharId, int targetCharId, ref sbyte __result)
-        {
-            GameData.Domains.Character.Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
-            GameData.Domains.Character.Character character = DomainManager.Character.GetElement_Objects(targetCharId);
-            IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
-            OrganizationInfo organizationInfo = character.GetOrganizationInfo();
-            if (organizationInfo.SettlementId >= 0 && Config.Organization.Instance[organizationInfo.OrgTemplateId].IsCivilian && DomainManager.Character.HasGuard(targetCharId, character))
+            if (_robMode == TryMode.SuccessRateMode) 
             {
-                sbyte fameType = character.GetFameType();
-                bool isHeretic = ((fameType == -2) ? random.NextBool() : (fameType < 3));
-                Location location = DomainManager.Organization.GetSettlement(organizationInfo.SettlementId).GetLocation();
-                sbyte stateTemplateIdByAreaId = DomainManager.Map.GetStateTemplateIdByAreaId(location.AreaId);
-                character = DomainManager.Character.GetPregeneratedCityTownGuard(stateTemplateIdByAreaId, isHeretic, organizationInfo.Grade);
+                processSuccessRateMode(_robValue, ref __result);
+                return false;
             }
+
             int value = _robValue;
 
             stealLogger.Info("======================");
@@ -224,7 +201,9 @@ namespace ConvenienceBackend.CustomSteal
             sbyte b = 0;
             for (int i = 1; i < value; i++)
             {
-                int robActionPhase = element_Objects.GetRobActionPhase(random, character);
+                IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
+                var newTargetChar = targetChar.GetGuardForCalculation(random);
+                int robActionPhase = selfChar.GetRobActionPhase(random, newTargetChar, alertFactor);
                 stealLogger.Info("第" + i.ToString() + "次抢夺结果为：" + _resultDesc[robActionPhase]);
                 b = (sbyte)Math.Max(b, robActionPhase);
                 if (b >= 5)
@@ -235,6 +214,8 @@ namespace ConvenienceBackend.CustomSteal
             stealLogger.Info("结束抢夺，最终结果为：" + _resultDesc[b]);
             stealLogger.Info("======================");
             __result = b;
+
+            return false;
         }
 
         /// <summary>
@@ -352,9 +333,9 @@ namespace ConvenienceBackend.CustomSteal
         /// <returns></returns>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(EventHelper), "GetPlotHarmActionPhase")]
-        public static bool GetPlotHarmActionPhasePrefix(int selfCharId, int targetCharId, ref sbyte __result)
+        public static bool GetPlotHarmActionPhasePrefix(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, ref sbyte __result)
         {
-            if (selfCharId == DomainManager.Taiwu.GetTaiwuCharId())
+            if (selfChar.GetId() == DomainManager.Taiwu.GetTaiwuCharId())
             {
                 switch (_plotHarmMode)
                 {
@@ -362,7 +343,7 @@ namespace ConvenienceBackend.CustomSteal
                         processSuccessRateMode(_plotHarmValue, ref __result);
                         return false;
                     case TryMode.SimulationMode:
-                        processPlotHarmSimulationMode(selfCharId, targetCharId, ref __result);
+                        processPlotHarmSimulationMode(selfChar, targetChar, ref __result);
                         return false;
                 }
             }
@@ -380,33 +361,13 @@ namespace ConvenienceBackend.CustomSteal
             __result = (sbyte)random.Next(0, 3);
         }
 
-        private static void processScamSimulationMode(int selfCharId, int targetCharId, ref sbyte __result)
+        private static void processScamSimulationMode(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, int alertFactor, ref sbyte __result)
         {
             int value = _scamValue;
-            IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
-            Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
-            Character character = DomainManager.Character.GetElement_Objects(targetCharId);
-            OrganizationInfo organizationInfo = character.GetOrganizationInfo();
-            if (organizationInfo.SettlementId >= 0 && Config.Organization.Instance[organizationInfo.OrgTemplateId].IsCivilian && DomainManager.Character.HasGuard(targetCharId, character))
-            {
-                sbyte fameType = character.GetFameType();
-                bool isHeretic = fameType == -2 ? random.NextBool() : fameType < 3;
-                Location location = DomainManager.Organization.GetSettlement(organizationInfo.SettlementId).GetLocation();
-                sbyte stateTemplateIdByAreaId = DomainManager.Map.GetStateTemplateIdByAreaId(location.AreaId);
-                character = DomainManager.Character.GetPregeneratedCityTownGuard(stateTemplateIdByAreaId, isHeretic, organizationInfo.Grade);
-            }
-            string text = "";
-            Character element_Objects3 = DomainManager.Character.GetElement_Objects(targetCharId);
-            if (element_Objects3 != null)
-            {
-                ValueTuple<string, string> name = element_Objects3.GetFullName().GetName(character.GetGender(), DomainManager.World.GetCustomTexts());
-                text = name.Item1 + name.Item2;
-            }
             stealLogger.Info("======================");
             stealLogger.Info(string.Concat(new string[]
             {
                 "准备开始哄骗",
-                text,
                 "，模拟哄骗次数为：",
                 value.ToString(),
                 "次"
@@ -414,7 +375,10 @@ namespace ConvenienceBackend.CustomSteal
             sbyte b = 0;
             for (int i = 1; i < value; i++)
             {
-                int stealActionPhase = element_Objects.GetStealActionPhase(random, character);
+                IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
+                var newTargetChar = targetChar.GetGuardForCalculation(random);
+
+                int stealActionPhase = selfChar.GetScamActionPhase(random, newTargetChar, alertFactor);
                 stealLogger.Info("第" + i.ToString() + "次哄骗结果为：" + stealActionPhase);
                 b = (sbyte)Math.Max(b, stealActionPhase);
                 if (b >= 5)
@@ -428,33 +392,14 @@ namespace ConvenienceBackend.CustomSteal
         }
 
         // Token: 0x06000003 RID: 3 RVA: 0x000020C4 File Offset: 0x000002C4
-        private static void processStealItemSimulationMode(int selfCharId, int targetCharId, ref sbyte __result)
+        private static void processStealItemSimulationMode(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, int alertFactor, ref sbyte __result)
         {
             int value = _stealValue;
-            IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
-            Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
-            Character character = DomainManager.Character.GetElement_Objects(targetCharId);
-            OrganizationInfo organizationInfo = character.GetOrganizationInfo();
-            if (organizationInfo.SettlementId >= 0 && Config.Organization.Instance[organizationInfo.OrgTemplateId].IsCivilian && DomainManager.Character.HasGuard(targetCharId, character))
-            {
-                sbyte fameType = character.GetFameType();
-                bool isHeretic = fameType == -2 ? random.NextBool() : fameType < 3;
-                Location location = DomainManager.Organization.GetSettlement(organizationInfo.SettlementId).GetLocation();
-                sbyte stateTemplateIdByAreaId = DomainManager.Map.GetStateTemplateIdByAreaId(location.AreaId);
-                character = DomainManager.Character.GetPregeneratedCityTownGuard(stateTemplateIdByAreaId, isHeretic, organizationInfo.Grade);
-            }
-            string text = "";
-            Character element_Objects3 = DomainManager.Character.GetElement_Objects(targetCharId);
-            if (element_Objects3 != null)
-            {
-                ValueTuple<string, string> name = element_Objects3.GetFullName().GetName(character.GetGender(), DomainManager.World.GetCustomTexts());
-                text = name.Item1 + name.Item2;
-            }
             stealLogger.Info("======================");
             stealLogger.Info(string.Concat(new string[]
             {
                 "准备开始偷窃",
-                text,
+                targetChar.GetGivenName(),
                 "，模拟偷窃次数为：",
                 value.ToString(),
                 "次"
@@ -462,7 +407,9 @@ namespace ConvenienceBackend.CustomSteal
             sbyte b = 0;
             for (int i = 1; i < value; i++)
             {
-                int stealActionPhase = element_Objects.GetStealActionPhase(random, character);
+                IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
+                var newTargetChar = targetChar.GetGuardForCalculation(random);
+                int stealActionPhase = selfChar.GetStealActionPhase(random, newTargetChar, alertFactor);
                 stealLogger.Info("第" + i.ToString() + "次偷窃结果为：" + _resultDesc[stealActionPhase]);
                 b = (sbyte)Math.Max(b, stealActionPhase);
                 if (b >= 5)
@@ -519,28 +466,15 @@ namespace ConvenienceBackend.CustomSteal
             __result = b;
         }
 
-        private static void processPlotHarmSimulationMode(int selfCharId, int targetCharId, ref sbyte __result) 
+        private static void processPlotHarmSimulationMode(GameData.Domains.Character.Character selfChar, GameData.Domains.Character.Character targetChar, ref sbyte __result) 
         {
             int value = _plotHarmValue;
-
-            GameData.Domains.Character.Character element_Objects = DomainManager.Character.GetElement_Objects(selfCharId);
-            GameData.Domains.Character.Character character = DomainManager.Character.GetElement_Objects(targetCharId);
-            IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
-            OrganizationInfo organizationInfo = character.GetOrganizationInfo();
-            if (organizationInfo.SettlementId >= 0 && Config.Organization.Instance[organizationInfo.OrgTemplateId].IsCivilian && DomainManager.Character.HasGuard(targetCharId, character))
-            {
-                sbyte fameType = character.GetFameType();
-                bool isHeretic = ((fameType == -2) ? random.NextBool() : (fameType < 3));
-                Location location = DomainManager.Organization.GetSettlement(organizationInfo.SettlementId).GetLocation();
-                sbyte stateTemplateIdByAreaId = DomainManager.Map.GetStateTemplateIdByAreaId(location.AreaId);
-                character = DomainManager.Character.GetPregeneratedCityTownGuard(stateTemplateIdByAreaId, isHeretic, organizationInfo.Grade);
-            }
 
             stealLogger.Info("======================");
             stealLogger.Info(string.Concat(new string[]
             {
                 "准备开始暗害",
-                character.GetGivenName(),
+                targetChar.GetGivenName(),
                 "，模拟暗害次数为：",
                 value.ToString(),
                 "次"
@@ -549,7 +483,9 @@ namespace ConvenienceBackend.CustomSteal
             sbyte b = 0;
             for (int i = 1; i < value; i++)
             {
-                int plotHarmActionPhase = element_Objects.GetPlotHarmActionPhase(random, character);
+                IRandomSource random = DomainManager.TaiwuEvent.MainThreadDataContext.Random;
+                targetChar = targetChar.GetGuardForCalculation(random);
+                int plotHarmActionPhase = selfChar.GetPlotHarmActionPhase(random, targetChar);
                 stealLogger.Info("第" + i.ToString() + "次暗害结果为：" + _resultDesc[plotHarmActionPhase]);
                 b = (sbyte)Math.Max(b, plotHarmActionPhase);
                 if (b >= 5)

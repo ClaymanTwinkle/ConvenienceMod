@@ -38,7 +38,7 @@ namespace ConvenienceFrontend.TaiwuBuildingManager
             {
                 UI_TaiwuBuildingManager.element = new UIElement
                 {
-                    Id = -1
+                    // Id = -1
                 };
                 Traverse.Create(UI_TaiwuBuildingManager.element).Field("_path").SetValue("UI_TaiwuBuildingManager");
 

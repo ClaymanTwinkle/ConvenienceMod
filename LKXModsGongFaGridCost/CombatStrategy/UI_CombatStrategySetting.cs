@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows;
+using CharacterMenu;
 using Config;
 using ConvenienceFrontend.CombatStrategy.config;
 using ConvenienceFrontend.CombatStrategy.config.data;
@@ -43,7 +44,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 element = new UIElement
                 {
-                    Id = -1
+                    // Id = -1
                 };
                 Traverse.Create(element).Field("_path").SetValue("UI_CombatStrategySetting");
                 GameObject gameObject = UIUtils.CreateMainUI("UI_CombatStrategySetting", "自动战斗设置");
@@ -217,7 +218,7 @@ namespace ConvenienceFrontend.CombatStrategy
             {
                 var btnList = new List<UI_PopupMenu.BtnData>
                 {
-                    new UI_PopupMenu.BtnData("新建方案", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("新建方案", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         ShowInputTextPanel(parent2, "输入方案名称", "", delegate (string val)
                         {
@@ -229,7 +230,7 @@ namespace ConvenienceFrontend.CombatStrategy
                             }
                         });
                     })),
-                    new UI_PopupMenu.BtnData("方案改名", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("方案改名", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         ShowInputTextPanel(parent2, "输入方案名称", dropdown.options[dropdown.value].text, delegate (string val)
                         {
@@ -241,19 +242,19 @@ namespace ConvenienceFrontend.CombatStrategy
                             }
                         });
                     })),
-                    new UI_PopupMenu.BtnData("复制方案", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("复制方案", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         var copyStrategy = CombatStrategyConfigManager.CopyStrategyProgramme();
                         copyStrategy.name += "（复制版）" + CombatStrategyConfigManager.Programmes.Count;
                         // 刷新UI
                         RefreshStrategyProgrammeOptions();
                     })),
-                    new UI_PopupMenu.BtnData("导出方案", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("导出方案", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         UIUtils.ShowTips("提示", "已将方案导出到剪切板，可以粘贴给其他人使用。");
                         GUIUtility.systemCopyBuffer = CombatStrategyConfigManager.GetCurrentStrategyProgrammeJson();
                     })),
-                    new UI_PopupMenu.BtnData("导入方案", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("导入方案", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         var Programme = CombatStrategyConfigManager.CreateNewStrategyProgrammeFromClipboard();
                         if (Programme != null)
@@ -267,7 +268,7 @@ namespace ConvenienceFrontend.CombatStrategy
                         }
                     })),
 
-                    new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("<color=yellow>自动生成</color>", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         if (!ConvenienceFrontend.IsInGame())
                         {
@@ -287,7 +288,7 @@ namespace ConvenienceFrontend.CombatStrategy
                             }
                         }));
                     })),
-                    new UI_PopupMenu.BtnData("<color=red>删除方案</color>", true, new Action(() =>
+                    new UI_PopupMenu.BtnData("<color=red>删除方案</color>", true, EItemMenuDisplayOrder.Other, new Action(() =>
                     {
                         if (dropdown.options.Count > 1)
                         {
@@ -635,7 +636,7 @@ namespace ConvenienceFrontend.CombatStrategy
             this.RenderStrategySkillText(strategy, skillRefers);
             var btnList = new List<UI_PopupMenu.BtnData>
             {
-                new UI_PopupMenu.BtnData("施展功法", true, new Action(() =>
+                new UI_PopupMenu.BtnData("施展功法", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     if (!ConvenienceFrontend.IsInGame())
                     {
@@ -659,32 +660,32 @@ namespace ConvenienceFrontend.CombatStrategy
                     });
                     ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.ConvertAll(x => x.TemplateId), _onSelected);
                 })),
-                new UI_PopupMenu.BtnData("变招", true, new Action(() =>
+                new UI_PopupMenu.BtnData("变招", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     this.ShowChangeTacticsPanel(skillRefers, strategy);
                 })),
-                new UI_PopupMenu.BtnData("切换武器", true, new Action(() =>
+                new UI_PopupMenu.BtnData("切换武器", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     this.ShowSwitchWeaponPanel(skillRefers, strategy);
                 })),
-                new UI_PopupMenu.BtnData("队友协助", true, new Action(() =>
+                new UI_PopupMenu.BtnData("队友协助", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     this.ShowTeammateCommandPanel(skillRefers, strategy);
                 })),
-                new UI_PopupMenu.BtnData("自动移动", true, new Action(() =>
+                new UI_PopupMenu.BtnData("自动移动", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     this._moveActionSelectPanel.Show(skillRefers, strategy, new Action(() =>
                     {
                         this.RenderStrategySkillText(strategy, skillRefers);
                     }));
                 })),
-                new UI_PopupMenu.BtnData("普通攻击", true, new Action(() =>
+                new UI_PopupMenu.BtnData("普通攻击", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     strategy.type = (short)StrategyConst.StrategyType.NormalAttack;
                     strategy.SetAction(new NormalAttackAction());
                     this.RenderStrategySkillText(strategy, skillRefers);
                 })),
-                new UI_PopupMenu.BtnData("打断功法", true, new Action(() =>
+                new UI_PopupMenu.BtnData("打断功法", true, EItemMenuDisplayOrder.Other, new Action(() =>
                 {
                     if (!ConvenienceFrontend.IsInGame())
                     {
@@ -708,7 +709,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     });
                     ShowSkillSelectUI(strategy.skillId, _allActiveSkillItemList.FindAll(x => x.EquipType != CombatSkillEquipType.Neigong && x.EquipType != CombatSkillEquipType.Assist).ConvertAll(x => x.TemplateId), _onSelected);
                 })),
-                new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, delegate ()
+                new UI_PopupMenu.BtnData("<color=yellow>添加条件</color>", true, EItemMenuDisplayOrder.Other, delegate ()
                 {
                     Condition condition = new Condition();
                     strategy.conditions.Add(condition);
@@ -719,7 +720,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     LayoutRebuilder.MarkLayoutForRebuild(transform.GetComponent<RectTransform>());
                 }),
-                new UI_PopupMenu.BtnData("<color=green>复制策略</color>", true, delegate ()
+                new UI_PopupMenu.BtnData("<color=green>复制策略</color>", true, EItemMenuDisplayOrder.Other, delegate ()
                 {
                     var copyStrategy = (Strategy)strategy.CreateDeepCopy();
                     CombatStrategyMod.Strategies.Add(copyStrategy);
@@ -727,7 +728,7 @@ namespace ConvenienceFrontend.CombatStrategy
                     this.RenderStrategy(newTransform.transform, copyStrategy);
                     LayoutRebuilder.MarkLayoutForRebuild(this._strategySettings.parent.GetComponent<RectTransform>());
                 }),
-                new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, delegate ()
+                new UI_PopupMenu.BtnData("<color=red>删除策略</color>", true, EItemMenuDisplayOrder.Other, delegate ()
                 {
                     CombatStrategyMod.Strategies.Remove(strategy);
                     for (int k = transform.GetSiblingIndex() + 1; k < _strategySettings.childCount; k++)
@@ -761,11 +762,11 @@ namespace ConvenienceFrontend.CombatStrategy
             this.RenderConditionText(component, condition);
             List<UI_PopupMenu.BtnData> btnList = new List<UI_PopupMenu.BtnData>
             {
-                new UI_PopupMenu.BtnData("设置条件", true, delegate()
+                new UI_PopupMenu.BtnData("设置条件", true, EItemMenuDisplayOrder.Other,  delegate()
                 {
                     this.ShowConditionSetter(transform, condition);
                 }),
-                new UI_PopupMenu.BtnData("删除条件", true, delegate()
+                new UI_PopupMenu.BtnData("删除条件", true, EItemMenuDisplayOrder.Other, delegate()
                 {
                     strategy.conditions.Remove(condition);
                     transform.SetAsLastSibling();
