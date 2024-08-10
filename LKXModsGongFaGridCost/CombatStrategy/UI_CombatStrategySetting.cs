@@ -597,21 +597,30 @@ namespace ConvenienceFrontend.CombatStrategy
                 argumentBox.SetObject("ItemSize", new Vector2(60f, 30f));
                 UIElement.SetSelectCount.SetOnInitArgs(argumentBox);
                 UIManager.Instance.ShowUI(UIElement.SetSelectCount);
-                Refers refers = UIElement.SetSelectCount.UiBaseAs<UI_SetSelectCount>().CGet<Refers>("SliceDownSheet");
-                GameObject confirm = refers.CGet<GameObject>("Conflict_Confirm");
-                refers.CGet<RectTransform>("CancelBtnPos").anchoredPosition = new Vector2(33f, 40f);
-                GameObject cancel = refers.CGet<PositionFollower>("Conflict_Cancel").gameObject;
-                GameObject bigCancel = refers.transform.GetChild(11).gameObject;
-                confirm.SetActive(true);
-                cancel.SetActive(true);
-                bigCancel.SetActive(false);
+                var uiSetSelectCount = UIElement.SetSelectCount.UiBaseAs<UI_SetSelectCount>();
+                
+                //Refers refers = UIElement.SetSelectCount.UiBaseAs<UI_SetSelectCount>().CGet<Refers>("SliceDownSheet");
+                //GameObject confirm = refers.CGet<GameObject>("Conflict_Confirm");
+                //refers.CGet<RectTransform>("CancelBtnPos").anchoredPosition = new Vector2(33f, 40f);
+                //GameObject cancel = refers.CGet<PositionFollower>("Conflict_Cancel").gameObject;
+                //GameObject bigCancel = refers.transform.GetChild(11).gameObject;
+                //confirm.SetActive(true);
+                //cancel.SetActive(true);
+                //bigCancel.SetActive(false);
+                RectTransform comfirmTip = uiSetSelectCount.CGet<RectTransform>("Tip");
                 UIElement setSelectCount = UIElement.SetSelectCount;
+                setSelectCount.OnShowed = (Action)Delegate.Combine(setSelectCount.OnShowed, (Action)delegate
+                {
+                    comfirmTip.gameObject.SetActive(value: false);
+                });
                 setSelectCount.OnHide = (Action)Delegate.Combine(setSelectCount.OnHide, new Action(delegate ()
                 {
+                    uiSetSelectCount.Confirm();
                     oRefers.CGet<CButton>("PriorityBtn").transform.SetParent(transform);
-                    confirm.SetActive(false);
-                    cancel.SetActive(false);
-                    bigCancel.SetActive(true);
+                    // confirm.SetActive(false);
+                    // cancel.SetActive(false);
+                    // bigCancel.SetActive(true);
+                    comfirmTip.gameObject.SetActive(value: true);
                 }));
             });
             CToggle ctoggle = oRefers.CGet<CToggle>("Toggle");
