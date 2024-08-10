@@ -134,7 +134,7 @@ namespace ConvenienceBackend.ComparativeArt
                 }
                 
                 // 跳转到较艺成功对话
-                DomainManager.TaiwuEvent.SetListenerBoolArg("WinState", true);
+                DomainManager.TaiwuEvent.SetListenerEventActionBoolArg("LifeSkillBattleComplete", "WinState", true);
                 DomainManager.TaiwuEvent.TriggerListener("LifeSkillBattleComplete", true);
                 return false;
             }
