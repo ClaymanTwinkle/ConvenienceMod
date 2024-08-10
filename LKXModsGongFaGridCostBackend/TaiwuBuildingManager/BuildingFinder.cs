@@ -22,7 +22,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
         /// <param name="buildingArea"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static List<BuildingBlockKey> FindBuildingsByType(Location location, BuildingAreaData buildingArea, EBuildingBlockType type)
+        public static List<BuildingBlockKey> FindBuildingsByType(Location location, BuildingAreaData buildingArea, EBuildingBlockType type, bool ignoreCanUse = false)
         {
             List<BuildingBlockKey> list = new List<BuildingBlockKey>();
             for (short num = 0; num < buildingArea.Width * buildingArea.Width; num = (short)(num + 1))
@@ -30,7 +30,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 BuildingBlockKey buildingBlockKey = new(location.AreaId, location.BlockId, num);
                 BuildingBlockData element_BuildingBlocks = DomainManager.Building.GetElement_BuildingBlocks(buildingBlockKey);
                 var buildingBlockItem = Config.BuildingBlock.Instance[element_BuildingBlocks.TemplateId];
-                if (buildingBlockItem != null && buildingBlockItem.Type == type && element_BuildingBlocks.CanUse())
+                if (buildingBlockItem != null && buildingBlockItem.Type == type && (ignoreCanUse || element_BuildingBlocks.CanUse()))
                 {
                     list.Add(buildingBlockKey);
                 }
