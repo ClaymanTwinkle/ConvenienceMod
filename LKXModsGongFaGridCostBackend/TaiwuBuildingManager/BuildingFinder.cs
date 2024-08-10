@@ -60,7 +60,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 ushort baseCost = buildingBlockItem.BaseBuildCost[(int)type];
                 if (baseCost > 0)
                 {
-                    int returnCount2 = (int)DomainManager.Building.CallMethod("GetRemoveOperationResReturn", BindingFlags.Instance | BindingFlags.NonPublic, baseCost, addCostPerLevel, resReturnPercent, buildingLevel);
+                    int returnCount2 = GameData.Domains.Building.SharedMethods.GetRemoveOperationResReturn(baseCost, addCostPerLevel, resReturnPercent, buildingLevel);
                     returnRes[type] = returnCount2;
                 }
             }
