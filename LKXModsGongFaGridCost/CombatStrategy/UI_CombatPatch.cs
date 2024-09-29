@@ -268,7 +268,7 @@ namespace ConvenienceFrontend.CombatStrategy
         private static void OnClickAutoFight(UI_Combat __instance)
         {
             _autoCombat = !_autoCombat;
-            SingletonObject.getInstance<GlobalSettings>().SetAutoCombat(_autoCombat);
+            SingletonObject.getInstance<GlobalSettings>().AutoCombat = _autoCombat;
             CombatStrategyConfigManager.GlobalSettings.isEnable = _autoCombat;
             CombatStrategyMod.SendSettings();
             __instance.CallMethod("UpdateAutoFightMark", BindingFlags.NonPublic | BindingFlags.Instance, CombatStrategyMod.GlobalSettings.isEnable);

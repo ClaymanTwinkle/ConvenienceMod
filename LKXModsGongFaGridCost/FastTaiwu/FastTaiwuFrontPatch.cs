@@ -49,7 +49,7 @@ namespace ConvenienceFrontend.FastTaiwu
                 traverse.Method("ShowCombatStateInfo", LocalStringManager.Get(1520), -1f, 5f).GetValue();
                 SingletonObject.getInstance<YieldHelper>().DelaySecondsDo(0.5f, delegate
                 {
-                    ItemDomainHelper.MethodCall.GetWagerValueRange(__instance.Element.GameDataListenerId);
+                    // ItemDomainHelper.MethodCall.GetWagerValueRange(__instance.Element.GameDataListenerId);
                 });
             }
             else
@@ -62,7 +62,7 @@ namespace ConvenienceFrontend.FastTaiwu
                     __instance.CGet<Refers>("EnemyInfos").CGet<TextMeshProUGUI>("WagerStateLabel").text = LocalStringManager.Get(1524);
                     SingletonObject.getInstance<YieldHelper>().DelaySecondsDo(1f, delegate
                     {
-                        ItemDomainHelper.MethodCall.CalcEnemyWager(__instance.Element.GameDataListenerId);
+                        // ItemDomainHelper.MethodCall.CalcEnemyWager(__instance.Element.GameDataListenerId);
                     });
                 });
             }

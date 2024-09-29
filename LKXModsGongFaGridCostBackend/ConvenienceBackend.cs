@@ -70,7 +70,7 @@ namespace ConvenienceBackend
             // 志向优化
             new ProfessionOptimizeBackend(),
             // 合并书页
-            new MergeBookPanelBackendPatch(),
+            // new MergeBookPanelBackendPatch(),
         };
 
         private static string _modIdStr = "1_";
@@ -84,7 +84,7 @@ namespace ConvenienceBackend
             // 自动突破
             new AutoBreakBackendPatch(),
             // 同道战斗
-            new TongdaoCombatBackendPatch(),
+            // new TongdaoCombatBackendPatch(),
             // 简易开局
             new QuickStartBackendPatch(),
 

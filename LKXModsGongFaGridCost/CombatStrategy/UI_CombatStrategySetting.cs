@@ -1092,7 +1092,7 @@ namespace ConvenienceFrontend.CombatStrategy
         // Token: 0x06000070 RID: 112 RVA: 0x0000764C File Offset: 0x0000584C
         private void ListenHotKey()
         {
-            Debug.Log("UI_CombatStrategySetting::ListenHotKey");
+            // Debug.Log("UI_CombatStrategySetting::ListenHotKey");
             KeyCode keyCode = 0;
             if (Input.anyKey)
             {
@@ -1177,8 +1177,10 @@ namespace ConvenienceFrontend.CombatStrategy
             if (isInit)
             {
                 refer.CGet<TextMeshProUGUI>("FunctionKey").gameObject.SetActive(false);
-                refer.CGet<TextMeshProUGUI>("FunctionKey").gameObject.GetComponent<UIRectSizeController>().ControlList[0].Target.gameObject.SetActive(false);
-                refer.CGet<TextMeshProUGUI>("Key").gameObject.GetComponent<UIRectSizeController>().ControlList[0].Target.gameObject.SetActive(key > 0);
+                List<CImage> list2 = refer.CGetList<CImage>("MouseIcon_");
+                list2.ForEach(x=>x.gameObject.SetActive(false));
+                //refer.CGet<TextMeshProUGUI>("FunctionKey").gameObject.GetComponent<UIRectSizeController>().ControlList[0].Target.gameObject.SetActive(false);
+                //refer.CGet<TextMeshProUGUI>("Key").gameObject.GetComponent<UIRectSizeController>().ControlList[0].Target.gameObject.SetActive(key > 0);
                 refer.CGet<TextMeshProUGUI>("AddMark").gameObject.SetActive(false);
                 ctoggle.onValueChanged.RemoveAllListeners();
                 ctoggle.onValueChanged.AddListener(delegate (bool on)

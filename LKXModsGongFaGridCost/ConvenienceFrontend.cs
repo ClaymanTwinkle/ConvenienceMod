@@ -69,11 +69,11 @@ namespace ConvenienceFrontend
             // 太吾村管家
             new TaiwuBuildingManagerFrontPatch(),
             // 隐藏已读书籍
-            new IgnoreReadFinishBookFrontPatch(),
+            // new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
             // new BetterArmorFrontPatch(),
             // 合并书页
-            new MergeBookPanelFrontPatch(),
+            // new MergeBookPanelFrontPatch(),
             // 批量制作物品
             new BatchMakeItemFrontPatch(),
             // 修改存档数量
@@ -85,7 +85,7 @@ namespace ConvenienceFrontend
             // 模拟对战
             // new CombatSimulatorFrontPatch(),
             // 蛐蛐战斗优化
-            new CricketCombatOptimizeFrontPatch(),
+            // new CricketCombatOptimizeFrontPatch(),
             // 一键突破
             new AutoBreakFrontPatch(),
             // 铭刻自己
@@ -95,7 +95,7 @@ namespace ConvenienceFrontend
             // 商店快捷操作
             new ShopShortcutFrontPatch(),
             // 同道战斗
-            new TongdaoFrontPatch(),
+            // new TongdaoFrontPatch(),
             // 更好的读书
             new BetterReadingFrontPatch(),
             // 重置分辨率
@@ -105,7 +105,7 @@ namespace ConvenienceFrontend
             // 同道换功法
             // new TongDaoEquipCombatSkillFrontPatch(),
             // 太吾加速
-            new FastTaiwuFrontPatch(),
+            // new FastTaiwuFrontPatch(),
             // 志向优化
             new ProfessionOptimizeFrontPatch(),
         };

@@ -14,6 +14,8 @@ using GameData.Domains.Character;
 using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
 using GameData.Domains.Item;
+using GameData.Domains.Taiwu;
+using GameData.Domains.TaiwuEvent;
 using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
@@ -68,7 +70,7 @@ namespace ConvenienceBackend.CombatStrategy
         {
             _logger.Info("开始战斗");
             _startCombatCalled = true;
-            AICombatManager.StartCombat();
+            // AICombatManager.StartCombat();
         }
 
         [HarmonyPostfix]
@@ -82,7 +84,7 @@ namespace ConvenienceBackend.CombatStrategy
                 _switchWeaponsCD = 0;
                 _prepareSkillCountMap.Clear();
 
-                AICombatManager.ResetCombat();
+                // AICombatManager.ResetCombat();
             }
         }
 
@@ -117,10 +119,10 @@ namespace ConvenienceBackend.CombatStrategy
             //    return;
             //}
 
-            if (_settings.UseAIPractice)
-            {
-                if (AIPracticeManager.HandleCombatUpdate(__instance, context, combatCharacter)) return;
-            }
+            //if (_settings.UseAIPractice)
+            //{
+            //    if (AIPracticeManager.HandleCombatUpdate(__instance, context, combatCharacter)) return;
+            //}
 
             List<Strategy> execStrategy = new List<Strategy>();
 
@@ -130,7 +132,7 @@ namespace ConvenienceBackend.CombatStrategy
                 execStrategy = AutoCastSkill(__instance, context, combatCharacter);
             }
             // 自动攻击
-            if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedFrame == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
+            if (_settings.AutoAttack && combatCharacter.MoveData.JumpPreparedProgress == 0 && combatCharacter.GetJumpPreparedDistance() == 0)
             {
                 AutoAttack(__instance, context, combatCharacter);
             }
@@ -461,7 +463,7 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     short mobilityValue = (short)(selfChar.GetMobilityValue() * MOD_MAX_MOBILITY / selfChar.GetMaxMobility());
                     int maxMobility = selfChar.GetMaxMobility();
-                    short mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
+                    int mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
                     if (selfChar.GetAffectingMoveSkillId() < 0)
                     {
                         if ((int)mobilityValue < _settings.MobilityRecoverCap)
@@ -505,7 +507,7 @@ namespace ConvenienceBackend.CombatStrategy
             {
                 // 条件不满足
                 if (!CheckCondition(instance, selfChar, strategy.conditions)) continue;
-                if ((StrategyType)strategy.type != StrategyType.AutoMove && (selfChar.MoveData.JumpPreparedFrame != 0 || selfChar.GetJumpPreparedDistance() != 0)) continue;
+                if ((StrategyType)strategy.type != StrategyType.AutoMove && (selfChar.MoveData.JumpPreparedProgress != 0 || selfChar.GetJumpPreparedDistance() != 0)) continue;
 
                 switch (strategy.type)
                 {
@@ -736,7 +738,14 @@ namespace ConvenienceBackend.CombatStrategy
                         }
                         break;
                     case JudgeItem.SkillMobility:
-                        meetTheConditions = CheckCondition((int)(combatCharacter.GetSkillMobility() * 1000 / GlobalConfig.Instance.AgileSkillMobility), condition);
+                        if (condition.value == 0)
+                        {
+                            meetTheConditions = CheckCondition((combatCharacter.GetAffectingMoveSkillId() < 0 ? 0 : 1), condition);
+                        }
+                        else
+                        {
+                            meetTheConditions = true; // CheckCondition((int)(combatCharacter.GetSkillMobility() * 1000 / GlobalConfig.Instance.AgileSkillMobility), condition);
+                        }
                         break;
                     case JudgeItem.HasTrick:
                         meetTheConditions = ((condition.subType < 0) ? CheckCondition(combatCharacter.GetTricks().Tricks.Count, condition) : CheckCondition((int)combatCharacter.GetTrickCount((sbyte)condition.subType), condition));
