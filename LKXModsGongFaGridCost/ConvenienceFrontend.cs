@@ -105,7 +105,7 @@ namespace ConvenienceFrontend
             // 同道换功法
             // new TongDaoEquipCombatSkillFrontPatch(),
             // 太吾加速
-            // new FastTaiwuFrontPatch(),
+            new FastTaiwuFrontPatch(),
             // 志向优化
             new ProfessionOptimizeFrontPatch(),
         };
@@ -130,7 +130,7 @@ namespace ConvenienceFrontend
             AdaptableLog.Info("Initialize " + _modIdStr);
 
             InitConfig();
-
+            UIUtils.PrepareMaterial();
             this.harmony = Harmony.CreateAndPatchAll(typeof(ConvenienceFrontend), null);
 
             allPatchList.ForEach((BaseFrontPatch patch) => this.harmony.PatchAll(patch.GetType()));

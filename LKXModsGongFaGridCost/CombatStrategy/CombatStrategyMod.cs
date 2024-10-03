@@ -28,7 +28,6 @@ namespace ConvenienceFrontend.CombatStrategy
             CombatStrategyMod._modId = modInfo.ModId;
             harmony.PatchAll(typeof(CombatStrategyMod));
             harmony.PatchAll(typeof(UI_CombatPatch));
-            UIUtils.PrepareMaterial();
             CombatStrategyConfigManager.ReadJsons();
         }
 

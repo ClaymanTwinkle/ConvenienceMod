@@ -33,8 +33,8 @@ namespace ConvenienceFrontend.FastTaiwu
         /// 跳过斗蛐蛐开头动画
         /// </summary>
         /// <param name="visible"></param>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_CricketCombat), "RandomFirstMove")]
+        // [HarmonyPrefix]
+        // [HarmonyPatch(typeof(UI_CricketCombat), "RandomFirstMove")]
         public static bool UI_CricketCombat_RandomFirstMove_Prefix(UI_CricketCombat __instance)
         {
             CricketView firstMoveJudger = __instance.CGet<CricketView>("FirstMoveJudger");
@@ -77,8 +77,8 @@ namespace ConvenienceFrontend.FastTaiwu
         /// <param name="__instance"></param>
         /// <param name="button"></param>
         /// <param name="interactable"></param>
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_CricketCombat), "SetButtonInteractable")]
+        // [HarmonyPostfix]
+        // [HarmonyPatch(typeof(UI_CricketCombat), "SetButtonInteractable")]
         public static void UI_CricketCombat_SetButtonInteractable_Postfix(UI_CricketCombat __instance, CButton button, bool interactable)
         {
             if (__instance.CGet<CButton>("BtnStartCombat") == button && interactable)
@@ -101,8 +101,8 @@ namespace ConvenienceFrontend.FastTaiwu
         /// <param name="__instance"></param>
         /// <param name="____wagerTypeTogGroup"></param>
         /// <returns></returns>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_CricketCombat), "OnEnable")]
+        // [HarmonyPrefix]
+        // [HarmonyPatch(typeof(UI_CricketCombat), "OnEnable")]
         public static bool UI_CricketCombat_OnEnable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
         {
             _isInCricketCombat = true;
@@ -136,8 +136,8 @@ namespace ConvenienceFrontend.FastTaiwu
             return false;
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_CricketCombat), "OnDisable")]
+        // [HarmonyPrefix]
+        // [HarmonyPatch(typeof(UI_CricketCombat), "OnDisable")]
         public static void UI_CricketCombat_OnDisable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
         {
             _isInCricketCombat = false;
