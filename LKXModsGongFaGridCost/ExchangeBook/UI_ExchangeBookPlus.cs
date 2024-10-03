@@ -166,8 +166,8 @@ namespace ConvenienceFrontend.ExchangeBook
             this._confirm = obj.transform.Find("MainWindow/ExchangeArea/ConfirmFrame/Confirm").gameObject.GetComponent<CButton>();
             base.AddMono(obj.transform.Find("MainWindow/NpcBooks/ImgTitle36/Title").gameObject.GetComponent<TextMeshProUGUI>(), "NpcTitle");
             this._npcItemScroll = obj.transform.Find("MainWindow/NpcBooks/NpcItemScroll/").gameObject.GetComponent<ItemScrollView>();
-            base.AddMono(obj.transform.Find("MainWindow/ExchangeArea/SelfPrestige/").gameObject.GetComponent<RectTransform>(), "SelfAuthority");
-            base.AddMono(obj.transform.Find("MainWindow/ExchangeArea/Load/").gameObject.GetComponent<RectTransform>(), "Load");
+            base.AddMono(obj.transform.Find("MainWindow/ExchangeArea/SelfInfoLayout/SelfPrestige/").gameObject.GetComponent<RectTransform>(), "SelfAuthority");
+            base.AddMono(obj.transform.Find("MainWindow/ExchangeArea/SelfInfoLayout/Load/").gameObject.GetComponent<RectTransform>(), "Load");
             this._confirm.ClearAndAddListener(delegate
             {
                 this.OnClick(this._confirm);

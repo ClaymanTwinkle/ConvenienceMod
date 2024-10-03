@@ -463,7 +463,7 @@ namespace ConvenienceBackend.CombatStrategy
                 {
                     short mobilityValue = (short)(selfChar.GetMobilityValue() * MOD_MAX_MOBILITY / selfChar.GetMaxMobility());
                     int maxMobility = selfChar.GetMaxMobility();
-                    int mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
+                    // int mobilityRecoverPrepareValue = selfChar.GetMobilityRecoverPrepareValue();
                     if (selfChar.GetAffectingMoveSkillId() < 0)
                     {
                         if ((int)mobilityValue < _settings.MobilityRecoverCap)

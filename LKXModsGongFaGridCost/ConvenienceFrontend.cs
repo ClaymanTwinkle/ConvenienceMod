@@ -55,19 +55,19 @@ namespace ConvenienceFrontend
         private readonly List<BaseFrontPatch> allPatchList = new List<BaseFrontPatch>()
         {
             // 较艺必胜
-            new ComparativeArtFrontPatch(),
+            // new ComparativeArtFrontPatch(),
             // 自动战斗
-            new CombatStrategyMod(),
+            // new CombatStrategyMod(),
             // 自定义偷窃
-            new CustomStealFrontPatch(),
+            // new CustomStealFrontPatch(),
             // 修改武器的式
-            new CustomWeaponFrontPatch(),
+            // new CustomWeaponFrontPatch(),
             // 手动存档
             // new ManualArchiveFrontendPatch(),
             // roll角色属性
-            new QuicklyCreateCharacterFrontend(),
+            // new QuicklyCreateCharacterFrontend(),
             // 太吾村管家
-            new TaiwuBuildingManagerFrontPatch(),
+            // new TaiwuBuildingManagerFrontPatch(),
             // 隐藏已读书籍
             // new IgnoreReadFinishBookFrontPatch(),
             // 平衡装备
@@ -75,7 +75,7 @@ namespace ConvenienceFrontend
             // 合并书页
             // new MergeBookPanelFrontPatch(),
             // 批量制作物品
-            new BatchMakeItemFrontPatch(),
+            // new BatchMakeItemFrontPatch(),
             // 修改存档数量
             new SettingsOptFrontPatch(),
         };

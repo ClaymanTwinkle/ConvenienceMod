@@ -50,21 +50,21 @@ namespace ConvenienceBackend
         private static readonly List<BaseBackendPatch> allPatchList = new()
         {
             // 较艺必胜
-            new ComparativeArtBackendPatch(),
+            // new ComparativeArtBackendPatch(),
             // sl偷窃、哄骗
-            new CustomStealBackendPatch(),
+            // new CustomStealBackendPatch(),
             // 自动战斗
-            new CombatStrategyBackendPatch(),
+            // new CombatStrategyBackendPatch(),
             // 拒绝NTR
             new NotNTRBackendPatch(),
             // 修改武器的式
-            new CustomWeaponBackendPatch(),
+            // new CustomWeaponBackendPatch(),
             // 手动存档
             // new ManualArchiveBackendPatch(),
             // 太吾村管家
-            new TaiwuBuildingManagerBackendPatch(),
+            // new TaiwuBuildingManagerBackendPatch(),
             // 开局Roll属性
-            new QuicklyCreateCharacterBackend(),
+            // new QuicklyCreateCharacterBackend(),
             // 平衡装备
             // new BetterArmorBackendPatch(),
             // 志向优化

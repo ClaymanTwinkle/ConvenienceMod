@@ -47,7 +47,7 @@ namespace ConvenienceFrontend.ExchangeBook
             bool flag = ExchangeBookFrontPatch.exchangeCombatSkillBookBtn == null;
             if (flag)
             {
-                GameObject gameObject = __instance.transform.Find("AnimationRoot/BackGround/BackPanel/Supprot/ShowCombatSkillTree/").gameObject;
+                GameObject gameObject = __instance.transform.Find("AnimationRoot/BackGround/BackPanel/Buttons/Supprot/ShowCombatSkillTree/").gameObject;
                 GameObject gameObject2 = UnityEngine.Object.Instantiate<GameObject>(gameObject, gameObject.transform.parent);
                 gameObject2.GetComponent<RectTransform>().anchoredPosition = new Vector2(300f, 16.8f);
                 gameObject2.GetComponentInChildren<TextMeshProUGUI>().SetCharArray("门派换书".ToCharArray());
@@ -63,7 +63,7 @@ namespace ConvenienceFrontend.ExchangeBook
             bool flag2 = ExchangeBookFrontPatch.exchangeLifeSkillBookBtn == null;
             if (flag2)
             {
-                GameObject gameObject3 = __instance.transform.Find("AnimationRoot/BackGround/BackPanel/Supprot/ShowCombatSkillTree/").gameObject;
+                GameObject gameObject3 = __instance.transform.Find("AnimationRoot/BackGround/BackPanel/Buttons/Supprot/ShowCombatSkillTree/").gameObject;
                 GameObject gameObject4 = UnityEngine.Object.Instantiate<GameObject>(gameObject3, gameObject3.transform.parent);
                 gameObject4.GetComponent<RectTransform>().anchoredPosition = new Vector2(550f, 16.8f);
                 gameObject4.GetComponentInChildren<TextMeshProUGUI>().SetCharArray("技艺换书".ToCharArray());
