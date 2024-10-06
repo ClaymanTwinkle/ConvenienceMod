@@ -99,7 +99,7 @@ namespace ConvenienceFrontend
             // 更好的读书
             new BetterReadingFrontPatch(),
             // 重置分辨率
-            new ResetResolutionFrontPatch(),
+            // new ResetResolutionFrontPatch(),
             // 门派换书
             new ExchangeBookFrontPatch(),
             // 同道换功法

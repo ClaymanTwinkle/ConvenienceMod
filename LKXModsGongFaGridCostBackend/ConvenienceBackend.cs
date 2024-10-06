@@ -88,10 +88,10 @@ namespace ConvenienceBackend
             // 简易开局
             new QuickStartBackendPatch(),
 
-            new GigolosBackendPatch(),
+            // new GigolosBackendPatch(),
 
             // 更多工具卖
-            new MoreGoodsBackendPatch(),
+            // new MoreGoodsBackendPatch(),
         };
 
         public override void Initialize()

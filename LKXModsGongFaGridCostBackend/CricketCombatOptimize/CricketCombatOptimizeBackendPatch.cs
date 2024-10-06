@@ -4,7 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GameData.Common;
+using GameData.Domains;
 using GameData.Domains.Taiwu;
+using GameData.Domains.TaiwuEvent;
+using GameData.Domains.TaiwuEvent.EventHelper;
 using GameData.Domains.TaiwuEvent.EventOption;
 using HarmonyLib;
 using NLog;
@@ -20,21 +23,17 @@ namespace ConvenienceBackend.CricketCombatOptimize
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(OptionConditionMatcher), "MonthCooldownCount")]
-        public static bool OptionConditionMatcher_MonthCooldownCount_PrePatch(string arg0, int arg1, sbyte arg2, ref bool __result)
+        [HarmonyPatch(typeof(OptionConditionMatcher), "InteractionOffCooldown")]
+        public static bool OptionConditionMatcher_InteractionOffCooldown_PrePatch(int arg0, short arg1, ref bool __result)
         {
-            if ("CriketCombatInteract".Equals(arg0))
+            if (7 == arg1)
             {
                 // 无限制斗促织
                 __result = true;
                 return false;
             }
 
-            // _logger.Info("MonthCooldownCount " + arg0);
-
             return true;
         }
-
-
     }
 }

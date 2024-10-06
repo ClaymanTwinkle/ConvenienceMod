@@ -82,12 +82,12 @@ namespace ConvenienceFrontend.BetterReading
 
         private static GameObject CreateRandomButtn(UI_ReadingEvent __instance, string tag, string text, Vector3 localPosition, UnityAction onClick)
         {
-            GameObject gameObject = Object.Instantiate<GameObject>(__instance.transform.Find("MainWindow/StrategyHolder/StrategyToggle_0/Bg").gameObject);
+            GameObject gameObject = Object.Instantiate<GameObject>(__instance.transform.Find("MainWindow/StrategyHolder/StrategyToggle_1/Bg").gameObject);
             gameObject.name = "RandomBtn_" + tag;
             Image component = gameObject.GetComponent<Image>();
             component.raycastTarget = true;
             CButton cbutton = gameObject.AddComponent<CButton>();
-            GameObject gameObject2 = Object.Instantiate<GameObject>(__instance.transform.Find("MainWindow/StrategyHolder/StrategyToggle_0/Name").gameObject);
+            GameObject gameObject2 = Object.Instantiate<GameObject>(__instance.transform.Find("MainWindow/StrategyHolder/StrategyToggle_1/Name").gameObject);
             gameObject2.name = "Name_" + tag;
             gameObject2.transform.SetParent(gameObject.transform, false);
             TextMeshProUGUI component2 = gameObject2.GetComponent<TextMeshProUGUI>();
