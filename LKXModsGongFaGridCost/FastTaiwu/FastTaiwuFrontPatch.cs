@@ -29,6 +29,13 @@ namespace ConvenienceFrontend.FastTaiwu
             // UI_CombatResult
         }
 
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_MainMenu), "ShowDevelopingDialog")]
+        public static bool UI_MainMenu_ShowDevelopingDialog_Postfix(UI_MainMenu __instance)
+        {
+            return false;
+        }
+
         /// <summary>
         /// 跳过斗蛐蛐开头动画
         /// </summary>
