@@ -85,7 +85,7 @@ namespace ConvenienceFrontend
             // 模拟对战
             // new CombatSimulatorFrontPatch(),
             // 蛐蛐战斗优化
-            // new CricketCombatOptimizeFrontPatch(),
+            new CricketCombatOptimizeFrontPatch(),
             // 一键突破
             new AutoBreakFrontPatch(),
             // 铭刻自己

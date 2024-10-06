@@ -16,6 +16,7 @@ using GameData.Domains.Item.Display;
 using DG.Tweening;
 using GameData.Utilities;
 using Spine.Unity;
+using ConvenienceFrontend.MergeBookPanel;
 
 namespace ConvenienceFrontend.CricketCombatOptimize
 {
@@ -60,7 +61,7 @@ namespace ConvenienceFrontend.CricketCombatOptimize
             sbyte _minGrade = traverse.Field<sbyte>("_minGrade").Value;
             sbyte _maxGrade = traverse.Field<sbyte>("_maxGrade").Value;
             bool _onlyNoInjuryCricket = traverse.Field<bool>("_onlyNoInjuryCricket").Value;
-            Dictionary<ItemKey, short[]> _cricketDataDict = traverse.Field<Dictionary<ItemKey, short[]>>("_cricketDataDict").Value;
+            Dictionary<ItemKey, CricketData> _cricketDataDict = traverse.Field<Dictionary<ItemKey, CricketData>>("_cricketDataDict").Value;
 
             List<ItemDisplayData> list = new List<ItemDisplayData>();
             foreach (ItemDisplayData canUseCricket in _canUseCricketList)
@@ -78,8 +79,8 @@ namespace ConvenienceFrontend.CricketCombatOptimize
 
                 if (_onlyNoInjuryCricket)
                 {
-                    short[] array = _cricketDataDict[canUseCricket.Key];
-                    if (array[0] > 0 || array[1] > 0 || array[2] > 0 || array[3] > 0 || array[4] > 0)
+                    CricketData cricketData = _cricketDataDict[canUseCricket.Key];
+                    if (cricketData[0] > 0 || cricketData[1] > 0 || cricketData[2] > 0 || cricketData[3] > 0 || cricketData[4] > 0)
                     {
                         continue;
                     }
@@ -110,11 +111,14 @@ namespace ConvenienceFrontend.CricketCombatOptimize
         /// 对方的蛐蛐都可见
         /// </summary>
         /// <param name="visible"></param>
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_CricketCombat), "SetEnemyCricketsVisible")]
-        public static void UI_CricketCombat_SetEnemyCricketsVisible_Prefix(ref bool visible)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "HandlerMethodItemGetCricketDataList")]
+        public static void UI_CricketCombat_HandlerMethodItemGetCricketDataList_Postfix(UI_CricketCombat __instance)
         {
-            visible = true;
+            for (int j = 0; j < 3; j++)
+            {
+                __instance.CallPrivateMethod<CricketJar>("GetJar", false, j).SetVisible(true);
+            }
         }
 
         private static bool randomFirstMove = false;
@@ -130,7 +134,7 @@ namespace ConvenienceFrontend.CricketCombatOptimize
             randomFirstMove = true;
         }
 
-        /// <summary>
+/*        /// <summary>
         /// 我方先手
         /// </summary>
         /// <param name="__instance"></param>
@@ -151,6 +155,6 @@ namespace ConvenienceFrontend.CricketCombatOptimize
             }
             randomFirstMove = false;
             return true;
-        }
+        }*/
     }
 }
