@@ -107,7 +107,7 @@ namespace ConvenienceFrontend
             // 太吾加速
             new FastTaiwuFrontPatch(),
             // 志向优化
-            new ProfessionOptimizeFrontPatch(),
+            // new ProfessionOptimizeFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

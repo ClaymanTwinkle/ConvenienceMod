@@ -60,7 +60,7 @@ namespace ConvenienceBackend.CricketCombatOptimize
                 if (itemPool.Count != 0)
                 {
                     sbyte highestGrade = itemPool.Max((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId));
-                    itemPool.RemoveAll((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId) < highestGrade);
+                    // itemPool.RemoveAll((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId) < highestGrade);
                     itemPool.ForEach(itemKey2 => returnResult.Add(Wager.CreateItem(itemKey2, 1)));
                 }
             }
@@ -73,7 +73,7 @@ namespace ConvenienceBackend.CricketCombatOptimize
                 if (itemPool.Count != 0)
                 {
                     sbyte highestGrade = itemPool.Max((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId));
-                    itemPool.RemoveAll((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId) < highestGrade);
+                    // itemPool.RemoveAll((ItemKey x) => ItemTemplateHelper.GetGrade(x.ItemType, x.TemplateId) < highestGrade);
                     itemPool.ForEach(itemKey2 => returnResult.Add(Wager.CreateItem(itemKey2, 1)));
                 }
             }
@@ -96,7 +96,7 @@ namespace ConvenienceBackend.CricketCombatOptimize
                 }
             }
 
-            foreach (sbyte resourceType in RandomUtils.GetRandomUnrepeated(random, 3, resourcePool))
+            foreach (sbyte resourceType in resourcePool)
             {
                 int index = resourcePool.IndexOf(resourceType);
                 sbyte grade = resourceGrades[index];

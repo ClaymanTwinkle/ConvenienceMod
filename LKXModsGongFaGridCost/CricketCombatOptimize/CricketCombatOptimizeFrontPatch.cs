@@ -134,6 +134,39 @@ namespace ConvenienceFrontend.CricketCombatOptimize
             randomFirstMove = true;
         }
 
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "CheckEnemyGiveUp")]
+        public static bool UI_Cricket_CheckEnemyGiveUp_Prefix(UI_CricketCombat __instance)
+        {
+            var traverse = Traverse.Create(__instance);
+            if (traverse.Field<bool>("_inCombat").Value)
+            {
+                return false;
+            }
+
+            if (!UIManager.Instance.IsFocusElement(__instance.Element))
+            {
+                __instance.CGet<CButton>("ForceGiveUp").interactable = true;
+                return false;
+            }
+
+            ItemKey[] _selfCricketKeys = traverse.Field<ItemKey[]>("_selfCricketKeys").Value;
+            List<ItemDisplayData> _inventoryItems = traverse.Field<List<ItemDisplayData>>("_inventoryItems").Value;
+            IReadOnlyList<ItemDisplayData> EnemyCrickets = traverse.Field<CricketWagerData>("_enemyWagerData").Value.Crickets;
+
+            int num = CricketCombatKit.SumCricketGrades(_selfCricketKeys.Select((ItemKey x) => _inventoryItems.First((ItemDisplayData data) => data.Key == x)));
+            int num2 = CricketCombatKit.SumCricketGrades(EnemyCrickets);
+            if (num2 <= num - 9)
+            {
+                traverse.Method("DoSettlement", true, true).GetValue();
+                return false;
+            }
+
+            traverse.Method("ShowBubbleText", false, LocalStringManager.Get(LanguageKey.LK_CricketCombat_Bubble_ForceGiveUp_Refuse)).GetValue();
+            __instance.CGet<CButton>("ForceGiveUp").interactable = true;
+            return false;
+        }
+
 /*        /// <summary>
         /// 我方先手
         /// </summary>

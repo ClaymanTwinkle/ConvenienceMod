@@ -42,10 +42,12 @@ namespace ConvenienceFrontend.Bandit
 
             switch (eventGuid)
             {
+                case "86ffa999-ea66-4c79-8125-c64aa51797c5":
                 case "f3495f3e-4d0c-4b70-8872-eedd1a4b2b3a":
                 case "aee604fc-c0b8-468e-bf51-8665e2844c00":
                 case "ad16ffb4-63fa-4282-b67c-c784beecdf0c":
                 case "ed52b469-6369-40be-8090-6f18d4cc431c":
+                case "fa091214-3585-4851-be73-02d027bb08da":
                     if (_kidnapButton != null && _kidnapButton.gameObject != null)
                     {
                         UnityEngine.Object.Destroy(_kidnapButton.gameObject);

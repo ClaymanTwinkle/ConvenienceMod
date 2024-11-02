@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using ConvenienceFrontend.CombatStrategy;
+using ConvenienceFrontend.MergeBookPanel;
 using DG.Tweening;
 using FrameWork;
 using FrameWork.ModSystem;
@@ -21,6 +22,12 @@ namespace ConvenienceFrontend.FastTaiwu
     internal class FastTaiwuFrontPatch : BaseFrontPatch
     {
         private static CToggle _markAutoSelectCToggle = null;
+        private static List<string> _blackList = new List<string>() {
+            "1e31b702-bf2f-4b0a-98b3-aee867a030a5",
+            "6ed72f36-01e2-4ee5-8b80-388ca91b580c",
+            "c0bf30b6-937d-4a40-adb7-458bfbc22600",
+            "00745ac4-a96a-473b-9ccb-ce1f71676c20"
+        };
 
         private static bool AllowAccelerate => UIElement.CricketCombat.Ready || UIElement.CombatResult.Ready || UIElement.CricketCombatResult.Ready;
 
@@ -78,27 +85,6 @@ namespace ConvenienceFrontend.FastTaiwu
             return false;
         }
 
-        /// <summary>
-        /// 回合结束后，马上执行回合二、三
-        /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="button"></param>
-        /// <param name="interactable"></param>
-        // [HarmonyPostfix]
-        // [HarmonyPatch(typeof(UI_CricketCombat), "SetButtonInteractable")]
-        public static void UI_CricketCombat_SetButtonInteractable_Postfix(UI_CricketCombat __instance, CButton button, bool interactable)
-        {
-            if (__instance.CGet<CButton>("BtnStartCombat") == button && interactable)
-            {
-                var traverse = Traverse.Create(__instance);
-                var _currRound = traverse.Field<int>("_currRound").Value;
-                if (_currRound > 0)
-                {
-                    traverse.Method("OnClick", button).GetValue();
-                }
-            }
-        }
-
         private static bool _isInCricketCombat = false;
         private static GEvent.Callback onConfirmQuitGameStateCallback = null;
 
@@ -108,23 +94,19 @@ namespace ConvenienceFrontend.FastTaiwu
         /// <param name="__instance"></param>
         /// <param name="____wagerTypeTogGroup"></param>
         /// <returns></returns>
-        // [HarmonyPrefix]
-        // [HarmonyPatch(typeof(UI_CricketCombat), "OnEnable")]
-        public static bool UI_CricketCombat_OnEnable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "OnEnable")]
+        public static bool UI_CricketCombat_OnEnable_Postfix(UI_CricketCombat __instance)
         {
             _isInCricketCombat = true;
             __instance.Element.ShowAfterRefresh();
-            onConfirmQuitGameStateCallback = (ArgumentBox argBox) =>
-            {
-                Traverse.Create(__instance).Method("OnConfirmQuitGameState", argBox).GetValue();
+            onConfirmQuitGameStateCallback = delegate (ArgumentBox argBox) {
+                __instance.CallPrivateMethod("OnConfirmQuitGameState", argBox);
             };
             GEvent.Add(EEvents.OnConfirmQuitGameState, onConfirmQuitGameStateCallback);
             CanvasGroup canvasGroup = __instance.CGet<CanvasGroup>("StartAnim");
             canvasGroup.DOFade(1f, 0.2f);
-            canvasGroup.DOFade(0f, 0.2f).SetDelay(0.3f).OnComplete(delegate
-            {
-                ____wagerTypeTogGroup.Set(0, value: true, forceRaiseEvent: true);
-            });
+            canvasGroup.DOFade(0f, 0.2f).SetDelay(0.3f);
             CImage startBG = __instance.CGet<CImage>("StartBG");
             startBG.DOFade(1f, 0f).OnStart(delegate
             {
@@ -134,18 +116,18 @@ namespace ConvenienceFrontend.FastTaiwu
             {
                 startBG.raycastTarget = false;
             });
-            canvasGroup.GetComponentsInChildren<SkeletonGraphic>().ForEach(delegate (int i, SkeletonGraphic graphic)
+            canvasGroup.GetComponentsInChildren<SkeletonGraphic>().ForEach(delegate (int _, SkeletonGraphic graphic)
             {
-                graphic.AnimationState.SetAnimation(0, "animation", false);
+                graphic.AnimationState.SetAnimation(0, "animation", loop: false);
                 return false;
             });
 
             return false;
         }
 
-        // [HarmonyPrefix]
-        // [HarmonyPatch(typeof(UI_CricketCombat), "OnDisable")]
-        public static void UI_CricketCombat_OnDisable_Postfix(UI_CricketCombat __instance, CToggleGroup ____wagerTypeTogGroup)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UI_CricketCombat), "OnDisable")]
+        public static void UI_CricketCombat_OnDisable_Postfix(UI_CricketCombat __instance)
         {
             _isInCricketCombat = false;
             if (onConfirmQuitGameStateCallback != null)
@@ -163,7 +145,9 @@ namespace ConvenienceFrontend.FastTaiwu
         [HarmonyPatch(typeof(UI_EventWindow), "AnimEventWindowIn")]
         public static void UI_EventWindow_AnimEventWindowIn_Postfix(UI_EventWindow __instance)
         {
-            __instance.WindowAnimDuration = 0;
+            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
+            if (displayingEventData != null && _blackList.Contains(displayingEventData.EventGuid)) return;
+            //__instance.WindowAnimDuration = 0;
         }
 
         /// <summary>
@@ -174,7 +158,9 @@ namespace ConvenienceFrontend.FastTaiwu
         [HarmonyPatch(typeof(UI_EventWindow), "AnimEventWindowOut")]
         public static void UI_EventWindow_AnimEventWindowOut_Postfix(UI_EventWindow __instance)
         {
-            __instance.WindowAnimDuration = 0;
+            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
+            if (displayingEventData != null && _blackList.Contains(displayingEventData.EventGuid)) return;
+            //__instance.WindowAnimDuration = 0;
         }
 
         private static JObject AutoSelectOptions => (JObject)ConvenienceFrontend.Config.GetValueSafe("AutoSelectOptions") ?? new JObject();
@@ -189,7 +175,7 @@ namespace ConvenienceFrontend.FastTaiwu
             if (displayingEventData == null) return;
             var eventGuid = displayingEventData.EventGuid;
 
-            if (AutoSelectOptions.ContainsKey(eventGuid))
+            if (!_blackList.Contains(eventGuid) && AutoSelectOptions.ContainsKey(eventGuid))
             {
                 // 自动点击
                 if (displayingEventData.EventOptionInfos == null) return;
@@ -301,6 +287,16 @@ namespace ConvenienceFrontend.FastTaiwu
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Sequence), "DoPrependInterval")]
         public static void Sequence_DoPrependInterval_Prefix(ref float interval)
+        {
+            if (AllowAccelerate)
+            {
+                interval /= 5;
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Sequence), "DoAppendInterval")]
+        public static void Sequence_DoAppendInterval_Prefix(ref float interval)
         {
             if (AllowAccelerate)
             {

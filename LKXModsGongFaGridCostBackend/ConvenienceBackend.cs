@@ -11,6 +11,7 @@ using ConvenienceBackend.ComparativeArt;
 using ConvenienceBackend.CricketCombatOptimize;
 using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
+using ConvenienceBackend.FastTaiwu;
 using ConvenienceBackend.Gigolos;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.MergeBookPanel;
@@ -68,7 +69,7 @@ namespace ConvenienceBackend
             // 平衡装备
             // new BetterArmorBackendPatch(),
             // 志向优化
-            new ProfessionOptimizeBackend(),
+            // new ProfessionOptimizeBackend(),
             // 合并书页
             // new MergeBookPanelBackendPatch(),
         };
@@ -89,6 +90,8 @@ namespace ConvenienceBackend
             new QuickStartBackendPatch(),
 
             // new GigolosBackendPatch(),
+
+            new FastTaiwuBackendPatch(),
 
             // 更多工具卖
             // new MoreGoodsBackendPatch(),
