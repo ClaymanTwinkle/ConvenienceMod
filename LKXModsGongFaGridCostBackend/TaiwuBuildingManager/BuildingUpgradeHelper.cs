@@ -76,7 +76,7 @@ namespace ConvenienceBackend.TaiwuBuildingManager
                 if (wokers.Any(x => x > -1))
                 {
                     BuildingBlockItem buildingBlockItem = BuildingBlock.Instance[buildingBlockData.TemplateId];
-                    if (DomainManager.Building.CanUpgrade(x) && DomainManager.Building.UpgradeIsHaveEnoughResource(buildingBlockData) && buildingBlockData.Level < buildingBlockItem.MaxLevel)
+                    if (DomainManager.Building.CanUpgrade(x, out bool dependencyIsNotMeet) && DomainManager.Building.UpgradeIsHaveEnoughResource(buildingBlockData) && buildingBlockData.Level < buildingBlockItem.MaxLevel)
                     {
                         DomainManager.Building.Upgrade(context, x, wokers);
                     }

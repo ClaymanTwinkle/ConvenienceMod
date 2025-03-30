@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using ConvenienceFrontend.AutoBreak;
 using ConvenienceFrontend.Bandit;
 using ConvenienceFrontend.BatchMakeItem;
 using ConvenienceFrontend.BetterReading;
@@ -23,7 +22,6 @@ using ConvenienceFrontend.SettingsOpt;
 using ConvenienceFrontend.ShopShortcut;
 using ConvenienceFrontend.TaiwuBuildingManager;
 using ConvenienceFrontend.TongdaoComabt;
-using ConvenienceFrontend.TongdaoEquipCombatSkill;
 using ConvenienceFrontend.Utils;
 using GameData.Domains.Mod;
 using GameData.GameDataBridge;
@@ -87,13 +85,13 @@ namespace ConvenienceFrontend
             // 蛐蛐战斗优化
             new CricketCombatOptimizeFrontPatch(),
             // 一键突破
-            new AutoBreakFrontPatch(),
+            // new AutoBreakFrontPatch(),
             // 铭刻自己
             new InscribeCharFrontPatch(),
             // 土匪
             new BanditFrontPatch(),
             // 商店快捷操作
-            new ShopShortcutFrontPatch(),
+            // new ShopShortcutFrontPatch(),
             // 同道战斗
             // new TongdaoFrontPatch(),
             // 更好的读书
@@ -101,7 +99,7 @@ namespace ConvenienceFrontend
             // 重置分辨率
             // new ResetResolutionFrontPatch(),
             // 门派换书
-            new ExchangeBookFrontPatch(),
+            // new ExchangeBookFrontPatch(),
             // 同道换功法
             // new TongDaoEquipCombatSkillFrontPatch(),
             // 太吾加速

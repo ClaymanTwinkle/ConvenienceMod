@@ -81,8 +81,7 @@ namespace ConvenienceBackend.CombatStrategy.Utils
         /// <returns></returns>
         public static CombatSkillData GetCombatSkillData(CombatDomain instance, int charId, short skillTemplateId)
         {
-            CombatSkillKey combatSkillKey = new(charId, skillTemplateId);
-            instance.TryGetElement_SelfSkillDataDict(combatSkillKey, out CombatSkillData skillData);
+            instance.TryGetCombatSkillData(charId, skillTemplateId, out CombatSkillData skillData);
 
             return skillData;
         }

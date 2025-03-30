@@ -21,14 +21,6 @@ namespace ConvenienceFrontend.FastTaiwu
 {
     internal class FastTaiwuFrontPatch : BaseFrontPatch
     {
-        private static CToggle _markAutoSelectCToggle = null;
-        private static List<string> _blackList = new List<string>() {
-            "1e31b702-bf2f-4b0a-98b3-aee867a030a5",
-            "6ed72f36-01e2-4ee5-8b80-388ca91b580c",
-            "c0bf30b6-937d-4a40-adb7-458bfbc22600",
-            "00745ac4-a96a-473b-9ccb-ce1f71676c20"
-        };
-
         private static bool AllowAccelerate => UIElement.CricketCombat.Ready || UIElement.CombatResult.Ready || UIElement.CricketCombatResult.Ready;
 
         public override void OnModSettingUpdate(string modIdStr)
@@ -135,112 +127,6 @@ namespace ConvenienceFrontend.FastTaiwu
                 GEvent.Remove(EEvents.OnConfirmQuitGameState, onConfirmQuitGameStateCallback);
                 onConfirmQuitGameStateCallback = null;
             }
-        }
-
-        /// <summary>
-        /// 对话UI动画
-        /// </summary>
-        /// <param name="__instance"></param>
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_EventWindow), "AnimEventWindowIn")]
-        public static void UI_EventWindow_AnimEventWindowIn_Postfix(UI_EventWindow __instance)
-        {
-            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
-            if (displayingEventData != null && _blackList.Contains(displayingEventData.EventGuid)) return;
-            //__instance.WindowAnimDuration = 0;
-        }
-
-        /// <summary>
-        /// 对话UI动画
-        /// </summary>
-        /// <param name="__instance"></param>
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_EventWindow), "AnimEventWindowOut")]
-        public static void UI_EventWindow_AnimEventWindowOut_Postfix(UI_EventWindow __instance)
-        {
-            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
-            if (displayingEventData != null && _blackList.Contains(displayingEventData.EventGuid)) return;
-            //__instance.WindowAnimDuration = 0;
-        }
-
-        private static JObject AutoSelectOptions => (JObject)ConvenienceFrontend.Config.GetValueSafe("AutoSelectOptions") ?? new JObject();
-        private static bool _isSelectOption = false;
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_EventWindow), "Update")]
-        public static void UI_EventWindow_Update_Postfix(UI_EventWindow __instance)
-        {
-            if (_isSelectOption) return;
-            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
-            if (displayingEventData == null) return;
-            var eventGuid = displayingEventData.EventGuid;
-
-            if (!_blackList.Contains(eventGuid) && AutoSelectOptions.ContainsKey(eventGuid))
-            {
-                // 自动点击
-                if (displayingEventData.EventOptionInfos == null) return;
-
-                // Debug.Log("自动选 " + AutoSelectOptions[eventGuid]);
-
-                Traverse.Create(__instance).Method("SelectOptionByOptionKey", new object[]
-                {
-                   AutoSelectOptions[eventGuid].ToString()
-                }).GetValue();
-            }
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_EventWindow), "UpdateOptionScroll")]
-        public static void UI_EventWindow_UpdateOptionScroll_Postfix(UI_EventWindow __instance)
-        {
-            if (_markAutoSelectCToggle != null && _markAutoSelectCToggle.gameObject != null)
-            {
-                var parent = _markAutoSelectCToggle.transform.parent.gameObject;
-                UnityEngine.Object.Destroy(_markAutoSelectCToggle.gameObject);
-                UnityEngine.Object.Destroy(parent);
-                _markAutoSelectCToggle = null;
-            }
-
-            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
-            if (displayingEventData == null) return;
-            var eventGuid = displayingEventData.EventGuid;
-            Debug.Log("UI_EventWindow " + eventGuid);
-
-            if (AutoSelectOptions.ContainsKey(eventGuid)) return;
-
-            TextMeshProUGUI contentTxt = __instance.CGet<TextMeshProUGUI>("EventContent");
-
-            _markAutoSelectCToggle = UIUtils.CreateToggle(contentTxt.transform.parent, "markAutoSelectCToggle", "自动选", "打开后自己手动选择选项后，下次将自动帮你做出一样的选择");
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UI_EventWindow), "SelectOption")]
-        public static void UI_EventWindow_SelectOption_Prefix(UI_EventWindow __instance, EventOptionInfo optionInfo)
-        {
-            _isSelectOption = true;
-            var displayingEventData = SingletonObject.getInstance<EventModel>().DisplayingEventData;
-            if (displayingEventData == null) return;
-            var eventGuid = displayingEventData.EventGuid;
-
-            if (_markAutoSelectCToggle != null)
-            {
-                if (_markAutoSelectCToggle.isOn)
-                {
-                    // 标记
-                    AutoSelectOptions[eventGuid] = optionInfo.OptionKey;
-                    Debug.Log("标记 " + eventGuid + "=" + optionInfo.OptionKey);
-
-                    ConvenienceFrontend.Config["AutoSelectOptions"] = AutoSelectOptions;
-                    ConvenienceFrontend.SaveConfig(false);
-                }
-            }
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UI_EventWindow), "SelectOption")]
-        public static void UI_EventWindow_SelectOption_Postfix(UI_EventWindow __instance, EventOptionInfo optionInfo)
-        {
-            _isSelectOption = false;
         }
 
         [HarmonyPostfix]

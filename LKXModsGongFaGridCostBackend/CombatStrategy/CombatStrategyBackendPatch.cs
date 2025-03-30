@@ -586,7 +586,7 @@ namespace ConvenienceBackend.CombatStrategy
                             if (weaponIndex == selfChar.GetUsingWeaponIndex()) break;
                             ItemKey weaponItemKey = selfChar.GetWeapons()[weaponIndex];
                             if (!weaponItemKey.IsValid()) break;
-                            if (!instance.GetWeaponData(true, weaponItemKey).GetCanChangeTo()) break;
+                            if (!selfChar.GetWeaponData(weaponIndex).GetCanChangeTo()) break;
                             if (execedStrategyList.Find(x => x.type == strategy.type) != null) break;
                             if (selfChar.StateMachine.GetCurrentState().StateType != CombatCharacterStateType.Idle) break;
                             if (_switchWeaponsCD > 0)
@@ -835,10 +835,7 @@ namespace ConvenienceBackend.CombatStrategy
                     case JudgeItem.CanUseSkill:
                         {
                             var skillId = (short)condition.subType;
-                            CombatSkillKey combatSkillKey = new CombatSkillKey(combatCharacter.GetId(), skillId);
-                            CombatSkillData skillData = null;
-                            instance.TryGetElement_SelfSkillDataDict(combatSkillKey, out skillData);
-
+                            instance.TryGetCombatSkillData(combatCharacter.GetId(), skillId, out CombatSkillData skillData);
                             if (skillData != null)
                             {
                                 if (skillData.GetCanUse())

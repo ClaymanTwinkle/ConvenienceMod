@@ -340,7 +340,7 @@ namespace ConvenienceBackend.QuicklyCreateCharacter
                 _inventory.OfflineAdd(itemKey, 1);
                 short combatSkillTemplateIdFromSkillBook = ItemTemplateHelper.GetCombatSkillTemplateIdFromSkillBook(skillBookId);
                 Config.CombatSkillItem combatSkillItem = Config.CombatSkill.Instance[combatSkillTemplateIdFromSkillBook];
-                GameData.Domains.CombatSkill.CombatSkill item2 = new GameData.Domains.CombatSkill.CombatSkill(-1, combatSkillTemplateIdFromSkillBook, 50, 0);
+                GameData.Domains.CombatSkill.CombatSkill item2 = new GameData.Domains.CombatSkill.CombatSkill(-1, combatSkillTemplateIdFromSkillBook, 0);
                 status.CombatSkills.Add(item2);
                 _learnedCombatSkills.Add(combatSkillTemplateIdFromSkillBook);
                 status.ReadCombatSkillTemplateId = combatSkillTemplateIdFromSkillBook;

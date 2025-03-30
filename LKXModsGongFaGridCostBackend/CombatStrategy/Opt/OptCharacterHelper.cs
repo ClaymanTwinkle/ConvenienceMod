@@ -32,7 +32,7 @@ namespace ConvenienceBackend.CombatStrategy.Opt
             if (skillItem.EquipType == CombatSkillEquipType.Neigong)
             {
                 // 没有装备内功
-                if (!selfChar.GetEquippedCombatSkills().Contains(skillId)) return false;
+                if (!selfChar.GetCharacter().GetEquippedCombatSkills().Contains(skillId)) return false;
 
                 // 施展内功，单独处理
                 // 目前内功只用在了处理施展中的功法上

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ConvenienceBackend.Utils;
 using GameData.Common;
 using GameData.Domains;
+using GameData.Domains.Extra;
 using GameData.Domains.Item;
 using GameData.Domains.Taiwu;
 using GameData.Domains.TaiwuEvent;
@@ -133,6 +135,50 @@ namespace ConvenienceBackend.CricketCombatOptimize
                         break;
                     }
                 }
+            }
+        }
+
+        private static List<short> typeRandomPool = null;
+        private static ECricketPartsType cricketType = ECricketPartsType.Trash;
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ExtraDomain), "UpgradeCricket")]
+        public static void ItemDomain_UpgradeCricket_Prefix(ItemDomain __instance, DataContext context, int charId, int cricketId)
+        {
+            GameData.Domains.Item.Cricket cricket = DomainManager.Item.GetElement_Crickets(cricketId);
+            if (cricket == null)
+            {
+                typeRandomPool = null;
+                cricketType = ECricketPartsType.Trash;
+                return;
+            }
+
+            var cricketUpgradeRandomPool = typeof(ExtraDomain).GetStaticFieldValue<Dictionary<ECricketPartsType, List<short>>>("CricketUpgradeRandomPool");
+            cricketType = cricket.GetColorData().Type;
+            typeRandomPool = cricketUpgradeRandomPool[cricketType];
+
+            if (typeRandomPool.Contains(Config.CricketParts.DefKey.SanDuanJin))
+            {
+                cricketUpgradeRandomPool[cricketType] = new List<short>() { Config.CricketParts.DefKey.SanDuanJin };
+            }
+            else if (typeRandomPool.Contains(Config.CricketParts.DefKey.BaBai))
+            {
+                cricketUpgradeRandomPool[cricketType] = new List<short>() { Config.CricketParts.DefKey.BaBai };
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(ExtraDomain), "UpgradeCricket")]
+        public static void ItemDomain_UpgradeCricket_Postfix(ItemDomain __instance, DataContext context, int charId, int cricketId)
+        {
+            if (cricketType == ECricketPartsType.Trash)
+            {
+                return;
+            }
+            var cricketUpgradeRandomPool = typeof(ExtraDomain).GetStaticFieldValue<Dictionary<ECricketPartsType, List<short>>>("CricketUpgradeRandomPool");
+            if (typeRandomPool != null)
+            { 
+                cricketUpgradeRandomPool[cricketType] = typeRandomPool;
             }
         }
     }

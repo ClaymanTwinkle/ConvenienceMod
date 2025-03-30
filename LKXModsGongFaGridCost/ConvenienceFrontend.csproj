@@ -72,7 +72,6 @@
     <Compile Include="SettingsOpt\SettingsOptFrontPatch.cs" />
     <Compile Include="ShopShortcut\ShopShortcutFrontPatch.cs" />
     <Compile Include="TongdaoComabt\TongdaoFrontPatch.cs" />
-    <Compile Include="TongdaoEquipCombatSkill\TongDaoEquipCombatSkillFrontPatch.cs" />
     <Compile Include="Utils\UIUtils.cs" />
     <Compile Include="CombatStrategy\UI_CombatPatch.cs" />
     <Compile Include="CombatStrategy\UI_CombatStrategySetting.cs" />

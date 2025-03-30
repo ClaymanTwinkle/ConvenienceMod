@@ -34,7 +34,7 @@ namespace ConvenienceFrontend.Bandit
             if (displayingEventData == null) return;
             var eventGuid = displayingEventData.EventGuid;
 
-            if (eventGuid.Equals("f3495f3e-4d0c-4b70-8872-eedd1a4b2b3a") && !displayingEventData.EventContent.Contains("杀得大败，只得悻悻离去"))
+            if (eventGuid.Equals("f3495f3e-4d0c-4b70-8872-eedd1a4b2b3a") && !displayingEventData.EventContent.Contains("杀得大败，只得悻悻离去") && !displayingEventData.EventContent.Contains("击倒在地"))
             {
                 eventGuid = "";
                 return;
@@ -84,7 +84,7 @@ namespace ConvenienceFrontend.Bandit
 
                             var info = displayingEventData.EventOptionInfos.Find((EventOptionInfo x) =>
                             {
-                                return x.OptionContent.Contains("任其离开") || x.OptionContent.Contains("如此便好");
+                                return x.OptionContent.Contains("任其离开") || x.OptionContent.Contains("如此便好") || x.OptionContent.Contains("就此作罢");
                             });
                             Traverse.Create(__instance).Method("SelectOption", new object[]
                             {
