@@ -13,9 +13,11 @@ using ConvenienceBackend.CustomSteal;
 using ConvenienceBackend.CustomWeapon;
 using ConvenienceBackend.FastTaiwu;
 using ConvenienceBackend.Gigolos;
+using ConvenienceBackend.LifeSkillAwakeningOpt;
 using ConvenienceBackend.ManualArchive;
 using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.MoreGoods;
+using ConvenienceBackend.MoreSpiritualDebt;
 using ConvenienceBackend.NotNTR;
 using ConvenienceBackend.ProfessionOptimize;
 using ConvenienceBackend.QuicklyCreateCharacter;
@@ -92,6 +94,12 @@ namespace ConvenienceBackend
             // new GigolosBackendPatch(),
 
             new FastTaiwuBackendPatch(),
+
+            // 更多地区恩义上限
+            // new MoreSpiritualDebtBackendPatch(),
+
+            // 提高技艺资历
+            new LifeSkillAwakeningOptBackendPatch(),
 
             // 更多工具卖
             // new MoreGoodsBackendPatch(),

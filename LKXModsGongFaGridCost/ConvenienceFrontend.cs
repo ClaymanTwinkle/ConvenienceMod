@@ -16,8 +16,10 @@ using ConvenienceFrontend.IgnoreReadFinishBook;
 using ConvenienceFrontend.InscribeChar;
 using ConvenienceFrontend.ManualArchive;
 using ConvenienceFrontend.MergeBookPanel;
+using ConvenienceFrontend.MoreSpiritualDebt;
 using ConvenienceFrontend.ProfessionOptimize;
 using ConvenienceFrontend.QuicklyCreateCharacter;
+using ConvenienceFrontend.ReBreak;
 using ConvenienceFrontend.SettingsOpt;
 using ConvenienceFrontend.ShopShortcut;
 using ConvenienceFrontend.TaiwuBuildingManager;
@@ -106,6 +108,11 @@ namespace ConvenienceFrontend
             new FastTaiwuFrontPatch(),
             // 志向优化
             // new ProfessionOptimizeFrontPatch(),
+
+            // 更多地区恩义上限
+            // new MoreSpiritualDebtFrontPatch(),
+
+            new ReBreakFrontPatch(),
         };
 
         public override void OnModSettingUpdate()

@@ -67,7 +67,9 @@
     <Compile Include="ExchangeBook\UIBuilder.cs" />
     <Compile Include="ExchangeBook\UI_ExchangeBookPlus.cs" />
     <Compile Include="FastTaiwu\FastTaiwuFrontPatch.cs" />
+    <Compile Include="MoreSpiritualDebt\MoreSpiritualDebtFrontPatch.cs" />
     <Compile Include="ProfessionOptimize\ProfessionOptimizeFrontPatch.cs" />
+    <Compile Include="ReBreak\ReBreakFrontPatch.cs" />
     <Compile Include="ResetResolutionFrontPatch.cs" />
     <Compile Include="SettingsOpt\SettingsOptFrontPatch.cs" />
     <Compile Include="ShopShortcut\ShopShortcutFrontPatch.cs" />
