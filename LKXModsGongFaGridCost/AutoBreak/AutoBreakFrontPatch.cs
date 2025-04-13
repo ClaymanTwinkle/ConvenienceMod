@@ -11,14 +11,15 @@ using HarmonyLib;
 using TMPro;
 using UISkillBreakPlate;
 using UnityEngine;
+using static GEvent;
 using static MapBlockEffect;
 
 namespace ConvenienceFrontend.AutoBreak
 {
     internal class AutoBreakFrontPatch : BaseFrontPatch
     {
-        private static bool _enableMod = true;
         private static CButton _autoBreakButton = null;
+        private static TextMeshProUGUI _expectMaxPowerLabel = null;
 
         private static List<SkillBreakPlateIndex> breakPath = null;
 
@@ -28,51 +29,56 @@ namespace ConvenienceFrontend.AutoBreak
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(UISkillBreakPlate2), "OnInit")]
-        public static void UISkillBreakPlate2_OnInit_Postfix(UISkillBreakPlate2 __instance)
+        [HarmonyPatch(typeof(UISkillBreakPlate2), "InitRefers")]
+        public static void UISkillBreakPlate2_InitRefers_Postfix(UISkillBreakPlate2 __instance)
         {
             var _isReview = Traverse.Create(__instance).Field<bool>("_isReview").Value;
 
             if (_autoBreakButton != null)
             {
-                _autoBreakButton.gameObject.SetActive(!_isReview && _enableMod);
-                return;
+                _autoBreakButton.gameObject.SetActive(!_isReview);
+            }
+            else
+            {
+                Refers refers = __instance.CharacterAttributeDataView;
+                var parent = refers.gameObject.transform;
+
+                _autoBreakButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(0, -550), new Vector2(150, 50), 16, "绘制突破路线");
+                _autoBreakButton.ClearAndAddListener(delegate ()
+                {
+                    OnClickBreakPath(__instance);
+                });
+                _autoBreakButton.gameObject.SetActive(!_isReview);
             }
 
-            Refers refers = __instance.CharacterAttributeDataView;
-            var parent = refers.gameObject.transform;
-
-            _autoBreakButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(0, -550), new Vector2(150, 50), 16, "绘制突破路线");
-            _autoBreakButton.ClearAndAddListener(delegate ()
+            if (_expectMaxPowerLabel != null)
             {
-                var traverse = Traverse.Create(__instance);
-                var _skillId = traverse.Field<short>("_skillId").Value;
+                _expectMaxPowerLabel.gameObject.SetActive(!_isReview);
+                _expectMaxPowerLabel.text = "理论最大威力上限：0";
+            }
+            else
+            {
+                var _maxPowerLabel = __instance.CGet<TextMeshProUGUI>("MaxPowerLabel");
+                var parent = _maxPowerLabel.gameObject.transform;
+                _expectMaxPowerLabel = GameObjectCreationUtils.UGUICreateTMPText(parent, "理论最大威力上限：0", 1000, 50, 500);
+                _expectMaxPowerLabel.gameObject.SetActive(!_isReview);
+            }
+        }
 
-                ShowMask();
-                FindBreakPath(null, _skillId, delegate (int offset, RawDataPool dataPool)
-                {
-                    breakPath = null;
-                    offset += Serializer.Deserialize(dataPool, offset, ref breakPath);
-                    int maxScore = 0;
-                    offset += Serializer.Deserialize(dataPool, offset, ref maxScore);
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UISkillBreakPlate2), "OnListenerIdReady")]
+        public static void UISkillBreakPlate2_OnListenerIdReady_Postfix(UISkillBreakPlate2 __instance)
+        {
+            var traverse = Traverse.Create(__instance);
+            var skillId = traverse.Field<short>("_skillId").Value;
 
-                    SkillBreakPlateRenderer _gridArea = __instance.GetFieldValue<SkillBreakPlateRenderer>("_gridArea");
-                    if (_gridArea != null)
-                    {
-                        try
-                        {
-                            USkillBreakPlateRenderer_RefreshSelectedPath_Postfix(_gridArea);
-                        }
-                        catch(Exception e)
-                        {
-                            Debug.LogException(e);
-                        }
-                    }
-                    HideMask();
-                    ShowDialog("结果", $"预计最大分数{maxScore}", delegate () { });
-                });
+            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1334, skillId, delegate (int offset, RawDataPool dataPool)
+            {
+                int maxScore = 0;
+                Serializer.Deserialize(dataPool, offset, ref maxScore);
+                _expectMaxPowerLabel.text = $"理论最大威力上限：{maxScore}";
             });
-            _autoBreakButton.gameObject.SetActive(!_isReview && _enableMod);
+            __instance?.RegisterAsyncMethodCall(callId);
         }
 
         [HarmonyPostfix]
@@ -150,16 +156,36 @@ namespace ConvenienceFrontend.AutoBreak
             }
         }
 
-        // [HarmonyPostfix]
-        // [HarmonyPatch(typeof(SkillBreakPlateCell), "RefreshPowerLabel")]
-        public static void SkillBreakPlateCell_RefreshPowerLabel_Postfix(SkillBreakPlateCell __instance, TextMeshProUGUI label, SkillBreakPlateGrid ____cellData, SkillBreakPlateIndex ____coordinate)
+        private static void OnClickBreakPath(UISkillBreakPlate2 __instance)
         {
-            // int power = ____plate.CalcAddMaxPower(____coordinate);
-            if (breakPath!=null && breakPath.Contains(____coordinate) && ____cellData!=null && ____cellData.State == ESkillBreakGridState.CanSelect)
+            var traverse = Traverse.Create(__instance);
+            var _skillId = traverse.Field<short>("_skillId").Value;
+
+            ShowMask();
+            FindBreakPath(null, _skillId, delegate (int offset, RawDataPool dataPool)
             {
-                label.text = $"<b><size=60>{label.text.RemoveColorTags().SetColor("red")}</size></b>";
-            }
-        }
+                breakPath = null;
+                offset += Serializer.Deserialize(dataPool, offset, ref breakPath);
+                int maxScore = 0;
+                offset += Serializer.Deserialize(dataPool, offset, ref maxScore);
+
+                SkillBreakPlateRenderer _gridArea = __instance.GetFieldValue<SkillBreakPlateRenderer>("_gridArea");
+                if (_gridArea != null)
+                {
+                    try
+                    {
+                        USkillBreakPlateRenderer_RefreshSelectedPath_Postfix(_gridArea);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+                }
+                HideMask();
+                ShowDialog("结果", $"预计最大分数{maxScore}", delegate () { });
+            });
+      }
+
 
         public static void FindBreakPath(IAsyncMethodRequestHandler requestHandler, short skillId, AsyncMethodCallbackDelegate callback)
         {
