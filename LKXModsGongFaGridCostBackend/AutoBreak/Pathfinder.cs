@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -74,7 +76,7 @@ namespace ConvenienceBackend.AutoBreak
         private readonly HashSet<sbyte> excludedTypes = new() { 15, 16 };
         private int allRequiredCount;
 
-        private HashSet<SkillBreakPlateIndex> initialVisited = new HashSet<SkillBreakPlateIndex>();
+        private HashSet<SkillBreakPlateIndex> initialVisited = new();
 
         private MapCache _cache = null;
 
@@ -168,14 +170,14 @@ namespace ConvenienceBackend.AutoBreak
 
                 foreach (var move in GenerateMoves(current))
                 {
-                    var newVisited = new HashSet<SkillBreakPlateIndex>(current.Visited) { (move.NewX, move.NewY) };
+                    var newVisited = new HashSet<SkillBreakPlateIndex>(current.Visited) { move.NewIndex };
                     int newRequiredMask = current.RequiredMask + (move.TemplateId == 2 ? 1 : 0);
 
                     int newRemaining = current.RemainingSteps - move.Cost + move.AddSteps;
                     if (newRemaining < 0) continue;
 
                     int newScore = 0;
-                    var newPath = new List<SkillBreakPlateIndex>(current.Path) { (move.NewX, move.NewY) };
+                    var newPath = new List<SkillBreakPlateIndex>(current.Path) { move.NewIndex };
                     foreach (var node in newPath)
                     {
                         newScore += CalcAddMaxPower(node, newVisited);
@@ -183,7 +185,7 @@ namespace ConvenienceBackend.AutoBreak
 
                     var newState = new State
                     {
-                        Index = (move.NewX, move.NewY),
+                        Index = move.NewIndex,
                         RemainingSteps = newRemaining,
                         Score = newScore,
                         Visited = newVisited,
@@ -191,12 +193,14 @@ namespace ConvenienceBackend.AutoBreak
                         Path = newPath
                     };
 
+                    var featureScore = CalcEstimateAddMaxPower(newState); // newScore
+
                     var key = new StateKey(newState.Index, newState.RemainingSteps, newState.RequiredMask);
 
-                    if (best.TryGetValue(key, out int existing) && newScore <= existing) continue;
+                    if (best.TryGetValue(key, out int existing) && featureScore <= existing) continue;
 
-                    best[key] = newScore;
-                    queue.Enqueue(newState, -newScore);
+                    best[key] = featureScore;
+                    queue.Enqueue(newState, -featureScore);
                 }
             }
             return (maxScore, bestPath);
@@ -228,8 +232,7 @@ namespace ConvenienceBackend.AutoBreak
 
             moves.Add(new Move
             {
-                NewX = index.X,
-                NewY = index.Y,
+                NewIndex = index,
                 Cost = cost,
                 AddSteps = addSteps,
                 Score = score,
@@ -245,6 +248,38 @@ namespace ConvenienceBackend.AutoBreak
             return excludedTypes.Contains(grid.TemplateId);
         }
 
+        /// <summary>
+        /// 预测分数
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="visited"></param>
+        /// <returns></returns>
+        private int CalcEstimateAddMaxPower(State state)
+        {
+            int maxScore = state.Score;
+            var newVisited = new HashSet<SkillBreakPlateIndex>(state.Visited);
+            foreach (var move in GenerateMoves(state))
+            {
+                int newScore = 0;
+                newVisited.Add(move.NewIndex);
+
+                foreach (var node in state.Path)
+                {
+                    newScore += CalcAddMaxPower(node, newVisited);
+                }
+
+                if (newScore >= maxScore)
+                {
+                    maxScore = newScore;
+                }
+                else
+                { 
+                    newVisited.Remove(move.NewIndex);
+                }
+            }
+
+            return maxScore;
+        }
 
         private int CalcAddMaxPower(SkillBreakPlateIndex index, HashSet<SkillBreakPlateIndex> visited)
         {
@@ -258,12 +293,10 @@ namespace ConvenienceBackend.AutoBreak
             else
             {
                 int successNeighborCount = 0;
-                foreach (var (dx, dy) in _pureNeighbors)
+                var neighbors = GetPureNeighbors(index, 1);
+                foreach (var neighbor in neighbors)
                 {
-                    int x = index.X + dx;
-                    int y = index.Y + dy;
-                    SkillBreakPlateIndex neighbor = (x, y);
-                    if (map.CheckIndex(x, y) && map.CalcDistance(index, neighbor) <= 1)
+                    if (map.CheckIndex(neighbor) && map.CalcDistance(index, neighbor) <= 1)
                     {
                         if (neighbor != index && visited.Contains(neighbor))
                         {
@@ -400,8 +433,7 @@ namespace ConvenienceBackend.AutoBreak
 
         private struct Move
         {
-            public int NewX;
-            public int NewY;
+            public SkillBreakPlateIndex NewIndex;
             public int Cost;
             public int AddSteps;
             public int Score;
