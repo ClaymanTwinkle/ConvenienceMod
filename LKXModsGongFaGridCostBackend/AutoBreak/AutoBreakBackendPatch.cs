@@ -4,12 +4,14 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using ConvenienceBackend.MergeBookPanel;
+using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
 using GameData.Domains;
 using GameData.Domains.CombatSkill;
 using GameData.Domains.Extra;
 using GameData.Domains.Taiwu;
 using GameData.GameDataBridge;
+using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
 using NLog;
@@ -56,8 +58,102 @@ namespace ConvenienceBackend.AutoBreak
         private static Dictionary<SkillBreakPlate, MapCache> _cache = new();
         private static bool waitToFindPath = false;
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(SkillBreakPlate), "UpdateCanSelectGrids")]
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ExtraDomain), "CallMethod")]
+        public static bool ExtraDomain_CallMethod_Prefix(ExtraDomain __instance, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, DataContext context, ref int __result)
+        {
+            if (operation.MethodId == 1333)
+            {
+                int argsOffset = operation.ArgsOffset;
+                if (operation.ArgsCount == 1)
+                {
+                    short skillId = -1;
+                    argsOffset += GameData.Serializer.Serializer.Deserialize(argDataPool, argsOffset, ref skillId);
+
+                    if (skillId > -1)
+                    {
+                        (int maxScore, List<SkillBreakPlateIndex> bestPath) = FindPath(skillId);
+
+                        __result = GameData.Serializer.Serializer.Serialize(bestPath, returnDataPool);
+                        GameData.Serializer.Serializer.Serialize(maxScore, returnDataPool);
+                        return false;
+                    }
+                }
+
+                __result = -1;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static (int score, List<SkillBreakPlateIndex>) FindPath(short skillId)
+        {
+            if (!DomainManager.Extra.TryGetElement_SkillBreakPlates(skillId, out SkillBreakPlate plate))
+            {
+                return (0, new List<SkillBreakPlateIndex>());
+            }
+
+            if (!plate.CheckIndex(plate.Current))
+            {
+                // 刚开始，4取1
+                var startPointList = (from pos in plate.GetIndexes()
+                                      where plate.CallPrivateMethod<bool>("IsStartPoint", pos.X, pos.Y)
+                                      select pos);
+
+                int maxScore = -1;
+                List<SkillBreakPlateIndex> bestPath = null;
+                foreach (var startPoint in startPointList)
+                {
+                    if (!_cache.TryGetValue(plate, out MapCache cache))
+                    {
+                        cache = new MapCache();
+                        _cache[plate] = cache;
+                    }
+                    PathFinder finder = new(plate, startPoint);
+                    _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                    (int score, List<SkillBreakPlateIndex> path) = finder.FindMaxScorePath();
+                    if (score > maxScore)
+                    {
+                        maxScore = score;
+                        bestPath = path;
+                    }
+                }
+                if (maxScore > 0 && bestPath != null && bestPath.Count > 1)
+                {
+                    // ShowNextPoint(plate, maxScore, bestPath);
+                    return (maxScore, bestPath);
+                }
+                else
+                {
+                    _logger.Info($"寻路失败");
+                }
+            }
+            else
+            {
+                if (!_cache.TryGetValue(plate, out MapCache cache))
+                {
+                    cache = new MapCache();
+                    _cache[plate] = cache;
+                }
+                PathFinder finder = new(plate, plate.Current, cache);
+                _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
+                if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
+                {
+                    // ShowNextPoint(plate, maxScore, bestPath);
+                    return(maxScore, bestPath);
+                }
+                else
+                {
+                    _logger.Info($"寻路失败");
+                }
+            }
+            return (0, new List<SkillBreakPlateIndex>());
+        }
+
+        // [HarmonyPostfix]
+        // [HarmonyPatch(typeof(SkillBreakPlate), "UpdateCanSelectGrids")]
         public static void Taiwu_UpdateCanSelectGrids_PostPatch(SkillBreakPlate __instance)
         {
             if (__instance.Finished)
@@ -90,8 +186,8 @@ namespace ConvenienceBackend.AutoBreak
             }
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(TaiwuDomain), "EnterSkillBreakPlate")]
+        // [HarmonyPostfix]
+        // [HarmonyPatch(typeof(TaiwuDomain), "EnterSkillBreakPlate")]
         public static void Taiwu_EnterSkillBreakPlate_PostPatch(TaiwuDomain __instance, DataContext context, short skillId, ushort selectedPages)
         {
             bool flag4 = !DomainManager.Extra.TryGetElement_SkillBreakPlates(skillId, out SkillBreakPlate plate);

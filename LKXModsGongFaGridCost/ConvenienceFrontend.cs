@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using ConvenienceFrontend.AutoBreak;
 using ConvenienceFrontend.Bandit;
 using ConvenienceFrontend.BatchMakeItem;
 using ConvenienceFrontend.BetterReading;
@@ -87,7 +88,7 @@ namespace ConvenienceFrontend
             // 蛐蛐战斗优化
             new CricketCombatOptimizeFrontPatch(),
             // 一键突破
-            // new AutoBreakFrontPatch(),
+            new AutoBreakFrontPatch(),
             // 铭刻自己
             new InscribeCharFrontPatch(),
             // 土匪
