@@ -7,6 +7,7 @@ using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
 using GameData.Domains;
+using GameData.Domains.Combat;
 using GameData.Domains.CombatSkill;
 using GameData.Domains.Extra;
 using GameData.Domains.Taiwu;
@@ -197,47 +198,53 @@ namespace ConvenienceBackend.AutoBreak
             }
         }
 
+        private static int bonusScore = 0;
 
         private static int CalcIdealMaximumScore(SkillBreakPlate plate)
-        { 
+        {
+            bonusScore = 0;
+
             var maxScore = 0;
             for (int j = 0; j < plate.Width; j++)
             {
                 for (int k = 0; k < plate.Height; k++)
                 {
                     var index = (j, k);
-                    var grid = plate[index];
-
-                    maxScore += CalcAddMaxPowerBase(plate, index);
-
-                    int extraCount = 0;
-                    int extraScore = 0;
-                    foreach (SkillBreakPlateAxial offset in _pureNeighbors)
-                    {
-                        SkillBreakPlateAxial neighborAxial = index + offset * grid.Template.NextStepOffset;
-                        SkillBreakPlateIndex neighborPos = (SkillBreakPlateIndex)neighborAxial;
-                        if (plate.CheckIndex(neighborPos))
-                        {
-                            if (!(neighborPos == index))
-                            {
-                                extraCount++;
-                                if (plate[neighborPos].Template.ClearNeighborMaxPower && plate[index].TemplateId != 2)
-                                {
-                                    continue;
-                                }
-
-                                extraScore += Math.Max(0, plate[neighborPos].Template.NeighborAddMaxPowerWhenActive);
-                            }
-                        }
-                    }
-                    extraScore += (extraCount * Math.Max(0, plate[index].Template.SucceedNeighborAddMaxPower));
-
-                    maxScore += extraScore;
+                    maxScore += CalcAddMaxPower(plate, index);
                 }
             }
 
+            _logger.Info($"bonusScore={bonusScore}");
+
             return maxScore;
         }
+
+        public static int CalcAddMaxPower(SkillBreakPlate plate, SkillBreakPlateIndex index)
+        {
+            int value = CalcAddMaxPowerBase(plate, index);
+            if (plate[index].Template.IgnoreEffectAddMaxPower)
+            {
+                return value;
+            }
+
+            int successNeighborCount = 0;
+            foreach (SkillBreakPlateIndex pureNeighbor in GetPureNeighbors(plate, index))
+            {
+                if (!(pureNeighbor == index))
+                {
+                    if (plate[pureNeighbor].Template.ClearNeighborMaxPower && plate[index].TemplateId != 2)
+                    {
+                        continue;
+                    }
+
+                    successNeighborCount++;
+                    value += plate[pureNeighbor].Template.NeighborAddMaxPowerWhenActive;
+                }
+            }
+
+            return value + successNeighborCount * plate[index].Template.SucceedNeighborAddMaxPower;
+        }
+
 
         private static int CalcAddMaxPowerBase(SkillBreakPlate plate, SkillBreakPlateIndex index)
         {
@@ -252,7 +259,8 @@ namespace ConvenienceBackend.AutoBreak
                 }
                 else
                 {
-                    result = 0; // this.CalcAddMaxPowerAsBonus(index, this.GetBonus(index).ImpactRange);
+                    result = CalcAddMaxPowerAsBonus(plate, index, 3);
+                    bonusScore += result;
                 }
             }
             else
@@ -260,6 +268,56 @@ namespace ConvenienceBackend.AutoBreak
                 result = 0;
             }
             return result;
+        }
+
+        private static int CalcAddMaxPowerAsBonus(SkillBreakPlate plate, SkillBreakPlateIndex index, int impactRange)
+        {
+            int total = 0;
+            int totalNormal = 0;
+            int totalGoneMad = 0;
+            foreach (SkillBreakPlateIndex neighborIndex in plate.CallPrivateMethod<IEnumerable<SkillBreakPlateIndex>>("GetPureNeighbors", index, impactRange))
+            {
+                SkillBreakPlateGrid neighbor = plate[neighborIndex];
+                int value = (neighbor.TemplateId == 2) ? 0 : CalcAddMaxPower(plate, neighborIndex);
+                if (value != 0)
+                {
+                    total += value;
+                    bool recordedStepIsGoneMad = neighbor.RecordedStepIsGoneMad;
+                    if (recordedStepIsGoneMad)
+                    {
+                        totalGoneMad += value;
+                    }
+                    else
+                    {
+                        totalNormal += value;
+                    }
+                }
+            }
+            _logger.Debug($"total={total}");
+            int result = total * (CValuePercentBonus)plate.OutlineConfig.BonusAddMaxPower;
+            _logger.Debug($"result={result}");
+
+            result += totalNormal * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerNormal;
+            result += totalGoneMad * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerGoneMad;
+            CValuePercent correctionFactor = (int)GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor;
+            _logger.Debug($"CalcAddMaxPowerAsBonus={result}*{correctionFactor}");
+            return result * correctionFactor;
+        }
+
+        private static List<SkillBreakPlateIndex> GetPureNeighbors(SkillBreakPlate plate, SkillBreakPlateIndex pos, int distance = 1)
+        {
+            var neighbors = new List<SkillBreakPlateIndex>();
+            foreach (var (dx, dy) in _pureNeighbors)
+            {
+                int x = pos.X + dx;
+                int y = pos.Y + dy;
+                SkillBreakPlateIndex index = (x, y);
+                if (plate.CheckIndex(x, y) && plate.CalcDistance(pos, index) <= distance)
+                {
+                    neighbors.Add(index);
+                }
+            }
+            return neighbors;
         }
     }
 }

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ConvenienceBackend.AutoBreak;
 using ConvenienceBackend.Utils;
+using GameData.Domains.Combat;
 using GameData.Domains.Taiwu;
 using Microsoft.VisualBasic;
 using NLog;
@@ -283,7 +284,7 @@ namespace ConvenienceBackend.AutoBreak
 
         private int CalcAddMaxPower(SkillBreakPlateIndex index, HashSet<SkillBreakPlateIndex> visited)
         {
-            int value = this.CalcAddMaxPowerBase(index);
+            int value = this.CalcAddMaxPowerBase(visited, index);
             bool ignoreEffectAddMaxPower = map[index].Template.IgnoreEffectAddMaxPower;
             int result;
             if (ignoreEffectAddMaxPower)
@@ -314,7 +315,7 @@ namespace ConvenienceBackend.AutoBreak
             return result;
         }
 
-        private int CalcAddMaxPowerBase(SkillBreakPlateIndex index)
+        private int CalcAddMaxPowerBase(HashSet<SkillBreakPlateIndex> visited, SkillBreakPlateIndex index)
         {
             SkillBreakPlateGrid grid = map[index];
             sbyte templateId = grid.TemplateId;
@@ -327,7 +328,7 @@ namespace ConvenienceBackend.AutoBreak
                 }
                 else
                 {
-                    result = 0; // this.CalcAddMaxPowerAsBonus(index, this.GetBonus(index).ImpactRange);
+                    result = this.CalcAddMaxPowerAsBonus(visited, index, 3);
                 }
             }
             else
@@ -335,6 +336,39 @@ namespace ConvenienceBackend.AutoBreak
                 result = 0;
             }
             return result;
+        }
+
+        private int CalcAddMaxPowerAsBonus(HashSet<SkillBreakPlateIndex> visited, SkillBreakPlateIndex index, int impactRange)
+        {
+            int total = 0;
+            int totalNormal = 0;
+            int totalGoneMad = 0;
+            foreach (SkillBreakPlateIndex neighborIndex in map.CallPrivateMethod<IEnumerable<SkillBreakPlateIndex>>("GetPureNeighbors", index, impactRange))
+            {
+                SkillBreakPlateGrid neighbor = map[neighborIndex];
+                int value = (neighbor.TemplateId == 2) ? 0 : this.CalcAddMaxPower(neighborIndex, visited);
+                if (value != 0)
+                {
+                    total += value;
+                    if (visited.Contains(neighborIndex))
+                    {
+                        bool recordedStepIsGoneMad = neighbor.RecordedStepIsGoneMad;
+                        if (recordedStepIsGoneMad)
+                        {
+                            totalGoneMad += value;
+                        }
+                        else
+                        {
+                            totalNormal += value;
+                        }
+                    }
+                }
+            }
+            int result = total * (CValuePercentBonus)map.OutlineConfig.BonusAddMaxPower;
+            result += totalNormal * (CValuePercent)map.OutlineConfig.BonusAddMaxPowerNormal;
+            result += totalGoneMad * (CValuePercent)map.OutlineConfig.BonusAddMaxPowerGoneMad;
+            CValuePercent correctionFactor = (int)GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor;
+            return result * correctionFactor;
         }
 
 
