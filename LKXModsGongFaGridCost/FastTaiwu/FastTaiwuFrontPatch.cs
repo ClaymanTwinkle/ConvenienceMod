@@ -21,7 +21,7 @@ namespace ConvenienceFrontend.FastTaiwu
 {
     internal class FastTaiwuFrontPatch : BaseFrontPatch
     {
-        private static bool AllowAccelerate => UIElement.CricketCombat.Ready || UIElement.CombatResult.Ready || UIElement.CricketCombatResult.Ready;
+        private static bool AllowAccelerate => UIElement.CricketCombat.Ready || UIElement.CombatResult.Ready || UIElement.CricketCombatResult.Ready || UIElement.SkillBreakPlate.Ready;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -166,7 +166,7 @@ namespace ConvenienceFrontend.FastTaiwu
         {
             if (AllowAccelerate)
             {
-                interval /= 5;
+                interval /= 10;
             }
         }
 
@@ -176,7 +176,7 @@ namespace ConvenienceFrontend.FastTaiwu
         {
             if (AllowAccelerate)
             {
-                interval /= 5;
+                interval /= 10;
             }
         }
 
@@ -186,7 +186,7 @@ namespace ConvenienceFrontend.FastTaiwu
         {
             if (AllowAccelerate)
             {
-                interval /= 5;
+                interval /= 10;
             }
         }
     }

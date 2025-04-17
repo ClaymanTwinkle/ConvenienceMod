@@ -11,6 +11,7 @@ using ConvenienceBackend.AutoBreak;
 using ConvenienceBackend.Utils;
 using GameData.Domains.Combat;
 using GameData.Domains.Taiwu;
+using GameData.Domains.Taiwu.LifeSkillCombat.Status;
 using Microsoft.VisualBasic;
 using NLog;
 using NLog.Fluent;
@@ -74,6 +75,7 @@ namespace ConvenienceBackend.AutoBreak
         public readonly int maxSteps;
         private readonly SkillBreakPlateIndex start;
         private SkillBreakPlateIndex end;
+        private List<SkillBreakPlateIndex> bonusPoints = new List<SkillBreakPlateIndex>();
         private readonly HashSet<sbyte> excludedTypes = new() { 15, 16 };
         private int allRequiredCount;
 
@@ -114,9 +116,13 @@ namespace ConvenienceBackend.AutoBreak
                     {
                         end = index;
                     }
-                    else if (grid.Template.Type == ESkillBreakGridTypeType.Bonus && grid.State != ESkillBreakGridState.Selected)
+                    else if (grid.Template.Type == ESkillBreakGridTypeType.Bonus)
                     {
-                        allRequiredCount++;
+                        if (grid.State != ESkillBreakGridState.Selected)
+                        {
+                            allRequiredCount++;
+                        }
+                        bonusPoints.Add(index);
                     }
                     if (grid.Template.NextStepCanJumpToSame)
                     {
@@ -155,18 +161,37 @@ namespace ConvenienceBackend.AutoBreak
             List<SkillBreakPlateIndex> bestPath = null;
             int remainingSteps = initialState.RemainingSteps;
 
+            int loopCount = 0;
+            int ignoreCount = 0;
+
             while (queue.Count > 0)
             {
+                loopCount++;
+
                 var current = queue.Dequeue();
 
-                if (current.RequiredMask == allRequiredCount && current.Index.Equals(end))
+                if (current.Index.Equals(end))
                 {
-                    if (current.Score > maxScore || (current.Score == maxScore && current.RemainingSteps > remainingSteps))
+                    if (current.RequiredMask == allRequiredCount)
                     {
-                        maxScore = current.Score;
-                        bestPath = current.Path;
+                        if (current.Score > maxScore || (current.Score == maxScore && current.RemainingSteps > remainingSteps))
+                        {
+                            maxScore = current.Score;
+                            bestPath = current.Path;
+                        }
                     }
+
                     continue;
+                }
+
+                if (current.RequiredMask != allRequiredCount)
+                { 
+                    var forceContinue = false;
+                    foreach (var bonusPoint in bonusPoints)
+                    {
+                        if (IsUnreachable(current, bonusPoint)) { forceContinue = true; break; }
+                    }
+                    if (forceContinue) continue;
                 }
 
                 foreach (var move in GenerateMoves(current))
@@ -204,6 +229,9 @@ namespace ConvenienceBackend.AutoBreak
                     queue.Enqueue(newState, -featureScore);
                 }
             }
+
+            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，忽略测试{ignoreCount}");
+
             return (maxScore, bestPath);
         }
 
@@ -343,7 +371,7 @@ namespace ConvenienceBackend.AutoBreak
             int total = 0;
             int totalNormal = 0;
             int totalGoneMad = 0;
-            foreach (SkillBreakPlateIndex neighborIndex in map.CallPrivateMethod<IEnumerable<SkillBreakPlateIndex>>("GetPureNeighbors", index, impactRange))
+            foreach (SkillBreakPlateIndex neighborIndex in GetPureNeighbors(index, impactRange))
             {
                 SkillBreakPlateGrid neighbor = map[neighborIndex];
                 int value = (neighbor.TemplateId == 2) ? 0 : this.CalcAddMaxPower(neighborIndex, visited);
@@ -369,23 +397,6 @@ namespace ConvenienceBackend.AutoBreak
             result += totalGoneMad * (CValuePercent)map.OutlineConfig.BonusAddMaxPowerGoneMad;
             CValuePercent correctionFactor = (int)GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor;
             return result * correctionFactor;
-        }
-
-
-        private List<SkillBreakPlateIndex> GetPureNeighbors(SkillBreakPlateIndex pos, int distance = 1)
-        {
-            var neighbors = new List<SkillBreakPlateIndex>();
-            foreach (var (dx, dy) in _pureNeighbors)
-            {
-                int x = pos.X + dx;
-                int y = pos.Y + dy;
-                SkillBreakPlateIndex index = (x, y);
-                if (map.CheckIndex(x, y) && map.CalcDistance(pos, index) <= distance)
-                {
-                    neighbors.Add(index);
-                }
-            }
-            return neighbors;
         }
 
         private List<SkillBreakPlateIndex> GetNeighborsGeneral(SkillBreakPlateIndex pos)
@@ -429,6 +440,61 @@ namespace ConvenienceBackend.AutoBreak
             }
 
             return list;
+        }
+
+        private List<SkillBreakPlateIndex> GetPureNeighbors(SkillBreakPlateIndex pos, int distance = 1)
+        {
+            List<SkillBreakPlateIndex> points = new();
+
+            for (int x = -distance; x <= distance; x++)
+            {
+                for (int y = -distance; y <= distance; y++)
+                {
+                    SkillBreakPlateIndex neighborPos = pos + (x, y);
+
+                    if (map.CheckIndex(neighborPos) && map.CalcDistance(pos, neighborPos) <= distance)
+                    {
+                        points.Add(neighborPos);
+                    }
+                }
+            }
+
+            return points;
+        }
+
+        private bool IsUnreachable(State state, SkillBreakPlateIndex pos)
+        {
+            if (state.Visited.Contains(pos)) return false;
+
+            var neighborPosList = GetPureNeighbors(pos, 2);
+            foreach (var neighborPos in neighborPosList)
+            {
+                SkillBreakPlateGrid grid = map[neighborPos];
+                if (grid.State == ESkillBreakGridState.Failed) continue;
+                if (map[pos].State == ESkillBreakGridState.CanSelect) return false;
+                if (grid.State == ESkillBreakGridState.Selected) continue;
+                if (neighborPos == pos) continue;
+
+                if (map.CalcDistance(pos, neighborPos) == grid.Template.NextStepOffset && (!state.Visited.Contains(neighborPos) || state.Index == neighborPos)) return false;
+
+                //if (!grid.Template.NextStepCanJumpToSame)
+                //{
+                //    continue;
+                //}
+                //var nextStepCanJumpList = nextStepCanJumpToSameDict[grid.TemplateId];
+                //foreach (SkillBreakPlateIndex otherIndex in nextStepCanJumpList)
+                //{
+                //    SkillBreakPlateGrid otherGrid = map[otherIndex];
+                //    if (otherGrid.TemplateId != grid.TemplateId) continue;
+                //    if (neighborPos == otherIndex) continue;
+                //    if (otherGrid.State == ESkillBreakGridState.Failed) continue;
+                //    if (state.Visited.Contains(otherIndex) && otherIndex != state.Index) continue;
+
+                //    return false;
+                //}
+            }
+
+            return true;
         }
 
         private struct State

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using ConvenienceBackend.MergeBookPanel;
 using ConvenienceBackend.TaiwuBuildingManager;
 using GameData.Common;
@@ -26,6 +27,8 @@ namespace ConvenienceBackend.AutoBreak
 {
             (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0), (1, 1), (0, -1), (0, 0), (0, 1)
 };
+        private static readonly object lockObj = new();
+
         public override void OnModSettingUpdate(string modIdStr)
         {
         }
@@ -129,22 +132,30 @@ namespace ConvenienceBackend.AutoBreak
 
                 int maxScore = -1;
                 List<SkillBreakPlateIndex> bestPath = null;
+                List<Thread> threads = new();
+
                 foreach (var startPoint in startPointList)
                 {
-                    if (!_cache.TryGetValue(plate, out MapCache cache))
-                    {
-                        cache = new MapCache();
-                        _cache[plate] = cache;
-                    }
-                    PathFinder finder = new(plate, startPoint);
-                    _logger.Info($"剩余可走步数是{finder.maxSteps}");
-                    (int score, List<SkillBreakPlateIndex> path) = finder.FindMaxScorePath();
-                    if (score > maxScore)
-                    {
-                        maxScore = score;
-                        bestPath = path;
-                    }
+                    Thread thread = new(() => {
+                        PathFinder finder = new(plate, startPoint);
+                        _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                        (int score, List<SkillBreakPlateIndex> path) = finder.FindMaxScorePath();
+                        _logger.Info($"预计最大分数是{score}");
+                        lock (lockObj) // 线程安全操作
+                        {
+                            if (score > maxScore)
+                            {
+                                maxScore = score;
+                                bestPath = path;
+                            }
+                        }
+                    });
+                    threads.Add(thread);
+                    thread.Start();
                 }
+
+                foreach (Thread t in threads) t.Join();
+
                 if (maxScore > 0 && bestPath != null && bestPath.Count > 1)
                 {
                     // ShowNextPoint(plate, maxScore, bestPath);
@@ -213,8 +224,6 @@ namespace ConvenienceBackend.AutoBreak
                     maxScore += CalcAddMaxPower(plate, index);
                 }
             }
-
-            _logger.Info($"bonusScore={bonusScore}");
 
             return maxScore;
         }
@@ -296,7 +305,6 @@ namespace ConvenienceBackend.AutoBreak
             _logger.Debug($"total={total}");
             int result = total * (CValuePercentBonus)plate.OutlineConfig.BonusAddMaxPower;
             _logger.Debug($"result={result}");
-
             result += totalNormal * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerNormal;
             result += totalGoneMad * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerGoneMad;
             CValuePercent correctionFactor = (int)GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor;
