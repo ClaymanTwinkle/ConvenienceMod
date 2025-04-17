@@ -16,6 +16,7 @@ using GameData.GameDataBridge;
 using GameData.Serializer;
 using GameData.Utilities;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using NLog;
 
 namespace ConvenienceBackend.AutoBreak
@@ -33,26 +34,72 @@ namespace ConvenienceBackend.AutoBreak
         {
         }
 
+        private static bool is_new_plate = false;
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TaiwuDomain), "EnterSkillBreakPlate")]
+        public static void Taiwu_Init_PrePatch(TaiwuDomain __instance, DataContext context, short skillId, ushort selectedPages)
+        {
+            is_new_plate = !DomainManager.Extra.TryGetElement_SkillBreakPlates(skillId, out var value);
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(TaiwuDomain), "EnterSkillBreakPlate")]
-        public static void Taiwu_Init_PostPatch(TaiwuDomain __instance, ref GameData.Domains.Taiwu.SkillBreakPlate __result)
+        public static void Taiwu_Init_PostPatch(TaiwuDomain __instance, DataContext context, short skillId, ushort selectedPages, ref GameData.Domains.Taiwu.SkillBreakPlate __result)
         {
             // if (!_isAutoBreak) return;
 
-            for (int j = 0; j < __result.Width; j++)
+            if (is_new_plate)
             {
-                for (int k = 0; k < __result.Height; k++)
+                Config.CombatSkillItem combatSkillItem = Config.CombatSkill.Instance[skillId];
+
+                var lastPlate = __result;
+                DomainManager.Extra.RemoveSkillBreakPlate(context, skillId);
+                int maxScore = CalcIdealMaximumScore(lastPlate);
+                for (int i =0;i<10;i++)
                 {
-                    var grid = __result[j, k];
-                    if (grid.State == ESkillBreakGridState.Invisible)
+                    Config.SkillBreakPlateItem config = combatSkillItem.SkillBreakPlate;
+                    if (DomainManager.TutorialChapter.InGuiding && skillId == Config.CombatSkill.DefKey.TianshuXuanji)
                     {
-                        grid.State = ESkillBreakGridState.Showed; // 显示
+                        config = Config.SkillBreakPlate.Instance[(sbyte)Config.SkillBreakPlate.DefKey.Tutorial];
                     }
-                    // grid.SuccessRateFix = 100;
+
+                    (int succeedCount, int failCount) clearedSkillPlateStepInfo = DomainManager.Extra.GetClearedSkillPlateStepInfo(skillId);
+                    int item = clearedSkillPlateStepInfo.succeedCount;
+                    int item2 = clearedSkillPlateStepInfo.failCount;
+                    var plate = new SkillBreakPlate(context.Random, config, selectedPages, item, item2);
+                    DomainManager.Extra.RemoveClearedSkillPlateStepInfo(context, skillId);
+
+                    plate.StepBase = __instance.GetTaiwu().GetSkillBreakoutAvailableStepsCount(skillId);
+                    plate.BaseSuccessRate = __instance.CallPrivateMethod<byte>("CalcTaiwuBreakBaseSuccessRate", combatSkillItem);
+                
+                    int score = CalcIdealMaximumScore(plate);
+                    if (score > maxScore)
+                    {
+                        maxScore = score;
+                        lastPlate = plate;
+                    }
+                }
+
+                __result = lastPlate;
+                DomainManager.Extra.SetOrAddSkillBreakPlate(context, skillId, __result);
+
+
+                for (int j = 0; j < __result.Width; j++)
+                {
+                    for (int k = 0; k < __result.Height; k++)
+                    {
+                        var grid = __result[j, k];
+                        if (grid.State == ESkillBreakGridState.Invisible)
+                        {
+                            grid.State = ESkillBreakGridState.Showed; // 显示
+                        }
+                        // grid.SuccessRateFix = 100;
+                    }
                 }
             }
-
         }
+
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SkillBreakPlate), "CalcSuccessRate")]
