@@ -44,6 +44,8 @@ using NLog.Fluent;
 */
 namespace ConvenienceBackend.AutoBreak
 {
+    public delegate bool IsMatch(SkillBreakPlateIndex index);
+
     public class MapCache
     {
         public readonly Dictionary<SkillBreakPlateIndex, List<SkillBreakPlateIndex>> neighborsGeneralCache = new();
@@ -74,9 +76,11 @@ namespace ConvenienceBackend.AutoBreak
         private readonly SkillBreakPlate map;
         public readonly int maxSteps;
         private readonly SkillBreakPlateIndex start;
-        private SkillBreakPlateIndex end;
-        private List<SkillBreakPlateIndex> bonusPoints = new List<SkillBreakPlateIndex>();
+        private readonly IsMatch endJudge;
+        private List<SkillBreakPlateIndex> bonusPoints = new();
+        private readonly IsMatch exculdeJudge;
         private readonly HashSet<sbyte> excludedTypes = new() { 15, 16 };
+
         private int allRequiredCount;
 
         private HashSet<SkillBreakPlateIndex> initialVisited = new();
@@ -85,10 +89,17 @@ namespace ConvenienceBackend.AutoBreak
 
         private readonly Dictionary<sbyte, List<SkillBreakPlateIndex>> nextStepCanJumpToSameDict = new();
 
-        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, MapCache cache = null)
+        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, SkillBreakPlateIndex end, IsMatch exculdeJudge, MapCache cache = null) :
+            this(map, start, delegate (SkillBreakPlateIndex index) { return index == end; }, exculdeJudge, cache)
+        {
+        }
+
+        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, IsMatch endJudge, IsMatch exculdeJudge, MapCache cache = null)
         {
             this.map = map;
             this.start = start;
+            this.endJudge = endJudge;
+            this.exculdeJudge = exculdeJudge;
             this.maxSteps = map.StepGoneMad - map.StepCostedGoneMad + (map.StepNormal - map.StepCostedNormal);
             allRequiredCount = 0;
 
@@ -112,11 +123,7 @@ namespace ConvenienceBackend.AutoBreak
                         initialVisited.Add(index);
                     }
 
-                    if (grid.Template.Type == ESkillBreakGridTypeType.EndPoint)
-                    {
-                        end = index;
-                    }
-                    else if (grid.Template.Type == ESkillBreakGridTypeType.Bonus)
+                    if (grid.Template.Type == ESkillBreakGridTypeType.Bonus)
                     {
                         if (grid.State != ESkillBreakGridState.Selected)
                         {
@@ -170,12 +177,13 @@ namespace ConvenienceBackend.AutoBreak
 
                 var current = queue.Dequeue();
 
-                if (current.Index.Equals(end))
+                if (endJudge.Invoke(current.Index))
                 {
                     if (current.RequiredMask == allRequiredCount)
                     {
                         if (current.Score > maxScore || (current.Score == maxScore && current.RemainingSteps > remainingSteps))
                         {
+                            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，忽略测试{ignoreCount}");
                             maxScore = current.Score;
                             bestPath = current.Path;
                         }
@@ -185,7 +193,7 @@ namespace ConvenienceBackend.AutoBreak
                 }
 
                 if (current.RequiredMask != allRequiredCount)
-                { 
+                {
                     var forceContinue = false;
                     foreach (var bonusPoint in bonusPoints)
                     {
@@ -251,7 +259,7 @@ namespace ConvenienceBackend.AutoBreak
         private void AddMove(State state, SkillBreakPlateIndex index, List<Move> moves)
         {
             var cell = map[index];
-            if (IsExcludedGrid(cell)) return;
+            if (IsExcludedGrid(index, cell)) return;
 
             int cost = map.CalcCostStep(index);
             if (state.RemainingSteps - cost < 0) return;
@@ -269,11 +277,11 @@ namespace ConvenienceBackend.AutoBreak
             });
         }
 
-        private bool IsExcludedGrid(SkillBreakPlateGrid grid)
+        private bool IsExcludedGrid(SkillBreakPlateIndex index, SkillBreakPlateGrid grid)
         {
             if (grid.State == ESkillBreakGridState.Failed) return true;
             if (grid.State == ESkillBreakGridState.Selected) return true;
-            if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint) return true;
+            if (exculdeJudge.Invoke(index)) return true;
             return excludedTypes.Contains(grid.TemplateId);
         }
 
@@ -302,7 +310,7 @@ namespace ConvenienceBackend.AutoBreak
                     maxScore = newScore;
                 }
                 else
-                { 
+                {
                     newVisited.Remove(move.NewIndex);
                 }
             }
@@ -405,7 +413,7 @@ namespace ConvenienceBackend.AutoBreak
 
             List<SkillBreakPlateIndex> list = null;
 
-            if (_cache.neighborsGeneralIdCache.ContainsKey(pos) && _cache.neighborsGeneralIdCache[pos] == grid.TemplateId) 
+            if (_cache.neighborsGeneralIdCache.ContainsKey(pos) && _cache.neighborsGeneralIdCache[pos] == grid.TemplateId)
             {
                 list = _cache.neighborsGeneralCache.GetValueOrDefault(pos);
             }

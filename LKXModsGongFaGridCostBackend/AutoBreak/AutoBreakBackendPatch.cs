@@ -170,41 +170,62 @@ namespace ConvenienceBackend.AutoBreak
                 return (0, new List<SkillBreakPlateIndex>());
             }
 
+            if (!_cache.TryGetValue(plate, out MapCache cache))
+            {
+                cache = new MapCache();
+                _cache[plate] = cache;
+            }
             if (!plate.CheckIndex(plate.Current))
             {
-                // 刚开始，4取1
-                var startPointList = (from pos in plate.GetIndexes()
-                                      where plate.CallPrivateMethod<bool>("IsStartPoint", pos.X, pos.Y)
-                                      select pos);
-
-                int maxScore = -1;
-                List<SkillBreakPlateIndex> bestPath = null;
-                List<Thread> threads = new();
-
-                foreach (var startPoint in startPointList)
+                var currentPos = plate.Current;
+                for (int j = 0; j < plate.Width; j++)
                 {
-                    Thread thread = new(() => {
-                        PathFinder finder = new(plate, startPoint);
-                        _logger.Info($"剩余可走步数是{finder.maxSteps}");
-                        (int score, List<SkillBreakPlateIndex> path) = finder.FindMaxScorePath();
-                        _logger.Info($"预计最大分数是{score}");
-                        lock (lockObj) // 线程安全操作
+                    for (int k = 0; k < plate.Height; k++)
+                    {
+                        var grid = plate[j, k];
+                        if (grid.Template.Type == ESkillBreakGridTypeType.EndPoint)
                         {
-                            if (score > maxScore)
-                            {
-                                maxScore = score;
-                                bestPath = path;
-                            }
+                            currentPos = (j, k);
+                            _logger.Info($"终点{currentPos}");
+                            break;
                         }
-                    });
-                    threads.Add(thread);
-                    thread.Start();
+                        else if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint)
+                        {
+                            grid.State = ESkillBreakGridState.CanSelect;
+                        }
+                    }
                 }
 
-                foreach (Thread t in threads) t.Join();
+                PathFinder finder = new(
+                    plate,
+                    currentPos,
+                    delegate (SkillBreakPlateIndex index) {
+                        return plate[index].Template.Type == ESkillBreakGridTypeType.StartPoint;
+                    },
+                    delegate (SkillBreakPlateIndex index)
+                    {
+                        return false;
+                    },
+                    cache
+                    );
+                _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
 
-                if (maxScore > 0 && bestPath != null && bestPath.Count > 1)
+                for (int j = 0; j < plate.Width; j++)
                 {
+                    for (int k = 0; k < plate.Height; k++)
+                    {
+                        var grid = plate[j, k];
+                        if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint)
+                        {
+                            grid.State = ESkillBreakGridState.Selected;
+                        }
+                    }
+                }
+
+                if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
+                {
+                    bestPath.Reverse();
                     // ShowNextPoint(plate, maxScore, bestPath);
                     return (maxScore, bestPath);
                 }
@@ -215,12 +236,19 @@ namespace ConvenienceBackend.AutoBreak
             }
             else
             {
-                if (!_cache.TryGetValue(plate, out MapCache cache))
-                {
-                    cache = new MapCache();
-                    _cache[plate] = cache;
-                }
-                PathFinder finder = new(plate, plate.Current, cache);
+
+                PathFinder finder = new(
+                    plate, 
+                    plate.Current,
+                    delegate(SkillBreakPlateIndex index) {
+                        return plate[index].Template.Type == ESkillBreakGridTypeType.EndPoint;
+                    }, 
+                    delegate(SkillBreakPlateIndex index)
+                    {
+                        return false;
+                    },
+                    cache
+                    );
                 _logger.Info($"剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
                 if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
