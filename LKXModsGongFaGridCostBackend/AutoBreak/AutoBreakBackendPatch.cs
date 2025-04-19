@@ -29,6 +29,7 @@ namespace ConvenienceBackend.AutoBreak
             (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0), (1, 1), (0, -1), (0, 0), (0, 1)
 };
         private static readonly object lockObj = new();
+        private static readonly int MaxRollCount = 20;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -56,7 +57,7 @@ namespace ConvenienceBackend.AutoBreak
                 var lastPlate = __result;
                 DomainManager.Extra.RemoveSkillBreakPlate(context, skillId);
                 int maxScore = CalcIdealMaximumScore(lastPlate);
-                for (int i =0;i<10;i++)
+                for (int i =0;i< MaxRollCount; i++)
                 {
                     Config.SkillBreakPlateItem config = combatSkillItem.SkillBreakPlate;
                     if (DomainManager.TutorialChapter.InGuiding && skillId == Config.CombatSkill.DefKey.TianshuXuanji)
@@ -83,19 +84,17 @@ namespace ConvenienceBackend.AutoBreak
 
                 __result = lastPlate;
                 DomainManager.Extra.SetOrAddSkillBreakPlate(context, skillId, __result);
-
-
-                for (int j = 0; j < __result.Width; j++)
+            }
+            for (int j = 0; j < __result.Width; j++)
+            {
+                for (int k = 0; k < __result.Height; k++)
                 {
-                    for (int k = 0; k < __result.Height; k++)
+                    var grid = __result[j, k];
+                    if (grid.State == ESkillBreakGridState.Invisible)
                     {
-                        var grid = __result[j, k];
-                        if (grid.State == ESkillBreakGridState.Invisible)
-                        {
-                            grid.State = ESkillBreakGridState.Showed; // 显示
-                        }
-                        // grid.SuccessRateFix = 100;
+                        grid.State = ESkillBreakGridState.Showed; // 显示
                     }
+                    // grid.SuccessRateFix = 100;
                 }
             }
         }
@@ -177,55 +176,30 @@ namespace ConvenienceBackend.AutoBreak
             }
             if (!plate.CheckIndex(plate.Current))
             {
-                var currentPos = plate.Current;
+                var startList = new List<SkillBreakPlateIndex>();
                 for (int j = 0; j < plate.Width; j++)
                 {
                     for (int k = 0; k < plate.Height; k++)
                     {
                         var grid = plate[j, k];
-                        if (grid.Template.Type == ESkillBreakGridTypeType.EndPoint)
+                        if (grid == null) continue;
+                        if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint)
                         {
-                            currentPos = (j, k);
-                            _logger.Info($"终点{currentPos}");
-                            break;
-                        }
-                        else if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint)
-                        {
-                            grid.State = ESkillBreakGridState.CanSelect;
+                            startList.Add((j, k));
                         }
                     }
                 }
 
                 PathFinder finder = new(
                     plate,
-                    currentPos,
-                    delegate (SkillBreakPlateIndex index) {
-                        return plate[index].Template.Type == ESkillBreakGridTypeType.StartPoint;
-                    },
-                    delegate (SkillBreakPlateIndex index)
-                    {
-                        return false;
-                    },
+                    startList,
                     cache
                     );
                 _logger.Info($"剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
 
-                for (int j = 0; j < plate.Width; j++)
-                {
-                    for (int k = 0; k < plate.Height; k++)
-                    {
-                        var grid = plate[j, k];
-                        if (grid.Template.Type == ESkillBreakGridTypeType.StartPoint)
-                        {
-                            grid.State = ESkillBreakGridState.Selected;
-                        }
-                    }
-                }
-
                 if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
                 {
-                    bestPath.Reverse();
                     // ShowNextPoint(plate, maxScore, bestPath);
                     return (maxScore, bestPath);
                 }
@@ -240,13 +214,6 @@ namespace ConvenienceBackend.AutoBreak
                 PathFinder finder = new(
                     plate, 
                     plate.Current,
-                    delegate(SkillBreakPlateIndex index) {
-                        return plate[index].Template.Type == ESkillBreakGridTypeType.EndPoint;
-                    }, 
-                    delegate(SkillBreakPlateIndex index)
-                    {
-                        return false;
-                    },
                     cache
                     );
                 _logger.Info($"剩余可走步数是{finder.maxSteps}");

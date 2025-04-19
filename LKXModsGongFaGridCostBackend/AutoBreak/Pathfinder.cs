@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -10,9 +11,12 @@ using System.Threading.Tasks;
 using ConvenienceBackend.AutoBreak;
 using ConvenienceBackend.Utils;
 using GameData.Domains.Combat;
+using GameData.Domains.SpecialEffect.LegendaryBook.NpcEffect;
 using GameData.Domains.Taiwu;
 using GameData.Domains.Taiwu.LifeSkillCombat.Status;
+using GameData.Utilities;
 using Microsoft.VisualBasic;
+using Newtonsoft.Json.Linq;
 using NLog;
 using NLog.Fluent;
 
@@ -20,7 +24,7 @@ using NLog.Fluent;
 0    起    StartPoint = 0    突破的起点。
 1    终    EndPoint = 1    "突破的终点。只有连接此格时，突破才能成功。否则无法获得任何突破奖励。"
 2    玄机    Bonus = 2    无说明
-3    如常    Normal = 3    按部就班的突破。    lightgrey
+3    如常    Normal = 3    按部就班的突破。
 4    相承    Special = 4    打通此格时，周围所有格子的打通成功率提高30%。    
 5    蕴海    Special = 4    打通此格时，下次连接必须选择距离2的突破格为连接目标。    
 6    魔障    Special = 4    打通此格时，此格周围的所有“如常”格变化为随机的“特殊突破格”。    
@@ -54,8 +58,7 @@ namespace ConvenienceBackend.AutoBreak
 
     public class PathFinder
     {
-        private static Logger _logger = LogManager.GetLogger("自动突破");
-
+        private static readonly Logger _logger = LogManager.GetLogger("自动突破");
 
         private static readonly SkillBreakPlateAxial[] _neighborAxial = new SkillBreakPlateAxial[6]
 {
@@ -67,69 +70,80 @@ namespace ConvenienceBackend.AutoBreak
             (1, -1)
 };
 
-        private static readonly SkillBreakPlateAxial[] _pureNeighbors = new SkillBreakPlateAxial[9]
-        {
-            (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0), (1, 1), (0, -1), (0, 0), (0, 1)
-        };
-
+        private static readonly ObjectPool<HashSet<SkillBreakPlateIndex>> HashSetPool = new(10, 10000);
+        private static readonly ObjectPool<List<SkillBreakPlateIndex>> ListPool = new(10, 10000);
 
         private readonly SkillBreakPlate map;
         public readonly int maxSteps;
-        private readonly SkillBreakPlateIndex start;
-        private readonly IsMatch endJudge;
-        private List<SkillBreakPlateIndex> bonusPoints = new();
-        private readonly IsMatch exculdeJudge;
+        private readonly List<SkillBreakPlateIndex> startList;
+        private SkillBreakPlateIndex end;
+        private readonly List<SkillBreakPlateIndex> bonusPoints = new();
+        private readonly int[,] bonusRangeArea;
         private readonly HashSet<sbyte> excludedTypes = new() { 15, 16 };
-
+        private readonly float[,] scoreMap;
         private int allRequiredCount;
 
-        private HashSet<SkillBreakPlateIndex> initialVisited = new();
+        private readonly int maxBonusImpactRange = 3;
 
-        private MapCache _cache = null;
+        private readonly HashSet<SkillBreakPlateIndex> initialVisited = new();
+
+        private readonly MapCache _cache = null;
 
         private readonly Dictionary<sbyte, List<SkillBreakPlateIndex>> nextStepCanJumpToSameDict = new();
 
-        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, SkillBreakPlateIndex end, IsMatch exculdeJudge, MapCache cache = null) :
-            this(map, start, delegate (SkillBreakPlateIndex index) { return index == end; }, exculdeJudge, cache)
+        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, MapCache cache = null) :
+            this(map, new List<SkillBreakPlateIndex> { start }, cache)
         {
         }
 
-        public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, IsMatch endJudge, IsMatch exculdeJudge, MapCache cache = null)
+        public PathFinder(SkillBreakPlate map, List<SkillBreakPlateIndex> startList, MapCache cache = null)
         {
             this.map = map;
-            this.start = start;
-            this.endJudge = endJudge;
-            this.exculdeJudge = exculdeJudge;
+            this.scoreMap = new float[map.Width,map.Height];
+            this.bonusRangeArea = new int[map.Width,map.Height];
+            this.startList = startList;
             this.maxSteps = map.StepGoneMad - map.StepCostedGoneMad + (map.StepNormal - map.StepCostedNormal);
             allRequiredCount = 0;
 
             _cache = cache ?? new MapCache();
 
-            initialVisited.Add(start);
+            foreach (var start in startList)
+            {
+                initialVisited.Add(start);
+            }
             GenerateCache();
         }
 
         private void GenerateCache()
         {
+            List<SkillBreakPlateIndex> specialPoints = new();
             for (int j = 0; j < map.Width; j++)
             {
                 for (int k = 0; k < map.Height; k++)
                 {
                     var grid = map[j, k];
                     if (grid == null) continue;
+                    scoreMap[j, k] = grid.AddMaxPower;
                     SkillBreakPlateIndex index = (j, k);
                     if (grid.State == ESkillBreakGridState.Selected)
                     {
                         initialVisited.Add(index);
                     }
-
-                    if (grid.Template.Type == ESkillBreakGridTypeType.Bonus)
+                    if (grid.Template.Type == ESkillBreakGridTypeType.EndPoint)
+                    {
+                        end = index;
+                    } 
+                    else if (grid.Template.Type == ESkillBreakGridTypeType.Bonus)
                     {
                         if (grid.State != ESkillBreakGridState.Selected)
                         {
                             allRequiredCount++;
                         }
                         bonusPoints.Add(index);
+                    }
+                    else if (grid.Template.Type == ESkillBreakGridTypeType.Special)
+                    { 
+                        specialPoints.Add(index);
                     }
                     if (grid.Template.NextStepCanJumpToSame)
                     {
@@ -143,30 +157,77 @@ namespace ConvenienceBackend.AutoBreak
                     }
                 }
             }
+            foreach (var specialPoint in specialPoints)
+            {
+                var specialGrid = map[specialPoint];
+                int successNeighborCount = 0;
+                var neighbors = GetPureNeighbors(specialPoint, 1);
+                foreach (var neighbor in neighbors)
+                {
+                    if (map.CheckIndex(neighbor) && map.CalcDistance(specialPoint, neighbor) <= 1)
+                    {
+                        if (neighbor != specialPoint)
+                        {
+                            successNeighborCount++;
+                            if (specialGrid.Template.ClearNeighborMaxPower)
+                            {
+                                continue;
+                            }
+
+                            if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus) 
+                            {
+                                scoreMap[neighbor.X, neighbor.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
+
+                                scoreMap[specialPoint.X, specialPoint.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
+                            }
+                        }
+                    }
+                }
+                RecycleList(ref neighbors);
+                scoreMap[specialPoint.X, specialPoint.Y] = scoreMap[specialPoint.X, specialPoint.Y] + successNeighborCount * specialGrid.Template.SucceedNeighborAddMaxPower;
+            }
+            foreach (var bonusPoint in bonusPoints)
+            {
+                var pureNeighbors = GetPureNeighbors(bonusPoint, maxBonusImpactRange);
+                foreach (SkillBreakPlateIndex neighborIndex in pureNeighbors)
+                {
+                    SkillBreakPlateGrid neighbor = map[neighborIndex];
+                    if (neighbor!= null && neighbor.TemplateId > 2)
+                    {
+                        bonusRangeArea[neighborIndex.X, neighborIndex.Y]++;
+                        scoreMap[neighborIndex.X, neighborIndex.Y] += (scoreMap[neighborIndex.X, neighborIndex.Y] * (map.OutlineConfig.BonusAddMaxPower + map.OutlineConfig.BonusAddMaxPowerNormal + map.OutlineConfig.BonusAddMaxPowerGoneMad) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 100);
+                    }
+                }
+                RecycleList(ref pureNeighbors);
+            }
         }
 
         public (int score, List<SkillBreakPlateIndex>) FindMaxScorePath()
         {
-            var initialState = new State
+            var queue = new PriorityQueue<State, float>();
+            var best = new Dictionary<StateKey, float>();
+
+            foreach (var start in startList)
             {
-                Index = start,
-                RemainingSteps = maxSteps,
-                Score = CalcAddMaxPower(start, initialVisited),
-                Visited = initialVisited,
-                RequiredMask = 0,
-                Path = new List<SkillBreakPlateIndex> { start }
-            };
+                var initialState = new State
+                {
+                    Index = start,
+                    RemainingSteps = maxSteps,
+                    Score = CalcAddMaxPower(start, initialVisited),
+                    Visited = initialVisited,
+                    RequiredMask = 0,
+                    Path = new List<SkillBreakPlateIndex> { start }
+                };
 
-            var queue = new PriorityQueue<State, int>();
-            queue.Enqueue(initialState, -initialState.Score);
+                queue.Enqueue(initialState, -initialState.Score);
 
-            var best = new Dictionary<StateKey, int>();
-            var stateKey = new StateKey(initialState.Index, initialState.RemainingSteps, initialState.RequiredMask);
-            best[stateKey] = initialState.Score;
+                var stateKey = new StateKey(initialState.Index, initialState.RemainingSteps, initialState.RequiredMask);
+                best[stateKey] = initialState.Score;
+            }
 
-            int maxScore = -1;
+            float maxScore = -1;
             List<SkillBreakPlateIndex> bestPath = null;
-            int remainingSteps = initialState.RemainingSteps;
+            int remainingSteps = 0;
 
             int loopCount = 0;
             int ignoreCount = 0;
@@ -177,18 +238,22 @@ namespace ConvenienceBackend.AutoBreak
 
                 var current = queue.Dequeue();
 
-                if (endJudge.Invoke(current.Index))
+                if (end == current.Index)
                 {
                     if (current.RequiredMask == allRequiredCount)
                     {
                         if (current.Score > maxScore || (current.Score == maxScore && current.RemainingSteps > remainingSteps))
                         {
-                            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，忽略测试{ignoreCount}");
                             maxScore = current.Score;
                             bestPath = current.Path;
+                            remainingSteps = current.RemainingSteps;
+
+                            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，分数{maxScore}，剩余步数{remainingSteps}");
+                            continue;
                         }
                     }
-
+                    // 回收current
+                    RecycleState(current);
                     continue;
                 }
 
@@ -199,19 +264,35 @@ namespace ConvenienceBackend.AutoBreak
                     {
                         if (IsUnreachable(current, bonusPoint)) { forceContinue = true; break; }
                     }
-                    if (forceContinue) continue;
+                    if (forceContinue)
+                    {
+                        // 回收current
+                        RecycleState(current);
+                        continue;
+                    }
+                }
+
+                if (IsUnreachable(current, end))
+                {
+                    // 回收current
+                    RecycleState(current);
+                    continue;
                 }
 
                 foreach (var move in GenerateMoves(current))
                 {
-                    var newVisited = new HashSet<SkillBreakPlateIndex>(current.Visited) { move.NewIndex };
-                    int newRequiredMask = current.RequiredMask + (move.TemplateId == 2 ? 1 : 0);
-
                     int newRemaining = current.RemainingSteps - move.Cost + move.AddSteps;
-                    if (newRemaining < 0) continue;
-
-                    int newScore = 0;
-                    var newPath = new List<SkillBreakPlateIndex>(current.Path) { move.NewIndex };
+                    if (newRemaining < 0) {
+                        continue;
+                    }
+                    var newVisited = HashSetPool.Get();
+                    newVisited.UnionWith(current.Visited);
+                    newVisited.Add(move.NewIndex);
+                    int newRequiredMask = current.RequiredMask + (move.TemplateId == 2 ? 1 : 0);
+                    float newScore = 0;
+                    var newPath = ListPool.Get();
+                    newPath.AddRange(current.Path);
+                    newPath.Add(move.NewIndex);
                     foreach (var node in newPath)
                     {
                         newScore += CalcAddMaxPower(node, newVisited);
@@ -231,28 +312,38 @@ namespace ConvenienceBackend.AutoBreak
 
                     var key = new StateKey(newState.Index, newState.RemainingSteps, newState.RequiredMask);
 
-                    if (best.TryGetValue(key, out int existing) && featureScore <= existing) continue;
+                    if (best.TryGetValue(key, out float existing) && featureScore < existing) 
+                    {
+                        continue;
+                    }
 
                     best[key] = featureScore;
-                    queue.Enqueue(newState, -featureScore);
+                    queue.Enqueue(newState, -newScore);
                 }
+                // 回收current
+                RecycleState(current);
+
             }
 
-            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，忽略测试{ignoreCount}");
+            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，分数{maxScore}，剩余步数{remainingSteps}");
 
-            return (maxScore, bestPath);
+            return ((int)maxScore, bestPath);
         }
 
-        private IEnumerable<Move> GenerateMoves(State state)
+        private List<Move> GenerateMoves(State state)
         {
             var moves = new List<Move>();
 
-            IEnumerable<SkillBreakPlateIndex> neighbors = GetNeighborsGeneral(state.Index);
+            List<SkillBreakPlateIndex> neighbors = GetNeighborsGeneral(state.Index);
             foreach (SkillBreakPlateIndex neighbor in neighbors)
             {
-                if (!state.Visited.Contains(neighbor))
+                if (!state.Visited.Contains(neighbor) && map.CheckIndex(neighbor))
+                {
                     AddMove(state, neighbor, moves);
+                }
             }
+
+            RecycleList(ref neighbors);
             return moves;
         }
 
@@ -265,7 +356,7 @@ namespace ConvenienceBackend.AutoBreak
             if (state.RemainingSteps - cost < 0) return;
 
             int addSteps = cell.Template.AddStepNormal;
-            int score = CalcAddMaxPower(index, state.Visited);
+            float score = CalcAddMaxPower(index, state.Visited);
 
             moves.Add(new Move
             {
@@ -281,7 +372,7 @@ namespace ConvenienceBackend.AutoBreak
         {
             if (grid.State == ESkillBreakGridState.Failed) return true;
             if (grid.State == ESkillBreakGridState.Selected) return true;
-            if (exculdeJudge.Invoke(index)) return true;
+
             return excludedTypes.Contains(grid.TemplateId);
         }
 
@@ -291,13 +382,24 @@ namespace ConvenienceBackend.AutoBreak
         /// <param name="index"></param>
         /// <param name="visited"></param>
         /// <returns></returns>
-        private int CalcEstimateAddMaxPower(State state)
+        private float CalcEstimateAddMaxPower(State state)
         {
-            int maxScore = state.Score;
-            var newVisited = new HashSet<SkillBreakPlateIndex>(state.Visited);
+            //float score = 0;
+
+            //foreach (var pos in state.Path)
+            //{
+            //    score += scoreMap[pos.X, pos.X];
+            //}
+
+            //return score;
+
+            float maxScore = state.Score;
+
+            var newVisited = HashSetPool.Get();
+            newVisited.UnionWith(state.Visited);
             foreach (var move in GenerateMoves(state))
             {
-                int newScore = 0;
+                float newScore = 0;
                 newVisited.Add(move.NewIndex);
 
                 foreach (var node in state.Path)
@@ -318,14 +420,14 @@ namespace ConvenienceBackend.AutoBreak
             return maxScore;
         }
 
-        private int CalcAddMaxPower(SkillBreakPlateIndex index, HashSet<SkillBreakPlateIndex> visited)
+        private float CalcAddMaxPower(SkillBreakPlateIndex index, HashSet<SkillBreakPlateIndex> visited)
         {
-            int value = this.CalcAddMaxPowerBase(visited, index);
+            float value = this.CalcAddMaxPowerBase(visited, index);
             bool ignoreEffectAddMaxPower = map[index].Template.IgnoreEffectAddMaxPower;
-            int result;
+            float result = value;
             if (ignoreEffectAddMaxPower)
             {
-                result = value;
+                // result = value;
             }
             else
             {
@@ -342,11 +444,27 @@ namespace ConvenienceBackend.AutoBreak
                                 return 0;
                             }
                             successNeighborCount++;
-                            value += map[neighbor].Template.NeighborAddMaxPowerWhenActive;
+                            result += map[neighbor].Template.NeighborAddMaxPowerWhenActive;
                         }
                     }
                 }
-                result = value + successNeighborCount * map[index].Template.SucceedNeighborAddMaxPower;
+                RecycleList(ref neighbors);
+
+                result += successNeighborCount * map[index].Template.SucceedNeighborAddMaxPower;
+
+                if (result > value)
+                {
+                    var bonusFactor = bonusRangeArea[index.X, index.Y];
+                    if (bonusFactor > 0)
+                    {
+                        var newResult = result;
+                        newResult += (bonusFactor * (result - value) * (map.OutlineConfig.BonusAddMaxPower + 100) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
+                        newResult += (bonusFactor * result * map.OutlineConfig.BonusAddMaxPowerNormal * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
+                        newResult += (bonusFactor * result * map.OutlineConfig.BonusAddMaxPowerGoneMad * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
+
+                        result = newResult;
+                    }
+                }
             }
             return result;
         }
@@ -364,7 +482,7 @@ namespace ConvenienceBackend.AutoBreak
                 }
                 else
                 {
-                    result = this.CalcAddMaxPowerAsBonus(visited, index, 3);
+                    result = 0; // this.CalcAddMaxPowerAsBonus(visited, index, maxBonusImpactRange);
                 }
             }
             else
@@ -382,7 +500,7 @@ namespace ConvenienceBackend.AutoBreak
             foreach (SkillBreakPlateIndex neighborIndex in GetPureNeighbors(index, impactRange))
             {
                 SkillBreakPlateGrid neighbor = map[neighborIndex];
-                int value = (neighbor.TemplateId == 2) ? 0 : this.CalcAddMaxPower(neighborIndex, visited);
+                int value = (neighbor.TemplateId == 2) ? 0 : (int)this.CalcAddMaxPower(neighborIndex, visited);
                 if (value != 0)
                 {
                     total += value;
@@ -413,14 +531,14 @@ namespace ConvenienceBackend.AutoBreak
 
             List<SkillBreakPlateIndex> list = null;
 
-            if (_cache.neighborsGeneralIdCache.ContainsKey(pos) && _cache.neighborsGeneralIdCache[pos] == grid.TemplateId)
-            {
-                list = _cache.neighborsGeneralCache.GetValueOrDefault(pos);
-            }
-            if (list != null) return list;
-            list = new List<SkillBreakPlateIndex>();
-            _cache.neighborsGeneralCache[pos] = list;
-            _cache.neighborsGeneralIdCache[pos] = grid.TemplateId;
+            //if (_cache.neighborsGeneralIdCache.ContainsKey(pos) && _cache.neighborsGeneralIdCache[pos] == grid.TemplateId)
+            //{
+            //    list = _cache.neighborsGeneralCache.GetValueOrDefault(pos);
+            //}
+            //if (list != null) return list;
+            list = ListPool.Get();
+            //_cache.neighborsGeneralCache[pos] = list;
+            //_cache.neighborsGeneralIdCache[pos] = grid.TemplateId;
 
             SkillBreakPlateAxial axial = pos;
             foreach (SkillBreakPlateAxial offset in _neighborAxial)
@@ -452,7 +570,7 @@ namespace ConvenienceBackend.AutoBreak
 
         private List<SkillBreakPlateIndex> GetPureNeighbors(SkillBreakPlateIndex pos, int distance = 1)
         {
-            List<SkillBreakPlateIndex> points = new();
+            List<SkillBreakPlateIndex> points = ListPool.Get();
 
             for (int x = -distance; x <= distance; x++)
             {
@@ -479,11 +597,15 @@ namespace ConvenienceBackend.AutoBreak
             {
                 SkillBreakPlateGrid grid = map[neighborPos];
                 if (grid.State == ESkillBreakGridState.Failed) continue;
-                if (map[pos].State == ESkillBreakGridState.CanSelect) return false;
+                //if (map[pos].State == ESkillBreakGridState.CanSelect) return false;
                 if (grid.State == ESkillBreakGridState.Selected) continue;
                 if (neighborPos == pos) continue;
 
-                if (map.CalcDistance(pos, neighborPos) == grid.Template.NextStepOffset && (!state.Visited.Contains(neighborPos) || state.Index == neighborPos)) return false;
+                if (map.CalcDistance(pos, neighborPos) == grid.Template.NextStepOffset && (!state.Visited.Contains(neighborPos) || state.Index == neighborPos))
+                {
+                    RecycleList(ref neighborPosList);
+                    return false;
+                }
 
                 //if (!grid.Template.NextStepCanJumpToSame)
                 //{
@@ -501,15 +623,35 @@ namespace ConvenienceBackend.AutoBreak
                 //    return false;
                 //}
             }
-
+            RecycleList(ref neighborPosList);
             return true;
+        }
+
+        private void RecycleState(State state)
+        {
+            RecycleHashSet(ref state.Visited);
+            RecycleList(ref state.Path);
+        }
+
+        private void RecycleHashSet(ref HashSet<SkillBreakPlateIndex> set)
+        {
+            set.Clear();
+            HashSetPool.Return(set);
+            set = null;
+        }
+
+        private void RecycleList(ref List<SkillBreakPlateIndex> list)
+        {
+            list.Clear();
+            ListPool.Return(list);
+            list = null;
         }
 
         private struct State
         {
             public SkillBreakPlateIndex Index;
             public int RemainingSteps;
-            public int Score;
+            public float Score;
             public HashSet<SkillBreakPlateIndex> Visited;
             public int RequiredMask;
             public List<SkillBreakPlateIndex> Path;
@@ -544,7 +686,7 @@ namespace ConvenienceBackend.AutoBreak
             public SkillBreakPlateIndex NewIndex;
             public int Cost;
             public int AddSteps;
-            public int Score;
+            public float Score;
             public sbyte TemplateId;
         }
     }
