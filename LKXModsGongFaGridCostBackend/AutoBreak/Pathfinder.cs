@@ -93,6 +93,8 @@ namespace ConvenienceBackend.AutoBreak
         private readonly MapCache _cache = null;
 
         private readonly Dictionary<sbyte, List<SkillBreakPlateIndex>> nextStepCanJumpToSameDict = new();
+        private readonly HashSet<sbyte> specialEffectSet = new() { 12, 13, 17, 18 }; // 12循序13苦功17嫁衣18寂灭
+        private readonly Dictionary<SkillBreakPlateIndex, HashSet<SkillBreakPlateIndex>> specialEffectIndexListDic = new();
 
         private readonly float bonusAddMaxPowerFactor;
         private readonly float bonusAddMaxPowerNormalFactor;
@@ -178,26 +180,50 @@ namespace ConvenienceBackend.AutoBreak
                 var specialGrid = map[specialPoint];
                 int successNeighborCount = 0;
                 var neighbors = GetPureNeighbors(specialPoint, 1);
+                if (specialEffectSet.Contains(specialGrid.TemplateId))
+                {
+                    if (specialGrid.TemplateId == 12)
+                    {
+                        foreach (var neighbor in neighbors)
+                        {
+                            HashSet<SkillBreakPlateIndex> effectIndexSet = specialEffectIndexListDic.GetValueOrDefault(neighbor) ?? new HashSet<SkillBreakPlateIndex>();
+                            specialEffectIndexListDic[neighbor] = effectIndexSet;
+                            effectIndexSet.Add(specialPoint);
+                        }
+                    }
+                    else
+                    {
+                        HashSet<SkillBreakPlateIndex> effectIndexSet = specialEffectIndexListDic.GetValueOrDefault(specialPoint) ?? new HashSet<SkillBreakPlateIndex>();
+                        specialEffectIndexListDic[specialPoint] = effectIndexSet;
+                        foreach (var neighbor in neighbors)
+                        {
+                            if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus)
+                            {
+                                effectIndexSet.Add(neighbor);
+                            }
+                        }
+                    }
+                }
+
+                if (specialGrid.Template.ClearNeighborMaxPower)
+                {
+                    continue;
+                }
+
                 foreach (var neighbor in neighbors)
                 {
-                    if (neighbor != specialPoint)
+                    successNeighborCount++;
+
+                    if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus)
                     {
-                        if (specialGrid.Template.ClearNeighborMaxPower)
-                        {
-                            continue;
-                        }
-                        successNeighborCount++;
+                        scoreMap[neighbor.X, neighbor.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
 
-                        if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus)
-                        {
-                            scoreMap[neighbor.X, neighbor.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
-
-                            //scoreMap[specialPoint.X, specialPoint.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
-                        }
+                        //scoreMap[specialPoint.X, specialPoint.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
                     }
                 }
                 scoreMap[specialPoint.X, specialPoint.Y] = scoreMap[specialPoint.X, specialPoint.Y] + successNeighborCount * specialGrid.Template.SucceedNeighborAddMaxPower;
             }
+            var bonusRangePosSet = new HashSet<SkillBreakPlateIndex>();
             foreach (var bonusPoint in bonusPoints)
             {
                 var pureNeighbors = GetPureNeighbors(bonusPoint, maxBonusImpactRange);
@@ -207,7 +233,26 @@ namespace ConvenienceBackend.AutoBreak
                     if (neighbor!= null && neighbor.TemplateId > 2)
                     {
                         bonusRangeArea[neighborIndex.X, neighborIndex.Y]++;
-                        scoreMap[neighborIndex.X, neighborIndex.Y] += (scoreMap[neighborIndex.X, neighborIndex.Y] * (map.OutlineConfig.BonusAddMaxPower + map.OutlineConfig.BonusAddMaxPowerNormal + map.OutlineConfig.BonusAddMaxPowerGoneMad) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 100);
+                        bonusRangePosSet.Add(neighborIndex);
+                    }
+                }
+            }
+
+            foreach (var pos in bonusRangePosSet)
+            {
+                var value = CalcAddMaxPowerBase(null, pos);
+                var result = scoreMap[pos.X, pos.Y];
+                if (result > value)
+                {
+                    var bonusFactor = bonusRangeArea[pos.X, pos.Y];
+                    if (bonusFactor > 0)
+                    {
+                        var newResult = result;
+                        newResult += (bonusFactor * (result - value) * bonusAddMaxPowerFactor);
+                        newResult += (bonusFactor * result * bonusAddMaxPowerNormalFactor);
+                        newResult += (bonusFactor * result * bonusAddMaxPowerGoneMadFactor);
+
+                        scoreMap[pos.X, pos.Y] = newResult;
                     }
                 }
             }
@@ -220,14 +265,18 @@ namespace ConvenienceBackend.AutoBreak
 
             foreach (var start in startList)
             {
+                var score = CalcAddMaxPower(start, initialVisited);
                 var initialState = new State
                 {
                     Index = start,
                     RemainingSteps = maxSteps,
-                    Score = CalcAddMaxPower(start, initialVisited),
+                    Score = score,
+                    ScoreRecord = new() { { start, score } },
                     Visited = initialVisited,
                     RequiredMask = 0,
-                    Path = new List<SkillBreakPlateIndex> { start }
+                    Path = new List<SkillBreakPlateIndex> {
+                        start
+                    }
                 };
 
                 queue.Enqueue(initialState, -initialState.Score);
@@ -302,14 +351,39 @@ namespace ConvenienceBackend.AutoBreak
                     var newVisited = HashSetPool.Get();
                     newVisited.UnionWith(current.Visited);
                     newVisited.Add(move.NewIndex);
+
                     int newRequiredMask = current.RequiredMask + (move.TemplateId == 2 ? 1 : 0);
-                    float newScore = 0;
+                    float newIndexScore = CalcAddMaxPower(move.NewIndex, newVisited);
+                    float newScore = current.Score + newIndexScore;
+                    
                     var newPath = ListPool.Get();
                     newPath.AddRange(current.Path);
                     newPath.Add(move.NewIndex);
-                    foreach (var node in newPath)
+
+                    var newScoreRecord = new Dictionary<SkillBreakPlateIndex, float>(current.ScoreRecord)
                     {
-                        newScore += CalcAddMaxPower(node, newVisited);
+                        {move.NewIndex, newIndexScore }
+                    };
+                    var effectSet = specialEffectIndexListDic.GetValueOrDefault(move.NewIndex);
+                    if (effectSet != null)
+                    {
+                        newScore = 0;
+                        foreach(var record in newScoreRecord)
+                        {
+                            var oldValue = record.Value;
+
+                            if (effectSet.Contains(record.Key))
+                            {
+                                var newValue = CalcAddMaxPower(record.Key, newVisited);
+                                newScoreRecord[record.Key] = newValue;
+
+                                newScore += newValue;
+                            }
+                            else
+                            {
+                                newScore += oldValue;
+                            }
+                        }
                     }
 
                     var newState = new State
@@ -317,6 +391,7 @@ namespace ConvenienceBackend.AutoBreak
                         Index = move.NewIndex,
                         RemainingSteps = newRemaining,
                         Score = newScore,
+                        ScoreRecord = newScoreRecord,
                         Visited = newVisited,
                         RequiredMask = newRequiredMask,
                         Path = newPath
@@ -335,7 +410,7 @@ namespace ConvenienceBackend.AutoBreak
                     }
 
                     best[key] = featureScore;
-                    queue.Enqueue(newState, -newScore);
+                    queue.Enqueue(newState, -featureScore);
                 }
                 // 回收current
                 RecycleState(current);
@@ -369,7 +444,6 @@ namespace ConvenienceBackend.AutoBreak
 
             int cost = cell.Template.CostBreakCount;
             if (state.RemainingSteps - cost < 0) return;
-
             int addSteps = cell.Template.AddStepNormal;
 
             moves.Add(new Move
@@ -410,14 +484,37 @@ namespace ConvenienceBackend.AutoBreak
 
             var newVisited = HashSetPool.Get();
             newVisited.UnionWith(state.Visited);
+
+            var newScoreRecord = new Dictionary<SkillBreakPlateIndex, float>(state.ScoreRecord);
+
             foreach (var move in GenerateMoves(state))
             {
-                float newScore = 0;
-                newVisited.Add(move.NewIndex);
+                float newIndexScore = CalcAddMaxPower(move.NewIndex, newVisited);
+                float newScore = state.Score + newIndexScore;
 
-                foreach (var node in state.Path)
+                newVisited.Add(move.NewIndex);
+                newScoreRecord[move.NewIndex] = newIndexScore;
+
+                var effectSet = specialEffectIndexListDic.GetValueOrDefault(move.NewIndex);
+                if (effectSet != null)
                 {
-                    newScore += CalcAddMaxPower(node, newVisited);
+                    newScore = 0;
+                    foreach (var record in newScoreRecord)
+                    {
+                        var oldValue = record.Value;
+
+                        if (effectSet.Contains(record.Key))
+                        {
+                            var newValue = CalcAddMaxPower(record.Key, newVisited);
+                            newScoreRecord[record.Key] = newValue;
+
+                            newScore += newValue;
+                        }
+                        else
+                        {
+                            newScore += oldValue;
+                        }
+                    }
                 }
 
                 if (newScore >= maxScore)
@@ -427,6 +524,7 @@ namespace ConvenienceBackend.AutoBreak
                 else
                 {
                     newVisited.Remove(move.NewIndex);
+                    newScoreRecord.Remove(move.NewIndex);
                 }
             }
 
@@ -448,7 +546,7 @@ namespace ConvenienceBackend.AutoBreak
                 var neighbors = GetPureNeighbors(index, 1);
                 foreach (var neighbor in neighbors)
                 {
-                    if (neighbor != index && visited.Contains(neighbor))
+                    if (visited.Contains(neighbor))
                     {
                         if (map[neighbor].Template.ClearNeighborMaxPower && map[index].TemplateId != 2)
                         {
@@ -601,6 +699,7 @@ namespace ConvenienceBackend.AutoBreak
             {
                 for (int y = -distance; y <= distance; y++)
                 {
+                    if (x == 0 && y == 0) continue;
                     SkillBreakPlateIndex neighborPos = pos + (x, y);
 
                     if (map.CheckIndex(neighborPos) && CalcDistance(pos, neighborPos) <= distance)
@@ -692,6 +791,7 @@ namespace ConvenienceBackend.AutoBreak
             public SkillBreakPlateIndex Index;
             public int RemainingSteps;
             public float Score;
+            public Dictionary<SkillBreakPlateIndex, float> ScoreRecord;
             public HashSet<SkillBreakPlateIndex> Visited;
             public int RequiredMask;
             public List<SkillBreakPlateIndex> Path;
