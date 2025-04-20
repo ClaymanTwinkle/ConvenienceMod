@@ -169,11 +169,6 @@ namespace ConvenienceBackend.AutoBreak
                 return (0, new List<SkillBreakPlateIndex>());
             }
 
-            if (!_cache.TryGetValue(plate, out MapCache cache))
-            {
-                cache = new MapCache();
-                _cache[plate] = cache;
-            }
             if (!plate.CheckIndex(plate.Current))
             {
                 var startList = new List<SkillBreakPlateIndex>();
@@ -192,8 +187,7 @@ namespace ConvenienceBackend.AutoBreak
 
                 PathFinder finder = new(
                     plate,
-                    startList,
-                    cache
+                    startList
                     );
                 _logger.Info($"剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
@@ -213,8 +207,7 @@ namespace ConvenienceBackend.AutoBreak
 
                 PathFinder finder = new(
                     plate, 
-                    plate.Current,
-                    cache
+                    plate.Current
                     );
                 _logger.Info($"剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();

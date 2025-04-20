@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,8 +53,10 @@ namespace ConvenienceBackend.AutoBreak
 
     public class MapCache
     {
-        public readonly Dictionary<SkillBreakPlateIndex, List<SkillBreakPlateIndex>> neighborsGeneralCache = new();
-        public readonly Dictionary<SkillBreakPlateIndex, sbyte> neighborsGeneralIdCache = new();
+        public readonly Dictionary<SkillBreakPlateIndex, List<SkillBreakPlateIndex>> NeighborsGeneralCache = new();
+        public readonly Dictionary<SkillBreakPlateIndex, List<SkillBreakPlateIndex>> PureNeighborsCache = new();
+
+        public readonly Dictionary<(SkillBreakPlateIndex, SkillBreakPlateIndex), int> DistanceCache = new();
     }
 
     public class PathFinder
@@ -91,6 +94,15 @@ namespace ConvenienceBackend.AutoBreak
 
         private readonly Dictionary<sbyte, List<SkillBreakPlateIndex>> nextStepCanJumpToSameDict = new();
 
+        private readonly float bonusAddMaxPowerFactor;
+        private readonly float bonusAddMaxPowerNormalFactor;
+        private readonly float bonusAddMaxPowerGoneMadFactor;
+
+        private readonly Stopwatch sw = new();
+        private readonly Stopwatch sw2 = new();
+        private int watchCount = 0;
+
+
         public PathFinder(SkillBreakPlate map, SkillBreakPlateIndex start, MapCache cache = null) :
             this(map, new List<SkillBreakPlateIndex> { start }, cache)
         {
@@ -104,6 +116,10 @@ namespace ConvenienceBackend.AutoBreak
             this.startList = startList;
             this.maxSteps = map.StepGoneMad - map.StepCostedGoneMad + (map.StepNormal - map.StepCostedNormal);
             allRequiredCount = 0;
+
+            this.bonusAddMaxPowerFactor = (map.OutlineConfig.BonusAddMaxPower + 100) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000f;
+            this.bonusAddMaxPowerNormalFactor = map.OutlineConfig.BonusAddMaxPowerNormal * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000f;
+            this.bonusAddMaxPowerGoneMadFactor = map.OutlineConfig.BonusAddMaxPowerGoneMad * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000f;
 
             _cache = cache ?? new MapCache();
 
@@ -164,26 +180,22 @@ namespace ConvenienceBackend.AutoBreak
                 var neighbors = GetPureNeighbors(specialPoint, 1);
                 foreach (var neighbor in neighbors)
                 {
-                    if (map.CheckIndex(neighbor) && map.CalcDistance(specialPoint, neighbor) <= 1)
+                    if (neighbor != specialPoint)
                     {
-                        if (neighbor != specialPoint)
+                        if (specialGrid.Template.ClearNeighborMaxPower)
                         {
-                            successNeighborCount++;
-                            if (specialGrid.Template.ClearNeighborMaxPower)
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
+                        successNeighborCount++;
 
-                            if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus) 
-                            {
-                                scoreMap[neighbor.X, neighbor.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
+                        if (map[neighbor].Template.Type > ESkillBreakGridTypeType.Bonus)
+                        {
+                            scoreMap[neighbor.X, neighbor.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
 
-                                scoreMap[specialPoint.X, specialPoint.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
-                            }
+                            //scoreMap[specialPoint.X, specialPoint.Y] += specialGrid.Template.NeighborAddMaxPowerWhenActive;
                         }
                     }
                 }
-                RecycleList(ref neighbors);
                 scoreMap[specialPoint.X, specialPoint.Y] = scoreMap[specialPoint.X, specialPoint.Y] + successNeighborCount * specialGrid.Template.SucceedNeighborAddMaxPower;
             }
             foreach (var bonusPoint in bonusPoints)
@@ -198,7 +210,6 @@ namespace ConvenienceBackend.AutoBreak
                         scoreMap[neighborIndex.X, neighborIndex.Y] += (scoreMap[neighborIndex.X, neighborIndex.Y] * (map.OutlineConfig.BonusAddMaxPower + map.OutlineConfig.BonusAddMaxPowerNormal + map.OutlineConfig.BonusAddMaxPowerGoneMad) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 100);
                     }
                 }
-                RecycleList(ref pureNeighbors);
             }
         }
 
@@ -234,7 +245,6 @@ namespace ConvenienceBackend.AutoBreak
 
             while (queue.Count > 0)
             {
-                loopCount++;
 
                 var current = queue.Dequeue();
 
@@ -267,6 +277,7 @@ namespace ConvenienceBackend.AutoBreak
                     if (forceContinue)
                     {
                         // 回收current
+                        ignoreCount++;
                         RecycleState(current);
                         continue;
                     }
@@ -275,14 +286,17 @@ namespace ConvenienceBackend.AutoBreak
                 if (IsUnreachable(current, end))
                 {
                     // 回收current
+                    ignoreCount++;
                     RecycleState(current);
                     continue;
                 }
 
+                loopCount++;
                 foreach (var move in GenerateMoves(current))
                 {
                     int newRemaining = current.RemainingSteps - move.Cost + move.AddSteps;
                     if (newRemaining < 0) {
+                        ignoreCount++;
                         continue;
                     }
                     var newVisited = HashSetPool.Get();
@@ -308,12 +322,15 @@ namespace ConvenienceBackend.AutoBreak
                         Path = newPath
                     };
 
+                    sw.Start();
                     var featureScore = CalcEstimateAddMaxPower(newState); // newScore
-
+                    watchCount++;
+                    sw.Stop();
                     var key = new StateKey(newState.Index, newState.RemainingSteps, newState.RequiredMask);
 
                     if (best.TryGetValue(key, out float existing) && featureScore < existing) 
                     {
+                        ignoreCount++;
                         continue;
                     }
 
@@ -325,7 +342,7 @@ namespace ConvenienceBackend.AutoBreak
 
             }
 
-            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，分数{maxScore}，剩余步数{remainingSteps}");
+            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}忽略次数{ignoreCount}，分数{maxScore}，剩余步数{remainingSteps}, 耗时{sw.ElapsedMilliseconds}ms，, 耗时2{sw2.ElapsedMilliseconds}ms, 耗时次数{watchCount}");
 
             return ((int)maxScore, bestPath);
         }
@@ -337,13 +354,11 @@ namespace ConvenienceBackend.AutoBreak
             List<SkillBreakPlateIndex> neighbors = GetNeighborsGeneral(state.Index);
             foreach (SkillBreakPlateIndex neighbor in neighbors)
             {
-                if (!state.Visited.Contains(neighbor) && map.CheckIndex(neighbor))
+                if (!state.Visited.Contains(neighbor))
                 {
                     AddMove(state, neighbor, moves);
                 }
             }
-
-            RecycleList(ref neighbors);
             return moves;
         }
 
@@ -352,18 +367,16 @@ namespace ConvenienceBackend.AutoBreak
             var cell = map[index];
             if (IsExcludedGrid(index, cell)) return;
 
-            int cost = map.CalcCostStep(index);
+            int cost = cell.Template.CostBreakCount;
             if (state.RemainingSteps - cost < 0) return;
 
             int addSteps = cell.Template.AddStepNormal;
-            float score = CalcAddMaxPower(index, state.Visited);
 
             moves.Add(new Move
             {
                 NewIndex = index,
                 Cost = cost,
                 AddSteps = addSteps,
-                Score = score,
                 TemplateId = cell.TemplateId,
             });
         }
@@ -435,20 +448,16 @@ namespace ConvenienceBackend.AutoBreak
                 var neighbors = GetPureNeighbors(index, 1);
                 foreach (var neighbor in neighbors)
                 {
-                    if (map.CheckIndex(neighbor) && map.CalcDistance(index, neighbor) <= 1)
+                    if (neighbor != index && visited.Contains(neighbor))
                     {
-                        if (neighbor != index && visited.Contains(neighbor))
+                        if (map[neighbor].Template.ClearNeighborMaxPower && map[index].TemplateId != 2)
                         {
-                            if (map[neighbor].Template.ClearNeighborMaxPower && map[index].TemplateId != 2)
-                            {
-                                return 0;
-                            }
-                            successNeighborCount++;
-                            result += map[neighbor].Template.NeighborAddMaxPowerWhenActive;
+                            return 0;
                         }
+                        successNeighborCount++;
+                        result += map[neighbor].Template.NeighborAddMaxPowerWhenActive;
                     }
                 }
-                RecycleList(ref neighbors);
 
                 result += successNeighborCount * map[index].Template.SucceedNeighborAddMaxPower;
 
@@ -458,14 +467,15 @@ namespace ConvenienceBackend.AutoBreak
                     if (bonusFactor > 0)
                     {
                         var newResult = result;
-                        newResult += (bonusFactor * (result - value) * (map.OutlineConfig.BonusAddMaxPower + 100) * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
-                        newResult += (bonusFactor * result * map.OutlineConfig.BonusAddMaxPowerNormal * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
-                        newResult += (bonusFactor * result * map.OutlineConfig.BonusAddMaxPowerGoneMad * GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor / 10000);
+                        newResult += (bonusFactor * (result - value) * bonusAddMaxPowerFactor);
+                        newResult += (bonusFactor * result * bonusAddMaxPowerNormalFactor);
+                        newResult += (bonusFactor * result * bonusAddMaxPowerGoneMadFactor);
 
                         result = newResult;
                     }
                 }
             }
+
             return result;
         }
 
@@ -529,16 +539,14 @@ namespace ConvenienceBackend.AutoBreak
         {
             SkillBreakPlateGrid grid = map[pos];
 
-            List<SkillBreakPlateIndex> list = null;
-
-            //if (_cache.neighborsGeneralIdCache.ContainsKey(pos) && _cache.neighborsGeneralIdCache[pos] == grid.TemplateId)
-            //{
-            //    list = _cache.neighborsGeneralCache.GetValueOrDefault(pos);
-            //}
-            //if (list != null) return list;
-            list = ListPool.Get();
-            //_cache.neighborsGeneralCache[pos] = list;
-            //_cache.neighborsGeneralIdCache[pos] = grid.TemplateId;
+            List<SkillBreakPlateIndex> list;
+            if (_cache.NeighborsGeneralCache.ContainsKey(pos))
+            {
+                list = _cache.NeighborsGeneralCache.GetValueOrDefault(pos);
+                if (list != null) return list;
+            }
+            list = new();
+            _cache.NeighborsGeneralCache[pos] = list;
 
             SkillBreakPlateAxial axial = pos;
             foreach (SkillBreakPlateAxial offset in _neighborAxial)
@@ -559,7 +567,7 @@ namespace ConvenienceBackend.AutoBreak
             var nextStepCanJumpList = nextStepCanJumpToSameDict[grid.TemplateId];
             foreach (SkillBreakPlateIndex otherIndex in nextStepCanJumpList)
             {
-                if (map[otherIndex].TemplateId == grid.TemplateId && !(pos == otherIndex) && map.CalcDistance(pos, otherIndex) != grid.Template.NextStepOffset && map[otherIndex].State.CanInteract())
+                if (map[otherIndex].TemplateId == grid.TemplateId && !(pos == otherIndex) && CalcDistance(pos, otherIndex) != grid.Template.NextStepOffset && map[otherIndex].State.CanInteract())
                 {
                     list.Add(otherIndex);
                 }
@@ -570,7 +578,24 @@ namespace ConvenienceBackend.AutoBreak
 
         private List<SkillBreakPlateIndex> GetPureNeighbors(SkillBreakPlateIndex pos, int distance = 1)
         {
-            List<SkillBreakPlateIndex> points = ListPool.Get();
+            List<SkillBreakPlateIndex> points;
+            if (distance == 1)
+            {
+                if (_cache.PureNeighborsCache.ContainsKey(pos))
+                {
+                    points = _cache.PureNeighborsCache.GetValueOrDefault(pos);
+                    if (points != null) 
+                    {
+                        return points;
+                    }
+                }
+            }
+
+            points = new();
+            if (distance == 1)
+            {
+                _cache.PureNeighborsCache[pos] = points;
+            }
 
             for (int x = -distance; x <= distance; x++)
             {
@@ -578,7 +603,7 @@ namespace ConvenienceBackend.AutoBreak
                 {
                     SkillBreakPlateIndex neighborPos = pos + (x, y);
 
-                    if (map.CheckIndex(neighborPos) && map.CalcDistance(pos, neighborPos) <= distance)
+                    if (map.CheckIndex(neighborPos) && CalcDistance(pos, neighborPos) <= distance)
                     {
                         points.Add(neighborPos);
                     }
@@ -601,9 +626,8 @@ namespace ConvenienceBackend.AutoBreak
                 if (grid.State == ESkillBreakGridState.Selected) continue;
                 if (neighborPos == pos) continue;
 
-                if (map.CalcDistance(pos, neighborPos) == grid.Template.NextStepOffset && (!state.Visited.Contains(neighborPos) || state.Index == neighborPos))
+                if (CalcDistance(pos, neighborPos) == grid.Template.NextStepOffset && (!state.Visited.Contains(neighborPos) || state.Index == neighborPos))
                 {
-                    RecycleList(ref neighborPosList);
                     return false;
                 }
 
@@ -623,8 +647,24 @@ namespace ConvenienceBackend.AutoBreak
                 //    return false;
                 //}
             }
-            RecycleList(ref neighborPosList);
             return true;
+        }
+
+        private int CalcDistance(SkillBreakPlateIndex a, SkillBreakPlateIndex b)
+        {
+            // var key = (a, b);
+            int distance;
+            //if (_cache.DistanceCache.ContainsKey(key))
+            //{
+            //    distance = _cache.DistanceCache[key];
+            //}
+            //else
+            {
+                distance = map.CalcDistance(a, b);
+                //_cache.DistanceCache[key] = distance;
+                //_cache.DistanceCache[(b, a)] = distance;
+            }
+            return distance;
         }
 
         private void RecycleState(State state)
@@ -633,14 +673,14 @@ namespace ConvenienceBackend.AutoBreak
             RecycleList(ref state.Path);
         }
 
-        private void RecycleHashSet(ref HashSet<SkillBreakPlateIndex> set)
+        private static void RecycleHashSet(ref HashSet<SkillBreakPlateIndex> set)
         {
             set.Clear();
             HashSetPool.Return(set);
             set = null;
         }
 
-        private void RecycleList(ref List<SkillBreakPlateIndex> list)
+        private static void RecycleList(ref List<SkillBreakPlateIndex> list)
         {
             list.Clear();
             ListPool.Return(list);
@@ -686,7 +726,6 @@ namespace ConvenienceBackend.AutoBreak
             public SkillBreakPlateIndex NewIndex;
             public int Cost;
             public int AddSteps;
-            public float Score;
             public sbyte TemplateId;
         }
     }
