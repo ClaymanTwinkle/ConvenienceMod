@@ -114,27 +114,17 @@ namespace ConvenienceFrontend.AutoBreak
             SkillBreakPlateIndex start = SkillBreakPlateIndex.Invalid;
             if (breakPath != null)
             {
-                SkillBreakPlateIndex? skillBreakPlateIndex = null;
                 foreach (SkillBreakPlateIndex item in breakPath)
                 {
                     SkillBreakPlateGrid skillBreakPlateGrid = __instance.DisplayPlate[item];
-                    if (skillBreakPlateGrid.TemplateId == 0)
+                    if (start == SkillBreakPlateIndex.Invalid)
                     {
-                        skillBreakPlateIndex = item;
+                        start = item;
                     }
                     else
                     {
-                        if (skillBreakPlateIndex.HasValue)
-                        {
-                            Add(new Segment(skillBreakPlateIndex.Value, item));
-                            skillBreakPlateIndex = null;
-                            start = item;
-                        }
-                        else
-                        {
-                            Add(new Segment(start, item));
-                            start = item;
-                        }
+                        Add(new Segment(start, item));
+                        start = item;
                     }
                 }
             }
@@ -174,7 +164,8 @@ namespace ConvenienceFrontend.AutoBreak
                 {
                     try
                     {
-                        USkillBreakPlateRenderer_RefreshSelectedPath_Postfix(_gridArea);
+                        _gridArea.CallPrivateMethod("RefreshSelectedPath");
+                        _gridArea.CallPrivateMethod("RefreshCanSelectPath");
                     }
                     catch (Exception e)
                     {

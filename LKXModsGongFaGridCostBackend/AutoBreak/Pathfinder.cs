@@ -266,13 +266,15 @@ namespace ConvenienceBackend.AutoBreak
             foreach (var start in startList)
             {
                 var score = CalcAddMaxPower(start, initialVisited);
+                var newVisited = HashSetPool.Get();
+                newVisited.UnionWith(initialVisited);
                 var initialState = new State
                 {
                     Index = start,
                     RemainingSteps = maxSteps,
                     Score = score,
                     ScoreRecord = new() { { start, score } },
-                    Visited = initialVisited,
+                    Visited = newVisited,
                     RequiredMask = 0,
                     Path = new List<SkillBreakPlateIndex> {
                         start
@@ -307,7 +309,7 @@ namespace ConvenienceBackend.AutoBreak
                             bestPath = current.Path;
                             remainingSteps = current.RemainingSteps;
 
-                            _logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，分数{maxScore}，剩余步数{remainingSteps}");
+                            //_logger.Info($"${map.Width}x{map.Height}循环次数{loopCount}，分数{maxScore}，剩余步数{remainingSteps}");
                             continue;
                         }
                     }
@@ -397,10 +399,7 @@ namespace ConvenienceBackend.AutoBreak
                         Path = newPath
                     };
 
-                    sw.Start();
                     var featureScore = CalcEstimateAddMaxPower(newState); // newScore
-                    watchCount++;
-                    sw.Stop();
                     var key = new StateKey(newState.Index, newState.RemainingSteps, newState.RequiredMask);
 
                     if (best.TryGetValue(key, out float existing) && featureScore < existing) 
@@ -768,18 +767,18 @@ namespace ConvenienceBackend.AutoBreak
 
         private void RecycleState(State state)
         {
-            RecycleHashSet(ref state.Visited);
-            RecycleList(ref state.Path);
+            RecycleHashSet(state.Visited);
+            RecycleList(state.Path);
         }
 
-        private static void RecycleHashSet(ref HashSet<SkillBreakPlateIndex> set)
+        private static void RecycleHashSet(HashSet<SkillBreakPlateIndex> set)
         {
             set.Clear();
             HashSetPool.Return(set);
             set = null;
         }
 
-        private static void RecycleList(ref List<SkillBreakPlateIndex> list)
+        private static void RecycleList(List<SkillBreakPlateIndex> list)
         {
             list.Clear();
             ListPool.Return(list);
@@ -819,6 +818,11 @@ namespace ConvenienceBackend.AutoBreak
                 RemainingSteps == other.RemainingSteps && RequiredMask == other.RequiredMask;
 
             public override int GetHashCode() => HashCode.Combine(X, Y, RemainingSteps, RequiredMask);
+
+            public override bool Equals(object obj)
+            {
+                return obj is StateKey key && Equals(key);
+            }
         }
 
         private struct Move

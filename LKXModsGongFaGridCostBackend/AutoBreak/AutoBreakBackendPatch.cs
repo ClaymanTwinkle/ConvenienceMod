@@ -29,7 +29,7 @@ namespace ConvenienceBackend.AutoBreak
             (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0), (1, 1), (0, -1), (0, 0), (0, 1)
 };
         private static readonly object lockObj = new();
-        private static readonly int MaxRollCount = 20;
+        private static readonly int MaxRollCount = 50;
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -107,8 +107,6 @@ namespace ConvenienceBackend.AutoBreak
             __result = 100;
             return false;
         }
-
-        private static Dictionary<SkillBreakPlate, MapCache> _cache = new();
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ExtraDomain), "CallMethod")]
@@ -189,7 +187,7 @@ namespace ConvenienceBackend.AutoBreak
                     plate,
                     startList
                     );
-                _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                _logger.Info($"{String.Join(",", startList)}剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
 
                 if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
@@ -209,11 +207,12 @@ namespace ConvenienceBackend.AutoBreak
                     plate, 
                     plate.Current
                     );
-                _logger.Info($"剩余可走步数是{finder.maxSteps}");
+                _logger.Info($"{plate.Current}剩余可走步数是{finder.maxSteps}");
                 (int maxScore, List<SkillBreakPlateIndex> bestPath) = finder.FindMaxScorePath();
                 if (maxScore > 0 && bestPath != null && bestPath.Count > 0)
                 {
                     // ShowNextPoint(plate, maxScore, bestPath);
+                    _logger.Info($"{String.Join(",", bestPath)}");
                     return(maxScore, bestPath);
                 }
                 else
@@ -230,7 +229,7 @@ namespace ConvenienceBackend.AutoBreak
         {
             if (__instance.TryGetElement_SkillBreakPlates(elementId, out SkillBreakPlate plate))
             { 
-                _cache.Remove(plate);
+                // _cache.Remove(plate);
             }
         }
 
@@ -240,7 +239,7 @@ namespace ConvenienceBackend.AutoBreak
         {
             if (__instance.TryGetElement_SkillBreakPlates(elementId, out SkillBreakPlate plate) && plate != value)
             {
-                _cache.Remove(plate);
+                // _cache.Remove(plate);
             }
         }
 
@@ -337,13 +336,10 @@ namespace ConvenienceBackend.AutoBreak
                     }
                 }
             }
-            _logger.Debug($"total={total}");
             int result = total * (CValuePercentBonus)plate.OutlineConfig.BonusAddMaxPower;
-            _logger.Debug($"result={result}");
             result += totalNormal * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerNormal;
             result += totalGoneMad * (CValuePercent)plate.OutlineConfig.BonusAddMaxPowerGoneMad;
             CValuePercent correctionFactor = (int)GlobalConfig.Instance.BreakoutBonusAddPowerCorrectionFactor;
-            _logger.Debug($"CalcAddMaxPowerAsBonus={result}*{correctionFactor}");
             return result * correctionFactor;
         }
 

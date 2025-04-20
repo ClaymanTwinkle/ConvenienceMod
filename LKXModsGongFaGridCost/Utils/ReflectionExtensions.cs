@@ -32,21 +32,18 @@ namespace ConvenienceFrontend.Utils
 
         public static T CallPrivateMethod<T>(this object instance, string methodname, params object[] param)
         {
-            AdaptableLog.Info("CallPrivateMethod: " + methodname);
             BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             return (T)((object)instance.GetType().GetMethod(methodname, bindingAttr).Invoke(instance, param));
         }
 
         public static T CallPrivateMethod<T>(this object instance, string methodname, Type[] types, params object[] param)
         {
-            AdaptableLog.Info("CallPrivateMethod: " + methodname);
             BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             return (T)((object)instance.GetType().GetMethod(methodname, bindingAttr, null, CallingConventions.Any, types, null).Invoke(instance, param));
         }
 
         public static void CallPrivateMethod(this object instance, string methodname, params object[] param)
         {
-            AdaptableLog.Info("CallPrivateMethod: "+methodname);
             BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             instance.GetType().GetMethod(methodname, bindingAttr).Invoke(instance, param);
         }
