@@ -18,6 +18,7 @@ namespace ConvenienceFrontend.AutoBreak
 {
     internal class AutoBreakFrontPatch : BaseFrontPatch
     {
+        private static CButton _drawBreakLineButton = null;
         private static CButton _autoBreakButton = null;
         private static TextMeshProUGUI _expectMaxPowerLabel = null;
 
@@ -32,28 +33,42 @@ namespace ConvenienceFrontend.AutoBreak
         [HarmonyPatch(typeof(UISkillBreakPlate2), "InitRefers")]
         public static void UISkillBreakPlate2_InitRefers_Postfix(UISkillBreakPlate2 __instance)
         {
-            var _isReview = Traverse.Create(__instance).Field<bool>("_isReview").Value;
-
-            if (_autoBreakButton != null)
+            if (_drawBreakLineButton != null)
             {
-                _autoBreakButton.gameObject.SetActive(!_isReview);
+                _drawBreakLineButton.gameObject.SetActive(false);
             }
             else
             {
                 Refers refers = __instance.CharacterAttributeDataView;
                 var parent = refers.gameObject.transform;
 
-                _autoBreakButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(0, -550), new Vector2(150, 50), 16, "绘制突破路线");
+                _drawBreakLineButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(0, -550), new Vector2(150, 50), 16, "绘制突破路线");
+                _drawBreakLineButton.ClearAndAddListener(delegate ()
+                {
+                    OnClickDrawBreakPath(__instance);
+                });
+                _drawBreakLineButton.gameObject.SetActive(false);
+            }
+            if (_autoBreakButton != null)
+            {
+                _autoBreakButton.gameObject.SetActive(false);
+            }
+            else
+            {
+                Refers refers = __instance.CharacterAttributeDataView;
+                var parent = refers.gameObject.transform;
+
+                _autoBreakButton = GameObjectCreationUtils.UGUICreateCButton(parent, new Vector2(0, -610), new Vector2(150, 50), 16, "自动突破");
                 _autoBreakButton.ClearAndAddListener(delegate ()
                 {
-                    OnClickBreakPath(__instance);
+                    OnClickAutoBreakPath(__instance);
                 });
-                _autoBreakButton.gameObject.SetActive(!_isReview);
+                _autoBreakButton.gameObject.SetActive(false);
             }
 
             if (_expectMaxPowerLabel != null)
             {
-                _expectMaxPowerLabel.gameObject.SetActive(!_isReview);
+                _expectMaxPowerLabel.gameObject.SetActive(false);
                 _expectMaxPowerLabel.text = "理论最大威力上限：0";
             }
             else
@@ -61,8 +76,18 @@ namespace ConvenienceFrontend.AutoBreak
                 var _maxPowerLabel = __instance.CGet<TextMeshProUGUI>("MaxPowerLabel");
                 var parent = _maxPowerLabel.gameObject.transform;
                 _expectMaxPowerLabel = GameObjectCreationUtils.UGUICreateTMPText(parent, "理论最大威力上限：0", 1000, 50, 500);
-                _expectMaxPowerLabel.gameObject.SetActive(!_isReview);
+                _expectMaxPowerLabel.gameObject.SetActive(false);
             }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UISkillBreakPlate2), "OnInit")]
+        public static void UISkillBreakPlate2_OnInit_Postfix(UISkillBreakPlate2 __instance)
+        {
+            var _isReview = Traverse.Create(__instance).Field<bool>("_isReview").Value;
+            _drawBreakLineButton?.gameObject?.SetActive(!_isReview);
+            _autoBreakButton?.gameObject?.SetActive(!_isReview);
+            _expectMaxPowerLabel?.gameObject?.SetActive(!_isReview);
         }
 
         [HarmonyPostfix]
@@ -72,7 +97,7 @@ namespace ConvenienceFrontend.AutoBreak
             var traverse = Traverse.Create(__instance);
             var skillId = traverse.Field<short>("_skillId").Value;
 
-            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1334, skillId, delegate (int offset, RawDataPool dataPool)
+            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1333, skillId, delegate (int offset, RawDataPool dataPool)
             {
                 int maxScore = 0;
                 Serializer.Deserialize(dataPool, offset, ref maxScore);
@@ -146,13 +171,13 @@ namespace ConvenienceFrontend.AutoBreak
             }
         }
 
-        private static void OnClickBreakPath(UISkillBreakPlate2 __instance)
+        private static void OnClickDrawBreakPath(UISkillBreakPlate2 __instance)
         {
             var traverse = Traverse.Create(__instance);
             var _skillId = traverse.Field<short>("_skillId").Value;
 
             ShowMask();
-            FindBreakPath(null, _skillId, delegate (int offset, RawDataPool dataPool)
+            DrawBreakPath(null, _skillId, delegate (int offset, RawDataPool dataPool)
             {
                 breakPath = null;
                 offset += Serializer.Deserialize(dataPool, offset, ref breakPath);
@@ -175,12 +200,62 @@ namespace ConvenienceFrontend.AutoBreak
                 HideMask();
                 ShowDialog("结果", $"预计最大分数{maxScore}", delegate () { });
             });
-      }
+        }
 
-
-        public static void FindBreakPath(IAsyncMethodRequestHandler requestHandler, short skillId, AsyncMethodCallbackDelegate callback)
+        private static void OnClickAutoBreakPath(UISkillBreakPlate2 __instance)
         {
-            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1333, skillId, callback);
+            var traverse = Traverse.Create(__instance);
+            var _skillId = traverse.Field<short>("_skillId").Value;
+
+            ShowMask();
+            AutoBreak(null, _skillId, delegate (int offset, RawDataPool dataPool)
+            {
+                SkillBreakPlate plate = null;
+                offset += Serializer.Deserialize(dataPool, offset, ref plate);
+
+                SkillBreakPlateRenderer _gridArea = __instance.GetFieldValue<SkillBreakPlateRenderer>("_gridArea");
+                if (_gridArea != null)
+                {
+                    try
+                    {
+                        if (plate != null)
+                        {
+                            __instance.CallPrivateMethod("CheckFinish", plate);
+
+                            SkillBreakPlate _lastPlate = __instance.GetFieldValue<SkillBreakPlate>("_lastPlate");
+                            _gridArea.RefreshOnShotParticles(plate, _lastPlate, out var largestDuration);
+                            __instance.CallPrivateMethod
+                            (
+                                "DelayCall",
+                                new Action
+                                (
+                                delegate
+                                {
+                                    __instance.CallPrivateMethod("RefreshWithPlate", plate);
+                                }
+                                ),
+                                largestDuration
+                            );
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+                }
+                HideMask();
+            });
+        }
+
+        public static void DrawBreakPath(IAsyncMethodRequestHandler requestHandler, short skillId, AsyncMethodCallbackDelegate callback)
+        {
+            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1334, skillId, callback);
+            requestHandler?.RegisterAsyncMethodCall(callId);
+        }
+
+        public static void AutoBreak(IAsyncMethodRequestHandler requestHandler, short skillId, AsyncMethodCallbackDelegate callback)
+        {
+            int callId = SingletonObject.getInstance<AsyncMethodDispatcher>().AsyncMethodCall<int>(19, 1335, skillId, callback);
             requestHandler?.RegisterAsyncMethodCall(callId);
         }
 

@@ -30,6 +30,7 @@ namespace ConvenienceBackend.AutoBreak
 };
         private static readonly object lockObj = new();
         private static readonly int MaxRollCount = 50;
+        private static readonly HashSet<int> stopBreakIdSet = new() { 6, 10 }; //6魔障10忘我
 
         public override void OnModSettingUpdate(string modIdStr)
         {
@@ -112,7 +113,28 @@ namespace ConvenienceBackend.AutoBreak
         [HarmonyPatch(typeof(ExtraDomain), "CallMethod")]
         public static bool ExtraDomain_CallMethod_Prefix(ExtraDomain __instance, Operation operation, RawDataPool argDataPool, RawDataPool returnDataPool, DataContext context, ref int __result)
         {
-            if (operation.MethodId == 1333)
+            if (operation.MethodId == 1335)
+            {
+                int argsOffset = operation.ArgsOffset;
+                if (operation.ArgsCount == 1)
+                {
+                    short skillId = -1;
+                    argsOffset += GameData.Serializer.Serializer.Deserialize(argDataPool, argsOffset, ref skillId);
+
+                    if (skillId > -1)
+                    {
+                        SkillBreakPlate plate = AutoBreak(context, skillId);
+
+                        __result = GameData.Serializer.Serializer.Serialize(plate, returnDataPool);
+
+                        return false;
+                    }
+                }
+
+                __result = -1;
+                return false;
+            }
+            else if (operation.MethodId == 1334)
             {
                 int argsOffset = operation.ArgsOffset;
                 if (operation.ArgsCount == 1)
@@ -126,6 +148,7 @@ namespace ConvenienceBackend.AutoBreak
 
                         __result = GameData.Serializer.Serializer.Serialize(bestPath, returnDataPool);
                         GameData.Serializer.Serializer.Serialize(maxScore, returnDataPool);
+
                         return false;
                     }
                 }
@@ -133,7 +156,7 @@ namespace ConvenienceBackend.AutoBreak
                 __result = -1;
                 return false;
             }
-            else if (operation.MethodId == 1334)
+            else if (operation.MethodId == 1333)
             {
                 int argsOffset = operation.ArgsOffset;
                 if (operation.ArgsCount == 1)
@@ -166,7 +189,11 @@ namespace ConvenienceBackend.AutoBreak
             {
                 return (0, new List<SkillBreakPlateIndex>());
             }
+            return FindPath(skillId, plate);
+        }
 
+        private static (int score, List<SkillBreakPlateIndex>) FindPath(short skillId, SkillBreakPlate plate)
+        {
             if (!plate.CheckIndex(plate.Current))
             {
                 var startList = new List<SkillBreakPlateIndex>();
@@ -221,6 +248,76 @@ namespace ConvenienceBackend.AutoBreak
                 }
             }
             return (0, new List<SkillBreakPlateIndex>());
+        }
+
+        private static SkillBreakPlate AutoBreak(DataContext context, short skillId)
+        {
+            if (!DomainManager.Extra.TryGetElement_SkillBreakPlates(skillId, out SkillBreakPlate plate))
+            {
+                return null;
+            }
+
+            SkillBreakPlate skillBreakPlate = null;
+
+            var needLoop = true;
+
+            while (needLoop)
+            {
+                needLoop = false;
+                (int maxScore, List<SkillBreakPlateIndex> bestPath) = FindPath(skillId);
+
+                if (bestPath != null && bestPath.Count > 0)
+                {
+                    var isFirst = true;
+                    var index = -1;
+                    foreach (var item in bestPath)
+                    {
+                        index++;
+                        var grid = plate[item];
+                        if (grid.State == ESkillBreakGridState.Selected)
+                        {
+                            if (isFirst)
+                            {
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                _logger.Info($"{item}{grid.Template.Name}已选中，无法自动突破");
+                                break;
+                            }
+                        }
+                        else if (grid.State == ESkillBreakGridState.CanSelect)
+                        {
+                            if (!DomainManager.Taiwu.GetCanBreakOut())
+                            {
+                                _logger.Info($"条件不足，无法自动突破");
+                                break;
+                            }
+
+                            plate = DomainManager.Taiwu.SelectSkillBreakGrid(context, skillId, item);
+                            if (plate == null)
+                            {
+                                _logger.Info($"条件不足，无法自动突破");
+                                break;
+                            }
+                            skillBreakPlate = plate;
+                            if (stopBreakIdSet.Contains(grid.TemplateId))
+                            {
+                                _logger.Info($"{item}遇到随机格子{grid.Template.Name}，停止自动突破，重新规划路线");
+                                needLoop = true;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            _logger.Info($"{item}{grid.Template.Name}状态{grid.State}不对，无法自动突破");
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return skillBreakPlate;
         }
 
         [HarmonyPrefix]
