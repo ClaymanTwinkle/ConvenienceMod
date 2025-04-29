@@ -88,7 +88,7 @@ namespace ConvenienceFrontend
             // 蛐蛐战斗优化
             new CricketCombatOptimizeFrontPatch(),
             // 一键突破
-            new AutoBreakFrontPatch(),
+            // new AutoBreakFrontPatch(),
             // 铭刻自己
             new InscribeCharFrontPatch(),
             // 土匪
@@ -188,7 +188,7 @@ namespace ConvenienceFrontend
         [HarmonyPatch(typeof(UIManager), "ShowUI")]
         public static void UIManager_ShowUI_Postfix(UIElement elem)
         {
-            Debug.Log("ShowUI: " + elem.Name);
+            // Debug.Log("ShowUI: " + elem.Name);
         }
 
         private void InitConfig()

@@ -85,7 +85,7 @@ namespace ConvenienceBackend
             // 促织优化
             new CricketCombatOptimizeBackendPatch(),
             // 自动突破
-            new AutoBreakBackendPatch(),
+            // new AutoBreakBackendPatch(),
             // 同道战斗
             // new TongdaoCombatBackendPatch(),
             // 简易开局

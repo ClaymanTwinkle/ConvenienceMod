@@ -9,6 +9,7 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.Character.Ai.GeneralAction.LifeSkillRandom;
 using GameData.Domains.Character.ParallelModifications;
+using GameData.Domains.TaiwuEvent.EventHelper;
 using HarmonyLib;
 using NLog;
 
@@ -22,6 +23,16 @@ namespace ConvenienceBackend.LifeSkillAwakeningOpt
         {
         }
 
+
+        
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(EventHelper), "TaiwuCanLearnCombatSkill")]
+        public static bool EventHelper_TaiwuCanLearnCombatSkill_PrePatch(ref bool __result)
+        {
+            __result = true;
+
+            return false;
+        }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(LifeSkillAwakeningAction), "CheckValid")]
